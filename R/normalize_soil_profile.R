@@ -92,6 +92,7 @@ normalize_soil_profile <- function(data,
         bg = "white"
       )
     }
+    print(plot)
   }
   
   # Format normalized soil profile
