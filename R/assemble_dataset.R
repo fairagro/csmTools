@@ -65,7 +65,6 @@
 #' }
 #'
 #' @importFrom purrr reduce map
-#' @importFrom dplyr full_join left_join right_join inner_join
 #' 
 #' @export
 #' 
@@ -140,8 +139,14 @@ assemble_dataset <- function(components = list(), keep_all = FALSE, action = "me
   }
   
   # Standard Join
-  join_fun <- match.fun(paste0(join_type, "_join"))
-  joined_df <- join_fun(df1, df2, by = common_cols)
+  joined_df <- switch(
+    join_type,
+    "full"  = dplyr::full_join(df1, df2, by = common_cols),
+    "left"  = dplyr::left_join(df1, df2, by = common_cols),
+    "right" = dplyr::right_join(df1, df2, by = common_cols),
+    "inner" = dplyr::inner_join(df1, df2, by = common_cols),
+    stop(paste("Unknown join type:", join_type))
+  )
   
   # Coalesce duplication (.x and .y)
   cols_x <- grep("\\.x$", names(joined_df), value = TRUE)
