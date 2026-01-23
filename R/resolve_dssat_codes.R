@@ -171,7 +171,7 @@ resolve_dssat_codes <- function(dataset) {
       }
     ) %>%
     dplyr::mutate(
-      file_name = paste0(strict_abbreviate(INST_NAME, 2), ".SOL")
+      file_name = paste0(substr(PEDON_new, 1, 2), ".SOL")
     ) %>%
     dplyr::ungroup()
   
