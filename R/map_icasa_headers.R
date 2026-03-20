@@ -20,29 +20,16 @@
 
 map_icasa_headers <- function(dataset, header_type = "short") {
   
-  # --- 1. Load ICASA Dictionary Configuration ---
-  config_path <- system.file("extdata", "datamodels.yaml", package = "csmTools")
-  config <- yaml::read_yaml(config_path)
-  dict_source_config <- config$icasa$dict_source
+  # Fetch ICASA dictionary
+  dict <- fetch_dictionary("icasa")
   
-  if (is.null(dict_source_config)) {
-    warning("ICASA dictionary source not found in config. Cannot format headers.")
-    return(dataset)
-  }
-  
-  # --- 2. Fetch and Prepare Dictionary ---
-  header_dict <- NULL
-  if (dict_source_config$type == "url_fetch_icasa") {
-    # TODO: generic fetch_data_model
-    dict <- fetch_icasa(dict_source_config$path)
-    header_dict <- dict %>%
-      mutate(long_name = Variable_Name, short_name = Code_Display) %>%
-      select(long_name, short_name)
-  } else {
-    warning("Unsupported dictionary type. Cannot format headers.")
-    return(dataset)
-  }
-  
+  # Keep only 'header' sections and filter
+  header_sec <- c("Metadata", "Management_info", "Soils_data", "Weather_data", "Measured_data")
+  header_dict <- dict[names(dict) %in% header_sec]
+  header_dict <- do.call(bind_rows, header_dict) %>%
+    mutate(long_name = Variable_Name, short_name = Code_Display) %>%
+    select(long_name, short_name)
+
   # --- 3. Create Name Lookup and Rename ---
   name_lookup <- if (header_type == "short") {
     setNames(header_dict$short_name, header_dict$long_name)

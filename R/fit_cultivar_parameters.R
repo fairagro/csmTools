@@ -114,7 +114,7 @@ set_class <- function(df, classes) {
 }
 
 
-#' Add a New Treatment Row to the treatment matrix of a DSSAT managemenet table list
+#' Add a New Treatment Row to the treatment matrix of a DSSAT managemeent table list
 #'
 #' Adds a new treatment to the treatment table within a DSSAT management tale list,
 #' using the last row as a template and updating specified columns.
@@ -544,7 +544,9 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     identify_model <- function(xtables, model){
       
       # Import DSSAT dict to control input data annotation
-      models <- get_dssat_terms("models")
+      # models <- get_dssat_terms("models")
+      dict <- fetch_dictionary("dssat")
+      models <- dict$SIMULATION$`Simulation/Crop Models`
       
       # Validate model input annotation
       models_short <- unique(models[[1]])
@@ -596,7 +598,10 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     crop_code <- cuTable[cuTable$CNAME == cultivar]$CR  # Crop code
     
     # Retrieve crop full name
-    crop_nms <- suppressWarnings(get_dssat_terms("crops"))
+    # crop_nms <- suppressWarnings(get_dssat_terms("crops"))
+    dict <- fetch_dictionary("dssat")
+    crop_nms <- tmp$DETAIL$`Crop and Weed Species`
+    
     crop <- crop_nms[crop_nms$`@CDE` == crop_code,]$DESCRIPTION  # Crop name
     
     

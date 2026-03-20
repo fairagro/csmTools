@@ -82,8 +82,7 @@ icasa:
     - SUMMARY
     - TIME_SERIES
   dict_source:
-    type: "url_fetch_icasa"
-    path: "https://raw.githubusercontent.com/DSSAT/ICASA-Dictionary/main/CSV/"  
+    path: "https://api.github.com/repos/DSSAT/ICASA-Dictionary/contents/CSV?ref=main"
     
   # --- Properties for when this model is an OUTPUT ---
   mappings:
@@ -196,7 +195,8 @@ dssat:
     - TILLAGE
     - HARVEST
     - SIMULATION_CONTROLS
-  dict_source: null
+  dict_source:
+    path: "https://api.github.com/repos/DSSAT/dssat-csm-os/contents/Data?ref=develop"
     
   # --- Properties for when this model is an OUTPUT ---
   mappings:
