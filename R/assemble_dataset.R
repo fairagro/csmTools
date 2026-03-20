@@ -124,8 +124,30 @@ assemble_dataset <- function(components = list(), keep_all = FALSE, action = "me
 }
 
 
-#' Smart merge colums or rows using join functions 
-#' 
+#' Merge two data frames with automatic join key detection and conflict resolution
+#'
+#' Nerges two data frames by detecting common columns, performing the appropriate
+#' join operation, and resolving duplicate columns created by the join.
+#'
+#' @param df1 First data frame
+#' @param df2 Second data frame
+#' @param join_type Character string specifying join type: `"full"` (default), `"left"`, `"right"`, or `"inner"`
+#'
+#' @return Single merged data frame with resolved column conflicts
+#'
+#' @details
+#' **Join logic:**
+#' \itemize{
+#'   \item **No common columns**: Performs Cartesian product (cross join) after
+#'         deduplicating `df2`, effectively broadcasting metadata
+#'   \item **Common columns exist**: Uses specified `join_type` with common columns as join keys
+#' }
+#'
+#' **Conflict resolution:**
+#' When columns exist in both data frames (creating `.x` and `.y` suffixes),
+#' values are coalesced using `dplyr::coalesce()`, preferring non-NA values from `df1`.
+#' Both suffixed columns are then removed, leaving only the resolved column.
+#'
 #' @noRd
 #' 
 
@@ -164,8 +186,38 @@ assemble_dataset <- function(components = list(), keep_all = FALSE, action = "me
 }
 
 
-#' Merge multiple data frames' rows and aggregate
-#' 
+#' Aggregate records from multiple data frames by grouping variables
+#'
+#' Combines multiple data frames via row-binding, then aggregates duplicate
+#' records using specified grouping columns and aggregation function.
+#'
+#' @param data_list List of data frames to combine and aggregate
+#' @param groups Character vector of column names to group by. If `NULL` or
+#'   empty, returns row-bound data without aggregation.
+#' @param agg_fun Aggregation function name: `"coalesce"` (default, first
+#'   non-NA), `"mean"`/`"average"`, `"sum"`, `"max"`, or `"min"`. Numeric
+#'   functions apply only to numeric/logical columns; text columns always use
+#'   first non-NA value.
+#'
+#' @return Single aggregated data frame with one row per unique combination of
+#'   grouping variables
+#'
+#' @details
+#' **Processing steps:**
+#' \enumerate{
+#'   \item Row-binds all data frames in `data_list`
+#'   \item If no groups specified, returns combined data as-is
+#'   \item Groups by specified columns and aggregates remaining columns
+#' }
+#'
+#' **Aggregation behavior:**
+#' \itemize{
+#'   \item **`"coalesce"`**: Returns first non-NA value (default for all types)
+#'   \item **Numeric functions**: Apply only to numeric/logical columns;
+#'         non-numeric columns fallback to coalesce behavior
+#'   \item **NA handling**: Removed before aggregation; all-NA groups return `NA`
+#' }
+#'
 #' @noRd
 #' 
 
@@ -205,8 +257,31 @@ assemble_dataset <- function(components = list(), keep_all = FALSE, action = "me
 }
 
 
+#' Repopulate nested list structure with updated data frames from pool
 #'
+#' Recursively traverses a nested list structure, replacing data frames with
+#' their updated versions from a flat named pool while preserving the original hierarchy.
 #'
+#' @param pool Named list of data frames (flat structure) containing updated tables
+#' @param node Current node being processed (data frame or nested list)
+#' @param node_name Character string name of current node, used to lookup
+#'   replacement in pool. Default `NULL` for root node.
+#'
+#' @return Nested list with same structure as `node` but data frames replaced from `pool`
+#'   where matches exist. Non-matching data frames and non-list elements returned unchanged.
+#'
+#' @details
+#' **Traversal logic:**
+#' \itemize{
+#'   \item **Data frame node**: If `node_name` exists in `pool`, return pooled
+#'         version; otherwise return original unchanged
+#'   \item **List node**: Recursively process each child, passing child name
+#'         for pool lookup
+#'   \item **Other types**: Return unchanged (pass-through)
+#' }
+#'
+#' Used by `assemble_dataset()` to restore hierarchical structure after flattening and
+#' merging operations on component tables.
 #'
 #' @noRd
 #' 

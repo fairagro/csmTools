@@ -617,18 +617,18 @@ rules:
     target:
       section: GENERAL
     actions:
-      - type: lookup_and_add
-        lookup_data_source: { section: INSTITUTIONS }  # REVIEW: Only EXP_ID (EXP_YEAR?)
+      - type: join
+        source: { section: EXPERIMENT_INSTITUTIONS }  # REVIEW: Only EXP_ID (EXP_YEAR?)
         on_key: { source_key: experiment_id, lookup_key: experiment_id }
         select_columns:
           institute_name: institute_name
-      - type: lookup_and_add
-        lookup_data_source: { section: DOCUMENTS }  # REVIEW: Only EXP_ID (EXP_YEAR?)
+      - type: join
+        source: { section: EXPERIMENT_DOCUMENTS }  # REVIEW: Only EXP_ID (EXP_YEAR?)
         on_key: { source_key: experiment_id, lookup_key: experiment_id }
         select_columns:
           digital_object_id: digital_object_id
-      - type: lookup_and_add
-        lookup_data_source: { section: PLOT_DETAILS }  # REVIEW: EXP_YEAR handling
+      - type: join
+        source: { section: PLOT_DETAILS }  # REVIEW: EXP_YEAR handling
         on_key: { source_key: experiment_id, lookup_key: experiment_id }
         select_columns:
           experiment_year: experiment_year
@@ -648,8 +648,8 @@ rules:
         output_header: temp_hm_plots
         map: *harvest_method_codes
         default_value: *harvest_method_default
-      - type: lookup_and_add
-        lookup_data_source: { section: HARVESTS }
+      - type: join
+        source: { section: HARVESTS }
         on_key: { source_key: experiment_id, lookup_key: experiment_id }
         select_columns:
           temp_hm_harvests: harvest_method_plot
@@ -663,8 +663,8 @@ rules:
         input_map:
           v1: temp_hm_plots
           v2: temp_hm_harvests
-      - type: lookup_and_add
-        lookup_data_source: { section: PERSONS }
+      - type: join
+        source: { section: EXPERIMENT_PERSONS }
         on_key: { source_key: experiment_id, lookup_key: experiment_id }
         select_columns:
           researcher_first_name: researcher_first_name
@@ -1170,8 +1170,8 @@ rules:
     target:
       section: SOIL_GENERAL
     actions:
-      - type: lookup_and_add
-        lookup_data_source: { section: SOIL_META }
+      - type: join
+        source: { section: SOIL_META }
         on_key: { source_key: experiment_id, lookup_key: experiment_id }
         select_columns:
           soil_classification: soil_classification
@@ -1573,7 +1573,7 @@ rules:
         target_section: SOIL_META
         rename_map:
           EXP_ID: experiment_id  #!!
-          PEDON: soil_profile_ID
+          PEDON: soil_profile_id
           SITE: soil_site
           COUNTRY: soil_location_country
           LAT: latitude_soil_profile
@@ -1590,7 +1590,7 @@ rules:
         target_section: SOIL_GENERAL
         rename_map:
           EXP_ID: experiment_id  #!!
-          PEDON: soil_profile_ID
+          PEDON: soil_profile_id
           SALB: soil_albedo
           SLU1: soil_evaporation_limit
           SLDR: drainage_rate_per_day
@@ -1607,7 +1607,7 @@ rules:
         target_section: SOIL_LAYERS
         rename_map:
           EXP_ID: experiment_id  #!!
-          PEDON: soil_profile_ID
+          PEDON: soil_profile_id
           SLB: soil_layer_base_depth
           SLMH: master_horizon
           SLCL: soil_clay_fraction

@@ -103,6 +103,15 @@ wth_model_icasa <- convert_dataset(
   output_path = "./inst/examples/sciwin/ochsenwasen_weather_nasapower_icasa.json"
 )
 
+# --- Combine with field data ---
+wth_icasa <- assemble_dataset(
+  components = list(wth_sensor_icasa, wth_model_icasa),  # replace
+  keep_all = FALSE,
+  action = "merge_properties",
+  join_type = "left",
+  output_path = "./inst/examples/sciwin/ochsenwasen_weather_icasa.json"
+)
+
 
 ###----- Soil profile data - external database --------------------------------------
 ## ----------------------------------------------------------------------------------

@@ -1,32 +1,37 @@
 #' Process a sequence of data transformation actions
 #'
-#' @description
-#' The core mapping engine that executes a sequence of declarative actions defined
-#' in a YAML rule to transform a data frame.
-#' Note: scripts for the actions are stored in mapping_actions.R
+#' Executes a series of actions on a data frame, applying each transformation in order.
+#' Actions are dispatched to their corresponding handler functions based on type.
+#'
+#' @param actions A list of action specifications, each containing at minimum a `type` field
+#'   that determines which transformation to apply
+#' @param input_df A data frame to be transformed
+#' @param dataset A list of data frames representing the complete dataset, used for
+#'   lookup operations in join actions
+#' @param ... Additional arguments passed to individual action handlers
+#'
+#' @return A transformed data frame after all actions have been applied sequentially
 #'
 #' @details
-#' This function iterates through a list of actions and dispatches the appropriate
-#' logic based on `action$type`. Supported actions include:
-#' - **`lookup_and_add`**: Joins data from another table.
-#' - **`map_values`**: Translates values using a key-value map.
-#' - **`rowwise_transform`**: Applies a formula to generate a new column.
-#' - **`aggregate_by_group`**: Aggregates the data frame using group_by/summarise.
-#' - **`concatenate_columns`**: Pastes multiple columns into one.
-#' - **`coalesce_columns`**: Finds the first non-NA value across a set of columns.
-#' - **`rename_column` / `delete_column`**: Explicit. Basic column manipulation.
-#' - **`filter_rows`**: Subsets the data based on column presence.
-#' - **`split_column`**: Split column into multiple columns
-#' - **`add_column`**: (Conditionally) add a single-value attribute (column)
-#' - **`add_column_conditional`**: Add column and conditionally populate with set values
-#' - TODO: ADD MISSING
+#' Actions are applied in the order they appear in the `actions` list. Each action
+#' receives the output of the previous action as its input, creating a transformation
+#' pipeline. If any action returns an empty data frame (0 rows), processing stops
+#' immediately and the empty frame is returned.
 #'
-#' @param actions A list of action definitions from a YAML rule.
-#' @param input_df The initial data frame for the rule.
-#' @param dataset The complete dataset, used for lookups.
-#' @param ... Optional arguments passed down from `convert_dataset`.
+#' **Supported action types include:**
+#' \itemize{
+#'   \item **Data combination**: `join`, `concatenate_columns`, `coalesce_columns`
+#'   \item **Value transformation**: `map_values`, `rowwise_transform`, `apply_function`
+#'   \item **Column operations**: `add_column`, `add_column_conditional`, `rename_column`,
+#'     `delete_column`, `format_column`, `convert_data_type`, `replace_na`
+#'   \item **Row operations**: `filter_rows`, `sort_rows`, `deduplicate`, `summarise`
+#'   \item **String operations**: `extract_string`
+#'   \item **Reshaping**: `pivot_wider`, `pivot_longer`
+#'   \item **Domain-specific**: `define_icasa_management_id`
+#' }
 #'
-#' @return A single data frame representing the result of all applied actions.
+#' Each action type is handled by a corresponding internal function (e.g., `.action_join()`,
+#' `.action_map_values()`). If an unknown action type is encountered, an error is raised.
 #'
 #' @noRd
 #'
@@ -44,8 +49,8 @@ process_actions <- function(actions, input_df, dataset, ...) {
     output_df <- switch(action$type,
            
            # --- Generic actions (from mapping_actions_generic.R) ---
-           "lookup_and_add" = { 
-             .action_lookup_and_add(action, output_df, dataset)
+           "join" = { 
+             .action_join(action, output_df, dataset)
            },
            
            "map_values" = {
@@ -142,21 +147,22 @@ process_actions <- function(actions, input_df, dataset, ...) {
 }
 
 
-#' Resolve an Input Map to a List of Data Vectors
+#' Resolve input columns for mapping/transformation actions
 #'
-#' @description
-#' Resolves a list of column specifications from a YAML rule against a data frame, extracting the corresponding data vectors.
+#' Extracts column vectors from a data frame based on an input map specification.
+#' Used by actions that transform column values (e.g., `map_values`, `apply_function`)
+#' to map column specifications to actual data.
+#'
+#' @param input_map Named list where names identify the role of each input
+#'   (e.g., "source", "x", "y") and values are column specifications
+#' @param df Data frame containing the columns to extract
+#'
+#' @return Named list of column vectors matching the input map structure,
+#'   or `NULL` if any column cannot be resolved (action should be skipped)
 #'
 #' @details
-#' This helper function is used by actions that require multiple inputs. It iterates through the `input_map`, uses
-#' `.resolve_column_name()` to find each column (handling synonyms), and returns a named list of the actual data vectors.
-#' It is designed to fail gracefully by returning `NULL` if any specified column is not found.
-#'
-#' @param input_map A named list from a YAML rule where keys are local names and values are column specifications
-#' (e.g., `{x: colA, y: {header: colB}}`).
-#' @param df The data frame from which to pull the column vectors.
-#'
-#' @return A named list of data vectors (e.g., `list(x=c(1,2), y=c(3,4))`), or `NULL` if any column cannot be resolved.
+#' Uses `.resolve_column_name()` for each column specification. All columns
+#' must resolve successfully for the transformation to proceed.
 #'
 #' @noRd
 #'
@@ -181,16 +187,19 @@ process_actions <- function(actions, input_df, dataset, ...) {
 }
 
 
-#' Find a Column Name Using Synonyms
+#' Resolve a column name specification to an actual column name
 #'
-#' @description
-#' Finds a column in a list of available columns using a flexible specification that can include a primary header and
-#' a list of synonyms.
+#' Matches a column specification against available columns, supporting both
+#' direct string matches and specifications with synonym fallbacks.
 #'
-#' @param name_spec A character string or a list with `$header` and `$synonyms` elements defining the names to search for.
-#' @param available_cols A character vector of column names to search within.
+#' @param name_spec Either a character string or a list with `header` and optional `synonyms`
+#' @param available_cols Character vector of available column names
 #'
-#' @return The character string of the first matching column name, or `NULL` if no match is found.
+#' @return The first matching column name, or `NULL` if no match found
+#'
+#' @details
+#' When `name_spec` is a list, tries `header` first, then each synonym in order.
+#' Returns the first match found.
 #'
 #' @noRd
 #'

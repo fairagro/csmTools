@@ -1,6 +1,6 @@
 *SOIL INORGANIC N BALANCE
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:39
 
 *RUN   1        : No N                      WHAPS048 HWOC2501    1
  MODEL          : WHAPS048 - Wheat
@@ -40,7 +40,7 @@
 
 !===============================================================================
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:40
 
 *RUN   2        : 147 kg[N]/ha - broadcast  WHAPS048 HWOC2501    3
  MODEL          : WHAPS048 - Wheat
@@ -80,7 +80,7 @@
 
 !===============================================================================
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:40
 
 *RUN   3        : 180 kg[N]/ha - broadcast  WHAPS048 HWOC2501    7
  MODEL          : WHAPS048 - Wheat

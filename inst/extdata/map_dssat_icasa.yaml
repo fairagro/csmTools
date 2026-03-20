@@ -623,8 +623,8 @@ rules:
     target:
       section: SOIL_PROFILE
     actions:
-      # - type: lookup_and_add
-      #   lookup_data_source: { section: SOIL_META }
+      # - type: join
+      #   source: { section: SOIL_META }
       #   on_key: { source_key: experiment_id, lookup_key: experiment_id }
       #   select_columns:
       #     soil_classification: soil_classification
@@ -669,7 +669,7 @@ rules:
         target_section: PROFILE_METADATA
         rename_map:
           experiment_id: EXP_ID  #!!
-          soil_profile_ID: PEDON
+          soil_profile_id: PEDON
           soil_site: SITE
           soil_location_country: COUNTRY
           latitude_soil_profile: LAT
@@ -686,7 +686,7 @@ rules:
         target_section: SOIL_PROFILE
         rename_map:
           experiment_id: EXP_ID #!!
-          soil_profile_ID: PEDON
+          soil_profile_id: PEDON
           soil_albedo: SALB
           soil_evaporation_limit: SLU1
           drainage_rate_per_day: SLDR
@@ -703,7 +703,7 @@ rules:
         target_section: SOIL_PROFILE_LAYERS
         rename_map:
           experiment_id: EXP_ID #!!
-          soil_profile_ID: PEDON
+          soil_profile_id: PEDON
           soil_layer_base_depth: SLB
           master_horizon: SLMH
           soil_clay_fraction: SLCL

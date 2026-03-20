@@ -1,16 +1,33 @@
-#' Format a DSSAT dataset list (internal)
+#' Build DSSAT-formatted file structures from standardized dataset components
 #'
-#' Internal orchestrator for formatting a DSSAT dataset. It iterates through the top-level list
-#' (e.g., "MANAGEMENT", "SOIL") and delegates formatting to the appropriate `build_*` helper function.
+#' Converts a standardized dataset into DSSAT-compliant file format structures by routing each
+#' component to an appropriate builder function with corresponding templates and formatting specifications.
 #'
-#' @param dataset A named list of data.frames/lists from a DSSAT file reader or mapper. Names should 
-#'    correspond to the different types of DSSAT input files: 'MANAGEMENT', 'SUMMARY', 'TIME_SERIES',
-#'    'SOIL', and 'WEATHER'
+#' @param dataset Named list of data frames representing DSSAT components:
+#'   \itemize{
+#'     \item **EXPERIMENT**: Experiment metadata, treatments, and crop management regimes
+#'     \item **SUMMARY**: Single-point or summarized measured data (e.g., crop yield)
+#'     \item **TIME_SERIES**: Daily time series measured data (e.g., zadoks stage)
+#'     \item **SOIL**: Soil profile data
+#'     \item **WEATHER**: Weather station data
+#'   }
 #'
-#' @return A named list with all elements formatted.
+#' @return Named list with same structure as input, where each data frame is replaced by its
+#'   DSSAT-formatted equivalent (character vectors or nested lists ready for file writing)
+#'
+#' @details
+#' **Component routing:**
+#' \itemize{
+#'   \item **EXPERIMENT**: Uses `.build_filex()` for FileX experiment format
+#'   \item **SUMMARY/TIME_SERIES**: Uses `.build_dssat_file()` with respective
+#'         templates and formatting functions
+#'   \item **SOIL**: Uses `.build_dssat_file()` with soil-specific template
+#'         and `DSSAT:::sol_v_fmt()` formatter
+#'   \item **WEATHER**: Uses `.build_wth()` for weather file format
+#' }
 #'
 #' @noRd
-#' 
+#'
 
 build_dssat_dataset <-  function(dataset) {
   
@@ -18,7 +35,7 @@ build_dssat_dataset <-  function(dataset) {
     purrr::imap(~{
       switch(
         .y,
-        "MANAGEMENT" = .build_filex(.x),
+        "EXPERIMENT" = .build_filex(.x),
         "SUMMARY"    = .build_dssat_file(.x, SUMMARY_template, v_fmt_filea),
         "TIME_SERIES"= .build_dssat_file(.x, TIME_SERIES_template, v_fmt_filet),
         "SOIL"       = .build_dssat_file(.x, SOIL_template, DSSAT:::sol_v_fmt()),
@@ -26,7 +43,7 @@ build_dssat_dataset <-  function(dataset) {
         
         # Default case if .y matches no other case.
         stop(paste0("Unrecognized DSSAT section name: '", .y, "'. ",
-                    "Expected one of 'MANAGEMENT', 'SUMMARY', 'TIME_SERIES', 'SOIL', or 'WEATHER'."))
+                    "Expected one of 'EXPERIMENT', 'SUMMARY', 'TIME_SERIES', 'SOIL', or 'WEATHER'."))
       )
     })
   
@@ -34,17 +51,27 @@ build_dssat_dataset <-  function(dataset) {
 }
 
 
-#' Format a simple DSSAT file section
+#' Build DSSAT-formatted data frame with print specifications
 #'
-#' The generic function format single data.frame DSSAT sections, as parsed with the DSSAT package
-#' (i.e., SUMMARY, TIME_SERIES, SOIL).
-#' It applies the relevant data template, filter-out invalid attributes and attaches print formats
+#' Prepares a data frame for DSSAT file output by applying template structure, filtering to valid
+#' DSSAT columns, and attaching print format attributes.
 #'
-#' @param data A single data.frame; DSSAT section to format.
-#' @param template The template data.frame for the focal section.
-#' @param v_fmt The 'v_fmt' list (named vector) of print formats for the focal section.
+#' @param data Data frame to format for DSSAT output
+#' @param template Template data frame defining column structure and metadata
+#' @param v_fmt Named list/vector of print format specifications (e.g., `"%6s"`, `"%5.1f"`) for each DSSAT variable
 #'
-#' @return A data.frame; write-ready DSSAT file.
+#' @return Data frame with columns from template, filtered to those present in
+#'   `v_fmt`, with matched format specs attached as `v_fmt` attribute
+#'
+#' @details
+#' **Processing steps:**
+#' \enumerate{
+#'   \item Apply template structure via `format_dssat_table()`
+#'   \item Filter to columns present in `v_fmt`
+#'   \item Attach filtered formats as `v_fmt` attribute
+#' }
+#'
+#' Used by `build_dssat_dataset()` for SUMMARY, TIME_SERIES, and SOIL components.
 #'
 #' @noRd
 #' 
@@ -62,21 +89,36 @@ build_dssat_dataset <-  function(dataset) {
 }
 
 
-#' Format the MANAGEMENT inputs (FileX) for DSSAT models
+#' Build DSSAT FileX experiment file structure
 #'
-#' The function formats the DSSAT FileX, which contains core parameters for DSSAT simulation (i.e., metadata,
-#' resources, management regimes and simulation). It iterates through each subsection (e.g., 'TREATMENTS', 'FIELDS'),
-#' applies the corresponding template from 'FILEX_template', selects valid DSSAT columns, and attaches print formats.
+#' Formats management data into nested list structure for FileX (.X) file
+#' writing, applying templates and print formats to each section.
 #'
-#' NB: preserves custom input attribute usable in downstreams file writing with the DSSAT package
-#' (e.g., file_name, comments)
+#' @param data Nested list of data frames, one per FileX section (e.g.,
+#'   TREATMENTS, CULTIVARS, FIELDS, PLANTING_DETAILS)
 #'
-#' @param data A named list where each element is a data.frame representing a DSSAT FileX subsection.
+#' @return Nested list with same structure, where each data frame is formatted per FILEX_template with
+#'   `v_fmt` attribute attached. Missing required sections are filled with template defaults (warns).
+#'   Custom attributes from input are preserved.
 #'
-#' @return A named-list; write-ready DSSAT FileX.
+#' @details
+#' **Processing steps:**
+#' \enumerate{
+#'   \item Preserve custom attributes from input
+#'   \item Apply `format_dssat_table()` to each section
+#'   \item Filter columns to those in FILEX_template
+#'   \item Attach section-specific print formats via `DSSAT:::filex_v_fmt()`
+#'   \item Reorder sections per template, drop empty non-required sections
+#'   \item Fill missing required sections (TREATMENTS, CULTIVARS, FIELDS,
+#'         PLANTING_DETAILS) with template defaults
+#'   \item Reattach custom attributes
+#' }
+#'
+#' **Required sections:** TREATMENTS, CULTIVARS, FIELDS, PLANTING_DETAILS must be present or will trigger
+#' warnings and use template defaults. GENERAL and SIMULATION_CONTROLS are also handled specially if missing.
 #'
 #' @noRd
-#' 
+#'
 
 .build_filex <- function(data) {
   
@@ -112,7 +154,7 @@ build_dssat_dataset <-  function(dataset) {
   # data <- lapply(data, function(df) df[order(df[[1]]), ])
   
   # Check file X writing requirements
-  # TODO: replace by DQ inputs
+  # TODO: replace by complete minimum requirement controls
   required_sections <- c("TREATMENTS", "CULTIVARS", "FIELDS", "PLANTING_DETAILS")
   
   for (i in names(FILEX_template)) {
@@ -122,7 +164,7 @@ build_dssat_dataset <-  function(dataset) {
         warning(paste0("Required section missing from input data: ", i))
       } else if (i == "GENERAL") {
         data[[i]] <- FILEX_template[[i]]
-        warning("Experiment metadata is missing.")
+        warning("Experiment metadata ('GENERAL') is missing.")
       } else if (i == "SIMULATION_CONTROLS") {
         data[[i]] <- DSSAT::as_DSSAT_tbl(FILEX_template[[i]])
         #warning("SIMULATION_CONTROLS section not provided with input data. Controls set to default values.")
@@ -139,15 +181,21 @@ build_dssat_dataset <-  function(dataset) {
 }
 
 
-#' Format the WEATHER input for DSSAT models
+#' Build DSSAT weather file structures
 #'
-#' Formats the WEATHER section for writing DSSAT files with the DSSAT package.
-#' It applies the core logic whether the input `data` is a single data frame (one year)
-#' or multiple data frames in a list (multiple years) by using `apply_recursive` to call the core formatting logic.
+#' Formats weather data into structures ready for .WTH file writing by applying
+#' templates and print formats to each station-year combination.
 #'
-#' @param data A data.frame or list of data.frames containing DSSAT-formatted weather data
+#' @param data Nested list of weather data frames, typically organized by
+#'   station and year (e.g., `data[[station_code]][[year]]`)
 #'
-#' @return The formatted weather data, preserving the original structure (list or data.frame).
+#' @return Nested list with same structure, where each weather data frame is
+#'   formatted per WTH_template with `v_fmt` attribute attached
+#'
+#' @details
+#' Recursively applies `.build_single_wth()` to each leaf data frame in the nested structure,
+#' preserving the hierarchical organization. Each weather table receives template formatting and
+#' print specifications for DSSAT weather file output.
 #'
 #' @noRd
 #' 
@@ -156,15 +204,33 @@ build_dssat_dataset <-  function(dataset) {
   apply_recursive(data, .build_single_wth)
 }
 
-#' Core logic for formatting DSSAT WEATHER data files
+
+#' Build single DSSAT weather file structure
 #'
-#' Helper; applies DSSAT WTH file templates to both daily weather and station metadata
-#' (stored in the 'GENERAL' attribute as per the DSSAT package standard).
-#' It filters out invalid DSSAT columns and attaches the 'v_fmt' attribute for printing.
+#' Formats one weather station-year dataset for .WTH file writing by applying
+#' templates and print formats to both daily data and station metadata.
 #'
-#' @param wth_data A data frame for a single DSSAT-formatted weather data, with metadata as 'GENERAL' attribute.
+#' @param wth_data Data frame of daily weather observations with station
+#'   metadata stored in `GENERAL` attribute
 #'
-#' @return The write-ready data.frame for the data, with formatted metadata and print formats as attributes
+#' @return Data frame formatted per WEATHER_template with `v_fmt` attribute for
+#'   daily variables. Station metadata reformatted and stored back in `GENERAL`
+#'   attribute with its own `v_fmt`.
+#'
+#' @details
+#' **Processing steps:**
+#' \enumerate{
+#'   \item **Daily data:** Apply WEATHER_template, filter to valid columns in
+#'         `wth_v_fmt("DAILY")`, attach daily print formats
+#'   \item **Station metadata:** Extract from `GENERAL` attribute, apply
+#'         WEATHER_header_template, filter to valid columns in 
+#'         `wth_v_fmt("GENERAL")`, attach metadata print formats
+#'   \item Restore formatted metadata to `GENERAL` attribute
+#' }
+#'
+#' **Structure:** Weather files have dual format requirements—daily observations
+#' as data frame rows, station info as header attributes. Both components get
+#' independent template application and format specs.
 #'
 #' @noRd
 #'

@@ -1,0 +1,373 @@
+*INFO DETAIL FILE
+
+******************************************************************************
+
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 17:32:35
+
+*RUN   1        : No N                               HWOC2501    1
+
+ EXPERIMENT     : HWOC2501 WH
+ DATA PATH      : C:/DSSAT48/Wheat/
+ TREATMENT  1   : No N
+  
+
+ MAKEFW  YEAR DOY =    0   0
+ Y4KDOY - Weather file                                                         
+ Not able to find 7-digits first weather date                                  
+ Set simulation to 5-digits first weather date                                 
+
+ CSM     YEAR DOY = 2024 296
+ RNMODE = B                                                                    
+ PATHEX = C:/DSSAT48/Wheat/                                                    
+ FILEX  = HWOC2501.WHX                                                         
+ FILEB  = DSSBatch.V48                                                         
+ FILEIO = DSSAT48.INP                                                          
+ MODEL  = WHAPS048                                                             
+ TRTNUM =     1                                                                
+
+ SOILDYN  YEAR DOY = 2024 296
+ The soil file has missing or invalid data.                                    
+ Default values have been used for these variables:                            
+   CEC, ADCOEF, SAEA                                                           
+ These defaults may or may not be important to your results.                   
+
+ RETC  YEAR DOY = 2024 296
+ Soil RETC parameters:                                                         
+  LYR DS  SWCN   WCR    Hb Lambd  Alpha     m     n Texture                    
+   1   5-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   2  10-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   3  20-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   4  30-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   5  40-99.00 0.028   1.1 0.329  0.036 0.292 1.413 SandyLoam                  
+   6  50-99.00 0.032   1.1 0.312  0.038 0.280 1.389 SandyLoam                  
+   7  60-99.00 0.032   1.1 0.312  0.038 0.280 1.389 SandyLoam                  
+   8  70-99.00 0.039   1.0 0.277  0.041 0.252 1.338 SandyLoam                  
+   9  90-99.00 0.055   0.9 0.223  0.046 0.209 1.265 SandyLoam                  
+  10 110-99.00 0.060   1.0 0.212  0.045 0.199 1.249 SandyLoam                  
+  11 130-99.00 0.061   1.1 0.211  0.043 0.197 1.246 SandyLoam                  
+  12 150-99.00 0.060   1.1 0.217  0.041 0.201 1.251 SandyLoam                  
+  13 170-99.00 0.060   1.1 0.217  0.042 0.201 1.252 SandyLoam                  
+  14 190-99.00 0.060   1.2 0.218  0.041 0.201 1.252 SandyLoam                  
+  15 210-99.00 0.060   1.2 0.218  0.041 0.201 1.252 SandyLoam                  
+
+ SETPM     YEAR DOY = 2024 296
+ Simulating flat surface with no plastic mulch.                                                                               
+
+ SOILDYN  YEAR DOY = 2024 296
+ Soil ID: DE02114767                                                           
+ DEFAULT - DEEP SANDY LOAM                                                     
+ GENERIC                                                                       
+   SALB SWCON    CN  DMOD  SLPF SMPX                                           
+   0.13  0.50  68.0  1.00  1.00 IB001                                          
+ Soil layer distribution method: 3                                             
+      DS DLAYR    LL   DUL   SAT  Root    BD    OC  CLAY  SILT  SAND           
+ LYR  cm    cm  frac  frac  frac  Grow g/cm3     %     %     %     %    pH     
+   1   5     5 0.052 0.211 0.431 1.000  1.61  0.70  10.0  30.0  60.0   6.5     
+   2  10     5 0.052 0.211 0.431 1.000  1.61  0.70  10.0  30.0  60.0   6.5     
+   3  20    10 0.052 0.211 0.431 0.879  1.61  0.69  10.0  30.0  60.0   6.5     
+   4  30    10 0.052 0.211 0.431 0.638  1.61  0.66  10.0  30.0  60.0   6.5     
+   5  40    10 0.066 0.224 0.432 0.527  1.61  0.61  10.0  30.0  60.0   6.5     
+   6  50    10 0.073 0.230 0.432 0.431  1.61  0.58  10.0  30.0  60.0   6.5     
+   7  60    10 0.073 0.230 0.432 0.350  1.61  0.58  10.0  30.0  60.0   6.5     
+   8  70    10 0.091 0.246 0.432 0.308  1.61  0.53  10.0  30.0  60.0   6.5     
+   9  90    20 0.128 0.278 0.433 0.223  1.61  0.43  10.0  30.0  60.0   6.5     
+  10 110    20 0.138 0.287 0.432 0.156  1.62  0.32  10.0  30.0  60.0   6.5     
+  11 130    20 0.141 0.292 0.431 0.104  1.62  0.21  10.0  30.0  60.0   6.5     
+  12 150    20 0.138 0.292 0.432 0.067  1.62  0.12  10.0  30.0  60.0   6.5     
+  13 170    20 0.138 0.292 0.433 0.047  1.62  0.07  10.0  30.0  60.0   6.5     
+  14 190    20 0.138 0.293 0.433 0.031  1.62  0.03  10.0  30.0  60.0   6.5     
+  15 210    20 0.138 0.293 0.433 0.020  1.62  0.01  10.0  30.0  60.0   6.5     
+
+ SOILDYN  YEAR DOY = 2024 296
+ Additional soil properties                                                    
+                Convert                                                        
+    Cation Adsrp  ppm /  SLCF  TOTN  OrgN                                      
+   L  Exch  Coef  kg/ha     %     % kg/ha                                      
+   1  15.5   0.0   1.24   0.0  0.07   562                                      
+   2  15.5   0.0   1.24   0.0  0.07   562                                      
+   3  15.5   0.0   0.62   0.0  0.07  1124                                      
+   4  15.5   0.0   0.62   0.0  0.07  1124                                      
+   5  15.5   0.0   0.62   0.0  0.06   963                                      
+   6  15.5   0.0   0.62   0.0  0.06   963                                      
+   7  15.5   0.0   0.62   0.0  0.06   963                                      
+   8  15.5   0.0   0.62   0.0  0.05   802                                      
+   9  15.5   0.0   0.31   0.0  0.04  1283                                      
+  10  15.5   0.0   0.31   0.0  0.03   967                                      
+  11  15.5   0.0   0.31   0.0  0.02   643                                      
+  12  15.5   0.0   0.31   0.0  0.01   319                                      
+  13  15.5   0.0   0.31   0.0  0.00   -99                                      
+  14  15.5   0.0   0.31   0.0  0.00   -99                                      
+  15  15.5   0.0   0.31   0.0  0.00   -99                                      
+
+ IPWTH   YEAR DOY = 2024 296
+ C:\DSSAT48\Weather\LL912401.WTH                                               
+ Found daily weather data headers for:                                         
+   SRAD           Col   7 -  11                                                
+   TMAX           Col  13 -  17                                                
+   TMIN           Col  19 -  23                                                
+   RAIN           Col  25 -  29                                                
+   DEWP           Col  31 -  35                                                
+   WIND           Col  37 -  41                                                
+   PAR            Col  43 -  47                                                
+   RHUM           Col  55 -  59                                                
+
+ CO2VAL  YEAR DOY = 2024 296
+  784 CO2 data points read from file.                                          
+ C:\DSSAT48\StandardData\CO2048.WDA                                            
+
+ TILEVENT  YEAR DOY = 2024 296
+              -- Lyr Thick (cm)--  --Blk dens (g/cm3)- ---- SOM-BD --------    
+                DL1    DL2    DL3    BD1    BD2    BD3   BDS1   BDS2   BDS3    
+ Before till  5.000  5.000 10.000  1.610  1.610  1.610  1.610  1.610  1.610    
+ After till   5.278  5.000 10.000  1.525  1.610  1.610                         
+
+ TILEVENT  YEAR DOY = 2024 297
+              -- Lyr Thick (cm)--  --Blk dens (g/cm3)- ---- SOM-BD --------    
+                DL1    DL2    DL3    BD1    BD2    BD3   BDS1   BDS2   BDS3    
+ Before till  5.261  5.000 10.000  1.530  1.610  1.610  1.610  1.610  1.610    
+ After till   5.278  5.000 10.000  1.487  1.610  1.610                         
+
+ ENDRUN  YEAR DOY = 2025 221
+ Normal end of run        1                                                    
+
+******************************************************************************
+
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 17:32:35
+
+*RUN   2        : 147 kg[N]/ha - broadcast  WHAPS048 HWOC2501    3
+ MODEL          : WHAPS048 - Wheat
+ EXPERIMENT     : HWOC2501 WH
+ DATA PATH      : C:/DSSAT48/Wheat/
+ TREATMENT  3   : 147 kg[N]/ha - broadcast  WHAPS048
+  
+
+ CSM     YEAR DOY = 2024 296
+ RNMODE = B                                                                    
+ PATHEX = C:/DSSAT48/Wheat/                                                    
+ FILEX  = HWOC2501.WHX                                                         
+ FILEB  = DSSBatch.V48                                                         
+ FILEIO = DSSAT48.INP                                                          
+ MODEL  = WHAPS048                                                             
+ TRTNUM =     3                                                                
+
+ SOILDYN  YEAR DOY = 2024 296
+ The soil file has missing or invalid data.                                    
+ Default values have been used for these variables:                            
+   CEC, ADCOEF, SAEA                                                           
+ These defaults may or may not be important to your results.                   
+
+ RETC  YEAR DOY = 2024 296
+ Soil RETC parameters:                                                         
+  LYR DS  SWCN   WCR    Hb Lambd  Alpha     m     n Texture                    
+   1   5-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   2  10-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   3  20-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   4  30-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   5  40-99.00 0.028   1.1 0.329  0.036 0.292 1.413 SandyLoam                  
+   6  50-99.00 0.032   1.1 0.312  0.038 0.280 1.389 SandyLoam                  
+   7  60-99.00 0.032   1.1 0.312  0.038 0.280 1.389 SandyLoam                  
+   8  70-99.00 0.039   1.0 0.277  0.041 0.252 1.338 SandyLoam                  
+   9  90-99.00 0.055   0.9 0.223  0.046 0.209 1.265 SandyLoam                  
+  10 110-99.00 0.060   1.0 0.212  0.045 0.199 1.249 SandyLoam                  
+  11 130-99.00 0.061   1.1 0.211  0.043 0.197 1.246 SandyLoam                  
+  12 150-99.00 0.060   1.1 0.217  0.041 0.201 1.251 SandyLoam                  
+  13 170-99.00 0.060   1.1 0.217  0.042 0.201 1.252 SandyLoam                  
+  14 190-99.00 0.060   1.2 0.218  0.041 0.201 1.252 SandyLoam                  
+  15 210-99.00 0.060   1.2 0.218  0.041 0.201 1.252 SandyLoam                  
+
+ SETPM     YEAR DOY = 2024 296
+ Simulating flat surface with no plastic mulch.                                                                               
+
+ SOILDYN  YEAR DOY = 2024 296
+ Soil ID: DE02114767                                                           
+ DEFAULT - DEEP SANDY LOAM                                                     
+ GENERIC                                                                       
+   SALB SWCON    CN  DMOD  SLPF SMPX                                           
+   0.13  0.50  68.0  1.00  1.00 IB001                                          
+ Soil layer distribution method: 3                                             
+      DS DLAYR    LL   DUL   SAT  Root    BD    OC  CLAY  SILT  SAND           
+ LYR  cm    cm  frac  frac  frac  Grow g/cm3     %     %     %     %    pH     
+   1   5     5 0.052 0.211 0.431 1.000  1.61  0.70  10.0  30.0  60.0   6.5     
+   2  10     5 0.052 0.211 0.431 1.000  1.61  0.70  10.0  30.0  60.0   6.5     
+   3  20    10 0.052 0.211 0.431 0.879  1.61  0.69  10.0  30.0  60.0   6.5     
+   4  30    10 0.052 0.211 0.431 0.638  1.61  0.66  10.0  30.0  60.0   6.5     
+   5  40    10 0.066 0.224 0.432 0.527  1.61  0.61  10.0  30.0  60.0   6.5     
+   6  50    10 0.073 0.230 0.432 0.431  1.61  0.58  10.0  30.0  60.0   6.5     
+   7  60    10 0.073 0.230 0.432 0.350  1.61  0.58  10.0  30.0  60.0   6.5     
+   8  70    10 0.091 0.246 0.432 0.308  1.61  0.53  10.0  30.0  60.0   6.5     
+   9  90    20 0.128 0.278 0.433 0.223  1.61  0.43  10.0  30.0  60.0   6.5     
+  10 110    20 0.138 0.287 0.432 0.156  1.62  0.32  10.0  30.0  60.0   6.5     
+  11 130    20 0.141 0.292 0.431 0.104  1.62  0.21  10.0  30.0  60.0   6.5     
+  12 150    20 0.138 0.292 0.432 0.067  1.62  0.12  10.0  30.0  60.0   6.5     
+  13 170    20 0.138 0.292 0.433 0.047  1.62  0.07  10.0  30.0  60.0   6.5     
+  14 190    20 0.138 0.293 0.433 0.031  1.62  0.03  10.0  30.0  60.0   6.5     
+  15 210    20 0.138 0.293 0.433 0.020  1.62  0.01  10.0  30.0  60.0   6.5     
+
+ SOILDYN  YEAR DOY = 2024 296
+ Additional soil properties                                                    
+                Convert                                                        
+    Cation Adsrp  ppm /  SLCF  TOTN  OrgN                                      
+   L  Exch  Coef  kg/ha     %     % kg/ha                                      
+   1  15.5   0.0   1.24   0.0  0.07   562                                      
+   2  15.5   0.0   1.24   0.0  0.07   562                                      
+   3  15.5   0.0   0.62   0.0  0.07  1124                                      
+   4  15.5   0.0   0.62   0.0  0.07  1124                                      
+   5  15.5   0.0   0.62   0.0  0.06   963                                      
+   6  15.5   0.0   0.62   0.0  0.06   963                                      
+   7  15.5   0.0   0.62   0.0  0.06   963                                      
+   8  15.5   0.0   0.62   0.0  0.05   802                                      
+   9  15.5   0.0   0.31   0.0  0.04  1283                                      
+  10  15.5   0.0   0.31   0.0  0.03   967                                      
+  11  15.5   0.0   0.31   0.0  0.02   643                                      
+  12  15.5   0.0   0.31   0.0  0.01   319                                      
+  13  15.5   0.0   0.31   0.0  0.00   -99                                      
+  14  15.5   0.0   0.31   0.0  0.00   -99                                      
+  15  15.5   0.0   0.31   0.0  0.00   -99                                      
+
+ IPWTH   YEAR DOY = 2024 296
+ C:\DSSAT48\Weather\LL912401.WTH                                               
+ Found daily weather data headers for:                                         
+   SRAD           Col   7 -  11                                                
+   TMAX           Col  13 -  17                                                
+   TMIN           Col  19 -  23                                                
+   RAIN           Col  25 -  29                                                
+   DEWP           Col  31 -  35                                                
+   WIND           Col  37 -  41                                                
+   PAR            Col  43 -  47                                                
+   RHUM           Col  55 -  59                                                
+
+ TILEVENT  YEAR DOY = 2024 296
+              -- Lyr Thick (cm)--  --Blk dens (g/cm3)- ---- SOM-BD --------    
+                DL1    DL2    DL3    BD1    BD2    BD3   BDS1   BDS2   BDS3    
+ Before till  5.000  5.000 10.000  1.610  1.610  1.610  1.610  1.610  1.610    
+ After till   5.278  5.000 10.000  1.525  1.610  1.610                         
+
+ TILEVENT  YEAR DOY = 2024 297
+              -- Lyr Thick (cm)--  --Blk dens (g/cm3)- ---- SOM-BD --------    
+                DL1    DL2    DL3    BD1    BD2    BD3   BDS1   BDS2   BDS3    
+ Before till  5.261  5.000 10.000  1.530  1.610  1.610  1.610  1.610  1.610    
+ After till   5.278  5.000 10.000  1.487  1.610  1.610                         
+
+ ENDRUN  YEAR DOY = 2025 221
+ Normal end of run        2                                                    
+
+******************************************************************************
+
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 17:32:35
+
+*RUN   3        : 180 kg[N]/ha - broadcast  WHAPS048 HWOC2501    7
+ MODEL          : WHAPS048 - Wheat
+ EXPERIMENT     : HWOC2501 WH
+ DATA PATH      : C:/DSSAT48/Wheat/
+ TREATMENT  7   : 180 kg[N]/ha - broadcast  WHAPS048
+  
+
+ CSM     YEAR DOY = 2024 296
+ RNMODE = B                                                                    
+ PATHEX = C:/DSSAT48/Wheat/                                                    
+ FILEX  = HWOC2501.WHX                                                         
+ FILEB  = DSSBatch.V48                                                         
+ FILEIO = DSSAT48.INP                                                          
+ MODEL  = WHAPS048                                                             
+ TRTNUM =     7                                                                
+
+ SOILDYN  YEAR DOY = 2024 296
+ The soil file has missing or invalid data.                                    
+ Default values have been used for these variables:                            
+   CEC, ADCOEF, SAEA                                                           
+ These defaults may or may not be important to your results.                   
+
+ RETC  YEAR DOY = 2024 296
+ Soil RETC parameters:                                                         
+  LYR DS  SWCN   WCR    Hb Lambd  Alpha     m     n Texture                    
+   1   5-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   2  10-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   3  20-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   4  30-99.00 0.022   1.2 0.370  0.033 0.321 1.472 SandyLoam                  
+   5  40-99.00 0.028   1.1 0.329  0.036 0.292 1.413 SandyLoam                  
+   6  50-99.00 0.032   1.1 0.312  0.038 0.280 1.389 SandyLoam                  
+   7  60-99.00 0.032   1.1 0.312  0.038 0.280 1.389 SandyLoam                  
+   8  70-99.00 0.039   1.0 0.277  0.041 0.252 1.338 SandyLoam                  
+   9  90-99.00 0.055   0.9 0.223  0.046 0.209 1.265 SandyLoam                  
+  10 110-99.00 0.060   1.0 0.212  0.045 0.199 1.249 SandyLoam                  
+  11 130-99.00 0.061   1.1 0.211  0.043 0.197 1.246 SandyLoam                  
+  12 150-99.00 0.060   1.1 0.217  0.041 0.201 1.251 SandyLoam                  
+  13 170-99.00 0.060   1.1 0.217  0.042 0.201 1.252 SandyLoam                  
+  14 190-99.00 0.060   1.2 0.218  0.041 0.201 1.252 SandyLoam                  
+  15 210-99.00 0.060   1.2 0.218  0.041 0.201 1.252 SandyLoam                  
+
+ SETPM     YEAR DOY = 2024 296
+ Simulating flat surface with no plastic mulch.                                                                               
+
+ SOILDYN  YEAR DOY = 2024 296
+ Soil ID: DE02114767                                                           
+ DEFAULT - DEEP SANDY LOAM                                                     
+ GENERIC                                                                       
+   SALB SWCON    CN  DMOD  SLPF SMPX                                           
+   0.13  0.50  68.0  1.00  1.00 IB001                                          
+ Soil layer distribution method: 3                                             
+      DS DLAYR    LL   DUL   SAT  Root    BD    OC  CLAY  SILT  SAND           
+ LYR  cm    cm  frac  frac  frac  Grow g/cm3     %     %     %     %    pH     
+   1   5     5 0.052 0.211 0.431 1.000  1.61  0.70  10.0  30.0  60.0   6.5     
+   2  10     5 0.052 0.211 0.431 1.000  1.61  0.70  10.0  30.0  60.0   6.5     
+   3  20    10 0.052 0.211 0.431 0.879  1.61  0.69  10.0  30.0  60.0   6.5     
+   4  30    10 0.052 0.211 0.431 0.638  1.61  0.66  10.0  30.0  60.0   6.5     
+   5  40    10 0.066 0.224 0.432 0.527  1.61  0.61  10.0  30.0  60.0   6.5     
+   6  50    10 0.073 0.230 0.432 0.431  1.61  0.58  10.0  30.0  60.0   6.5     
+   7  60    10 0.073 0.230 0.432 0.350  1.61  0.58  10.0  30.0  60.0   6.5     
+   8  70    10 0.091 0.246 0.432 0.308  1.61  0.53  10.0  30.0  60.0   6.5     
+   9  90    20 0.128 0.278 0.433 0.223  1.61  0.43  10.0  30.0  60.0   6.5     
+  10 110    20 0.138 0.287 0.432 0.156  1.62  0.32  10.0  30.0  60.0   6.5     
+  11 130    20 0.141 0.292 0.431 0.104  1.62  0.21  10.0  30.0  60.0   6.5     
+  12 150    20 0.138 0.292 0.432 0.067  1.62  0.12  10.0  30.0  60.0   6.5     
+  13 170    20 0.138 0.292 0.433 0.047  1.62  0.07  10.0  30.0  60.0   6.5     
+  14 190    20 0.138 0.293 0.433 0.031  1.62  0.03  10.0  30.0  60.0   6.5     
+  15 210    20 0.138 0.293 0.433 0.020  1.62  0.01  10.0  30.0  60.0   6.5     
+
+ SOILDYN  YEAR DOY = 2024 296
+ Additional soil properties                                                    
+                Convert                                                        
+    Cation Adsrp  ppm /  SLCF  TOTN  OrgN                                      
+   L  Exch  Coef  kg/ha     %     % kg/ha                                      
+   1  15.5   0.0   1.24   0.0  0.07   562                                      
+   2  15.5   0.0   1.24   0.0  0.07   562                                      
+   3  15.5   0.0   0.62   0.0  0.07  1124                                      
+   4  15.5   0.0   0.62   0.0  0.07  1124                                      
+   5  15.5   0.0   0.62   0.0  0.06   963                                      
+   6  15.5   0.0   0.62   0.0  0.06   963                                      
+   7  15.5   0.0   0.62   0.0  0.06   963                                      
+   8  15.5   0.0   0.62   0.0  0.05   802                                      
+   9  15.5   0.0   0.31   0.0  0.04  1283                                      
+  10  15.5   0.0   0.31   0.0  0.03   967                                      
+  11  15.5   0.0   0.31   0.0  0.02   643                                      
+  12  15.5   0.0   0.31   0.0  0.01   319                                      
+  13  15.5   0.0   0.31   0.0  0.00   -99                                      
+  14  15.5   0.0   0.31   0.0  0.00   -99                                      
+  15  15.5   0.0   0.31   0.0  0.00   -99                                      
+
+ IPWTH   YEAR DOY = 2024 296
+ C:\DSSAT48\Weather\LL912401.WTH                                               
+ Found daily weather data headers for:                                         
+   SRAD           Col   7 -  11                                                
+   TMAX           Col  13 -  17                                                
+   TMIN           Col  19 -  23                                                
+   RAIN           Col  25 -  29                                                
+   DEWP           Col  31 -  35                                                
+   WIND           Col  37 -  41                                                
+   PAR            Col  43 -  47                                                
+   RHUM           Col  55 -  59                                                
+
+ TILEVENT  YEAR DOY = 2024 296
+              -- Lyr Thick (cm)--  --Blk dens (g/cm3)- ---- SOM-BD --------    
+                DL1    DL2    DL3    BD1    BD2    BD3   BDS1   BDS2   BDS3    
+ Before till  5.000  5.000 10.000  1.610  1.610  1.610  1.610  1.610  1.610    
+ After till   5.278  5.000 10.000  1.525  1.610  1.610                         
+
+ TILEVENT  YEAR DOY = 2024 297
+              -- Lyr Thick (cm)--  --Blk dens (g/cm3)- ---- SOM-BD --------    
+                DL1    DL2    DL3    BD1    BD2    BD3   BDS1   BDS2   BDS3    
+ Before till  5.261  5.000 10.000  1.530  1.610  1.610  1.610  1.610  1.610    
+ After till   5.278  5.000 10.000  1.487  1.610  1.610                         
+
+ ENDRUN  YEAR DOY = 2025 221
+ Normal end of run        3                                                    

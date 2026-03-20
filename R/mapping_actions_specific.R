@@ -7,16 +7,33 @@
 #
 # =============================================================================
 
-#' Defines a management regime ID based on a sequence of events.
-#' 
-#' Takes a series of events for different plots, creates a unique "signature"
-#' for each plot's event history, and assigns a unique integer ID to each
-#' unique signature.
-#' 
-#' @param action A list of parameters from the YAML map.
-#' @param df The data frame being processed.
-#' 
-#' @return A modified data frame.
+#' Define crop management regime IDs with treatment-regime mapping
+#'
+#' Creates unique management regime IDs consistant with ICASA format by analyzing
+#' event sequences across plots. Automatically detects whether management regimes
+#' align with experimental treatments and assigns IDs accordingly.
+#'
+#' @param action List containing:
+#'   - `plot_keys`: Column names that uniquely identify plots
+#'   - `regime_scope`: Column names defining the scope for regime comparison
+#'     (e.g., experiment, year)
+#'   - `treatment_key`: Column containing treatment identifiers
+#'   - `event_key`: Column for unique event-plot identifier to remove (optional)
+#'   - `event_cols`: Columns containing event characteristics for signatures
+#'   - `order_by`: Column to order events within each plot
+#'   - `output_id_col`: Name for the output regime ID column
+#' @param df Data frame containing plot-level event data
+#'
+#' @return Data frame with added regime ID column
+#'
+#' @details
+#' Uses a two-pass algorithm: First, creates regime signatures by concatenating
+#' ordered event characteristics within each plot. Second, analyzes the
+#' treatment-regime relationship within each scope. If regimes map 1-to-1 with
+#' treatments (management IS the treatment), uses treatment IDs. Otherwise,
+#' uses global preliminary regime IDs (management is baseline).
+#'
+#' If `event_key` is specified, that column is removed from the result.
 #'
 #' @noRd
 #' 

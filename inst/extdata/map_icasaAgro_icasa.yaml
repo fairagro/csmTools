@@ -771,8 +771,8 @@ rules:
     target:
       section: EXPERIMENTAL_DESIGN
     actions:
-      - type: lookup_and_add
-        lookup_data_source: { section: CROP_SEASON }
+      - type: join
+        source: { section: CROP_SEASON }
         on_key:
           source_key: [experiment_id, crop_season_id] 
           lookup_key: [experiment_id, crop_season_id]
@@ -796,8 +796,8 @@ rules:
     target:
       section: GENERAL
     actions:
-      - type: lookup_and_add
-        lookup_data_source: { section: PLOT_LAYOUT }
+      - type: join
+        source: { section: PLOT_LAYOUT }
         on_key:
           source_key: [experiment_id]
           lookup_key: [experiment_id]
@@ -1113,24 +1113,24 @@ rules:
       section: FIELDS
     actions:
       # Join model run identifiers (year + crop)
-      - type: lookup_and_add
-        lookup_data_source: { section: EXPERIMENTAL_DESIGN }
+      - type: join
+        source: { section: EXPERIMENTAL_DESIGN }
         on_key:
           source_key: [field_level]
           lookup_key: [field_level]
         select_columns:
           experiment_id: experiment_id
       # Look up and add soil identifier from the SOILS table.
-      - type: lookup_and_add
-        lookup_data_source: { section: SOILS }
+      - type: join
+        source: { section: SOILS }
         on_key:
           source_key: [field_level]
           lookup_key: [field_level]
         select_columns:
           soil_profile_id: soil_profile_id
-      # Look up and add weather identifier from the WEATHER_DATA table.
-      - type: lookup_and_add
-        lookup_data_source: { section: WEATHER_DATA }
+      # Look up and add weather identifier from the WEATHER table.
+      - type: join
+        source: { section: WEATHER }
         on_key:
           source_key: [field_level]
           lookup_key: [field_level]
@@ -1161,22 +1161,22 @@ rules:
 ## --- SECTION: GENOTYPES ---
 
   - mapping_uid: '21'
-    order: 1
+    order: 2
     notes: "Creates GENOTYPES table from contact information in the GENOTYPES and CROP_SEASON template section."
     source:
       section: GENOTYPES
     target:
       section: GENOTYPES
     actions:
-      - type: lookup_and_add
-        lookup_data_source: { section: PLANTINGS }
+      - type: join
+        source: { section: PLANTINGS }
         on_key:
           source_key: [genotype_level]
           lookup_key: [genotype_level]
         select_columns:
           experiment_id: experiment_id
-      - type: lookup_and_add
-        lookup_data_source: { section: CROP_SEASON }
+      - type: join
+        source: { section: CROP_SEASON }
         on_key:
           source_key: [experiment_id, crop_id] 
           lookup_key: [experiment_id, crop_id]
@@ -1202,8 +1202,8 @@ rules:
       section: TILLAGE
     actions:
       # Join management events
-      - type: lookup_and_add
-        lookup_data_source: { section: TILLAGE_EVENTS }
+      - type: join
+        source: { section: TILLAGE_EVENTS }
         on_key:
           source_key: [experiment_id, tillage_level]
           lookup_key: [experiment_id, tillage_level]
@@ -1260,8 +1260,8 @@ rules:
       section: ORGANIC_MATERIALS
     actions:
       # Join management events
-      - type: lookup_and_add
-        lookup_data_source: { section: ORGANIC_MATERIAL_APPLICS }
+      - type: join
+        source: { section: ORGANIC_MATERIAL_APPLICS }
         on_key:
           source_key: [experiment_id, org_materials_applic_lev]
           lookup_key: [experiment_id, org_materials_applic_lev]
@@ -1309,8 +1309,8 @@ rules:
       section: FERTILIZERS
     actions:
       # Join management events
-      - type: lookup_and_add
-        lookup_data_source: { section: FERTILIZER_APPLICS }
+      - type: join
+        source: { section: FERTILIZER_APPLICS }
         on_key:
           source_key: [experiment_id, fertilizer_level]
           lookup_key: [experiment_id, fertilizer_level]
@@ -1377,8 +1377,8 @@ rules:
       section: IRRIGATIONS
     actions:
       # Join management events
-      - type: lookup_and_add
-        lookup_data_source: { section: IRRIGATION_APPLICATIONS }
+      - type: join
+        source: { section: IRRIGATION_APPLICATIONS }
         on_key:
           source_key: [experiment_id, irrigation_level]  #!!
           lookup_key: [experiment_id, irrigation_level]
@@ -1414,11 +1414,11 @@ rules:
     source:
       section: CHEMICALS
     target:
-      section: CHEMICAL_APPLICS
+      section: CHEMICALS
     actions:
       # Join management events
-      - type: lookup_and_add
-        lookup_data_source: { section: CHEMICAL_APPLICS }
+      - type: join
+        source: { section: CHEMICAL_APPLICS }
         on_key:
           source_key: [experiment_id, chemical_applic_level]
           lookup_key: [experiment_id, chemical_applic_level]
@@ -1482,11 +1482,11 @@ rules:
     source:
       section: HARVESTS
     target:
-      section: HARVEST_EVENTS
+      section: HARVESTS
     actions:
       # Join management events
-      - type: lookup_and_add
-        lookup_data_source: { section: HARVEST_EVENTS }
+      - type: join
+        source: { section: HARVEST_EVENTS }
         on_key:
           source_key: [experiment_id, harvest_operations_level]
           lookup_key: [experiment_id, harvest_operations_level]
@@ -1533,7 +1533,33 @@ rules:
 
 ## --- SECTION: ENVIRONMENTAL MODIFICATIONS ---
 
-##!! rule 30 to make
+  - mapping_uid: '30'
+    notes: "Creates ENVIRON_MODIFICATIONS table from data in the ENVIRON_MODIFICATIONS and ENVIRON_MODIF_LEVELS template sections."
+    source:
+      section: ENVIRON_MODIFICATIONS
+    target:
+      section: ENVIRON_MODIFICATIONS
+    actions:
+      - type: join
+        source: { section: ENVIRON_MODIF_LEVELS }
+        on_key:
+          source_key: [experiment_id, environmental_modif_lev]
+          lookup_key: [experiment_id, environmental_modif_lev]
+        select_columns:
+          environ_modificat_date: environ_modificat_date
+          environ_parameter: environ_parameter
+          modif_code: modif_code
+          environ_parameter_value: environ_parameter_value
+      - type: map_values
+        input_map: { x: environ_parameter }
+        output_header: environ_parameter
+        map: *environ_mod_param_map
+      - type: pivot_wider
+        input_map:
+          names_from: environ_parameter
+          values_from:
+            - modif_code
+            - environ_parameter_value
 
 
 #### ------ MANAGEMENT MATRIX ------------------------------------
@@ -1546,8 +1572,8 @@ rules:
     target:
       section: PLOT_SETUP
     actions:
-      - type: lookup_and_add
-        lookup_data_source: { section: PLOTS }
+      - type: join
+        source: { section: PLOTS }
         on_key:
           source_key: [experiment_id, field_level, plot_layout_id, plot_id] 
           lookup_key: [experiment_id, field_level, plot_layout_id, plot_id]
@@ -1569,8 +1595,8 @@ rules:
     target:
       section: TREATMENTS
     actions:
-      - type: lookup_and_add
-        lookup_data_source: { section: CROP_SEASON }
+      - type: join
+        source: { section: CROP_SEASON }
         on_key:
           source_key: [experiment_id, crop_season_id] 
           lookup_key: [experiment_id, crop_season_id]
@@ -1581,8 +1607,8 @@ rules:
         input_map: { x: crop_id }
         output_header: crop_id
         map: *crop_name_map
-      - type: lookup_and_add
-        lookup_data_source: { section: PLOT_SETUP }
+      - type: join
+        source: { section: PLOT_SETUP }
         on_key:
           source_key: [experiment_id, field_level, crop_season_id, treatment_number]
           lookup_key: [experiment_id, field_level, crop_season_id, treatment_number]
@@ -1595,28 +1621,98 @@ rules:
           plot_geocoord_x: plot_geocoord_x
           plot_geocoord_y: plot_geocoord_y
           plot_geocoord_system: plot_geocoord_system
-      - type: lookup_and_add
-        lookup_data_source: { section: TREATMENTS }
+      - type: join
+        source: { section: TREATMENTS }
         on_key:
           source_key: [experiment_id, treatment_number]
           lookup_key: [experiment_id, treatment_number]
         select_columns:
           treatment_name: treatment_name
           treatment_comments: treatment_comments
-      - type: lookup_and_add
-        lookup_data_source: { section: PLANTINGS }
+      - type: join
+        source: { section: PLANTINGS }
         on_key:
           source_key: [experiment_id, planting_level]
           lookup_key: [experiment_id, planting_level]
         select_columns:
           genotype_level: genotype_level
-      - type: lookup_and_add
-        lookup_data_source: { section: SOIL_ANALYSES }
+      - type: join
+        source: { section: SOIL_ANALYSES }
         on_key:
           source_key: [experiment_id]
           lookup_key: [experiment_id]
         select_columns:
           soil_analysis_level: soil_analysis_level
+      # Replace NA levels with 0s
+      - type: add_column
+        output_header: zero_helper
+        value: 0
+      - type: coalesce_columns
+        output_header: genotype_level
+        input_map:
+          x: genotype_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: field_level
+        input_map:
+          x: field_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: initial_conditions_level
+        input_map:
+          x: initial_conditions_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: soil_analysis_level
+        input_map:
+          x: soil_analysis_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: planting_level
+        input_map:
+          x: planting_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: irrigation_level
+        input_map:
+          x: irrigation_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: fertilizer_level
+        input_map:
+          x: fertilizer_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: org_materials_applic_lev
+        input_map:
+          x: org_materials_applic_lev
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: mulch_level
+        input_map:
+          x: mulch_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: chemical_applic_level
+        input_map:
+          x: chemical_applic_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: tillage_level
+        input_map:
+          x: tillage_level
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: environmental_modif_lev
+        input_map:
+          x: environmental_modif_lev
+          y: zero_helper
+      - type: coalesce_columns
+        output_header: harvest_operations_level
+        input_map:
+          x: harvest_operations_level
+          y: zero_helper
+
 
 
 #### ------ SOIL DATA SECTIONS ------------------------------------
@@ -1639,27 +1735,29 @@ rules:
 ## --- SECTION: PROFILE_METADATA ---
 
   - mapping_uid: '34'
+    order: 1
     notes: "Creates PROFILE_METADATA table from contact information in the SOILS template sections."
     source:
       section: SOILS
     target:
       section: PROFILE_METADATA
     actions:
-      - type: lookup_and_add
-        lookup_data_source: { section: EXPERIMENTAL_DESIGN }
+      - type: join
+        source: { section: EXPERIMENTAL_DESIGN }
         on_key:
-          source_key: [experiment_id, field_level]
-          lookup_key: [experiment_id, field_level]
+          source_key: [field_level]
+          lookup_key: [field_level]
         select_columns:
+          experiment_id: experiment_id
           crop_season_id: crop_season_id
           experiment_year: experiment_year
           crop_id: crop_id
-      - type: lookup_and_add
-        lookup_data_source: { section: SOIL_DATA }
+      - type: join
+        source: { section: SOIL_DATA }
         on_key:
           source_key: [experiment_id, crop_season_id]
           lookup_key: [experiment_id, crop_season_id]
-        filter_lookup:
+        filter_rows:
           column: obs_unit_type
           equals: "Field"
         select_columns:
@@ -1680,9 +1778,8 @@ rules:
     target:
       section: SOIL_DATA_INTERMEDIATE
     actions:
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_PHYSICAL }
+      - type: join
+        source: { section: SOIL_LYR_PHYSICAL }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1698,9 +1795,8 @@ rules:
           soil_bulk_density_moist: soil_bulk_density_moist
           soil_adsorption_coef: soil_adsorption_coef
           CaCO3_content: CaCO3_content
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_CHEMICAL }
+      - type: join
+        source: { section: SOIL_LYR_CHEMICAL }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1709,9 +1805,8 @@ rules:
           soil_pH_in_water: soil_pH_in_water
           electric_conductivity: electric_conductivity
           soil_analys_meth_pH_buff: soil_analys_meth_pH_buff
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_ORGMATTER }
+      - type: join
+        source: { section: SOIL_LYR_ORGMATTER }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1762,9 +1857,8 @@ rules:
           P_stress_photo: P_stress_photo
           reserves_factor_photosyn: reserves_factor_photosyn
           soil_organic_carbon: soil_organic_carbon
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_CARBON }
+      - type: join
+        source: { section: SOIL_LYR_CARBON }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1787,9 +1881,8 @@ rules:
           litter_C_soil_by_layer: litter_C_soil_by_layer
           litter_C_metabol_by_lyr: litter_C_metabol_by_lyr
           litter_C_struct__by_lyr: litter_C_struct__by_lyr
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_NPK }
+      - type: join
+        source: { section: SOIL_LYR_NPK }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1829,9 +1922,8 @@ rules:
           inorganic_N_by_layer: inorganic_N_by_layer
           soil_anal_meth_P_extract: soil_anal_meth_P_extract
           soil_anal_meth_exch_K: soil_anal_meth_exch_K
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_NUTRIENTS }
+      - type: join
+        source: { section: SOIL_LYR_NUTRIENTS }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1850,9 +1942,8 @@ rules:
           soil_sodium_conc: soil_sodium_conc
           soil_sulfur_conc: soil_sulfur_conc
           soil_base_saturation: soil_base_saturation
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_NITROGEN }
+      - type: join
+        source: { section: SOIL_LYR_NITROGEN }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1879,9 +1970,8 @@ rules:
           residue_N_remaining: residue_N_remaining
           NH3_volatilization_rate: NH3_volatilization_rate
           nitrificat_rate_oxid_lyr: nitrificat_rate_oxid_lyr
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_PHOSPHORUS }
+      - type: join
+        source: { section: SOIL_LYR_PHOSPHORUS }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1898,9 +1988,8 @@ rules:
           org_P_active_soil_total: org_P_active_soil_total
           total_soil_P: total_soil_P
           soil_P_at_maturity: soil_P_at_maturity
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_WATER }
+      - type: join
+        source: { section: SOIL_LYR_WATER }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1922,9 +2011,8 @@ rules:
           layer_drainage_rate_per_day: layer_drainage_rate_per_day
           van_genuch_alpha: van_genuch_alpha
           van_genuch_n: van_genuch_n
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_ROOTS }
+      - type: join
+        source: { section: SOIL_LYR_ROOTS }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
@@ -1936,15 +2024,14 @@ rules:
           plant_root_uptake_factor: plant_root_uptake_factor
           specific_root_length_lyr: specific_root_length_lyr
           root_length_dens_proj: root_length_dens_proj
-      - type: lookup_and_add
-        join_type: full
-        lookup_data_source: { section: SOIL_LYR_TEMPERATURE }
+      - type: join
+        source: { section: SOIL_LYR_TEMPERATURE }
         on_key:
           source_key: [soil_data_id_long]
           lookup_key: [soil_data_id_long]
         select_columns:
           soil_temperature_by_lyr: soil_temperature_by_lyr
-      # Resolve treatment number  
+      # Resolve observation unit 
       - type: add_column_conditional
         output_header: plot_id
         conditions:
@@ -1957,20 +2044,38 @@ rules:
           - on_column: obs_unit_type
             if_equals: 'Treatment'
             then_value: obs_unit_id
-      ## Lookup plot-treatment links for plot-level observation
-      - type: lookup_and_add
-        lookup_data_source: { section: PLOT_SETUP }
+      - type: add_column_conditional
+        output_header: temp_field_local
+        conditions:
+          - on_column: obs_unit_type
+            if_equals: 'Field'
+            then_value: obs_unit_id
+      # Resolve treatment number for plot-level observations
+      - type: join
+        source: { section: PLOT_SETUP }
         on_key:
-          source_key: [experiment_id, plot_id]
-          lookup_key: [experiment_id, plot_id]
+          source_key: [experiment_id, crop_season_id, plot_id]
+          lookup_key: [experiment_id, crop_season_id, plot_id]
         select_columns:
           temp_treatment_lookup: treatment_number
-      ## Merge the two columns into one final 'treatment_number'
       - type: coalesce_columns
         output_header: treatment_number
         input_map:
           source_1: temp_treatment_local
           source_2: temp_treatment_lookup
+      # Resolve field code for treatment-level observations
+      - type: join
+        source: { section: MANAGEMENTS }
+        on_key:
+          source_key: [experiment_id, crop_season_id, treatment_number]
+          lookup_key: [experiment_id, crop_season_id, treatment_number]
+        select_columns:
+          temp_field_lookup: field_level
+      - type: coalesce_columns
+        output_header: field_level
+        input_map:
+          source_1: temp_field_local
+          source_2: temp_field_lookup
 
 ## --- SECTION: INITIAL_CONDITIONS ---
 
@@ -1983,8 +2088,8 @@ rules:
       section: INITIAL_CONDITIONS
     actions:
       # Join model run identifiers (year + crop)
-      - type: lookup_and_add
-        lookup_data_source: { section: EXPERIMENTAL_DESIGN }
+      - type: join
+        source: { section: EXPERIMENTAL_DESIGN }
         on_key:
           source_key: [experiment_id, initial_conditions_level]
           lookup_key: [experiment_id, initial_conditions_level]
@@ -1993,54 +2098,67 @@ rules:
           experiment_year: experiment_year
           crop_id: crop_id
           treatment_number: treatment_number
-      - type: lookup_and_add
-        lookup_data_source: { section: SOIL_DATA_INTERMEDIATE }
+      - type: join
+        source: { section: SOIL_DATA_INTERMEDIATE }
         on_key:
           source_key: [experiment_id, crop_season_id, treatment_number]
           lookup_key: [experiment_id, crop_season_id, treatment_number]
-        filter_lookup:
+        filter_rows:
           column: soil_data_type
           equals: "Initial conditions"
         select_columns:
           me_soil_layer_top_depth: me_soil_layer_top_depth
           me_soil_layer_bot_depth: me_soil_layer_bot_depth
           soil_stable_C: soil_stable_C
-          initial_Ntot_layer: initial_Ntot_layer
-          initial_NH4_concen_layer: initial_NH4_concen_layer
-          initial_NH4_mass_layer: initial_NH4_mass_layer
-          initial_NO3_concen_layer: initial_NO3_concen_layer
-          initial_NO3_mass_layer: initial_NO3_mass_layer
-          initial_soil_temperature: soil_temperature_by_lyr
-          initial_watr_conc_by_lyr: initial_watr_conc_by_lyr
-          soil_layer_comment: soil_layer_comment
-          initial_profile_wtr_cont: initial_profile_wtr_cont
-          initial_profile_wtr_cont_%: initial_profile_wtr_cont_%
-          initial_water_tabl_depth: initial_water_tabl_depth
-          initial_prof_inorg_N: initial_prof_inorg_N
-          initial_prof_NH4: initial_prof_NH4
-          initial_prof_NO3: initial_prof_NO3
+          # initial_Ntot_layer: initial_Ntot_layer
+          NH4_soil_by_layer: NH4_soil_by_layer
+          # initial_NH4_mass_layer: initial_NH4_mass_layer
+          NO3_soil_by_layer: NO3_soil_by_layer
+          # initial_NO3_mass_layer: initial_NO3_mass_layer
+          soil_temperature_by_lyr: soil_temperature_by_lyr
+          soil_water_by_layer: soil_water_by_layer
+          # initial_profile_wtr_cont: initial_profile_wtr_cont
+          soil_water_profile: soil_water_profile
+          water_table_depth_daily: water_table_depth_daily
+          NO3_NH4_Nsoil_total: NO3_NH4_Nsoil_total
+          NH4_Nsoil_total: NH4_Nsoil_total
+          NO3_Nsoil_total: NO3_Nsoil_total
+          # soil_layer_comment: soil_layer_comment
 
 ## --- SECTION: SOIL_PROFILE ---
 
+  # - mapping_uid: '37'
+  #   order: 1
+  #   notes: "Creates SOIL_PROFILE table from contact information in the SOILS and ### template sections."
+  #   source:
+  #     section: SOIL_DATA_INTERMEDIATE
+  #   target:
+  #     section: SOIL_PROFILE
+
   - mapping_uid: '37'
-    order: 2
+    order: 1
     notes: "Creates SOIL_PROFILE table from contact information in the SOILS and ### template sections."
     source:
       section: SOILS
     target:
       section: SOIL_PROFILE
     actions:
-      # Join soil analyses methods
-      - type: lookup_and_add
-        lookup_data_source: { section: SOIL_DATA_INTERMEDIATE }
+      # Join model run identifiers (year + crop)
+      - type: join
+        source: { section: EXPERIMENTAL_DESIGN }
         on_key:
-          source_key: [soil_profile_id, field_level] 
-          lookup_key: [soil_profile_id, field_level]
-        filter_lookup:
-          column: soil_data_type
-          equals: "Site characterization"
+          source_key: [field_level]
+          lookup_key: [field_level]
         select_columns:
-          soil_profile_id: soil_profile_id
+          experiment_id: experiment_id
+          crop_season_id: crop_season_id
+      - type: join
+        source: { section: SOIL_DATA_INTERMEDIATE }
+        on_key:
+          source_key: [experiment_id, crop_season_id, field_level]
+          lookup_key: [experiment_id, crop_season_id, field_level]
+        select_columns:
+          soil_data_type: soil_data_type
           soil_analys_meth_pH_buff: soil_analys_meth_pH_buff
           soil_anal_meth_P_extract: soil_anal_meth_P_extract
           soil_anal_meth_exch_K: soil_anal_meth_exch_K
@@ -2104,6 +2222,11 @@ rules:
           soil_water_uptake_factor: soil_water_uptake_factor
           plant_root_uptake_factor: plant_root_uptake_factor
           soil_layer_comment: soil_layer_comment
+      - type: filter_rows
+        on_column_values:
+          - column: { header: soil_data_type }
+            values: 
+              - "Site characterization"       
       - type: map_values
         input_map: { x: soil_drainage_class }
         output_header: soil_drainage_class
@@ -2139,8 +2262,8 @@ rules:
       section: SOIL_TIME_SERIES
     actions:
       # Join model run identifiers (year + crop)
-      - type: lookup_and_add
-        lookup_data_source: { section: EXPERIMENTAL_DESIGN }
+      - type: join
+        source: { section: EXPERIMENTAL_DESIGN }
         on_key:
           source_key: [experiment_id, crop_season_id, treatment_number]
           lookup_key: [experiment_id, crop_season_id, treatment_number]
@@ -2251,7 +2374,7 @@ rules:
       section: WEATHER_GENER_PARMS
 
 
-#### ------ PLANT DATA SECTIONS ------------------------------------
+#### ------ PLANT/ENVIRONMENT DATA SECTIONS ------------------------------------
 
   - mapping_uid: '44'
     order: 1
@@ -2261,18 +2384,24 @@ rules:
     target:
       section: SUMMARY
     actions:
+      - type: join
+        source: { section: ENV_DATA }
+        on_key:
+          source_key: [experiment_id, data_id_long, crop_season_id, obs_unit_type, obs_unit_id, date_of_measurement, sample_number, data_type]
+          lookup_key: [experiment_id, data_id_long, crop_season_id, obs_unit_type, obs_unit_id, date_of_measurement, sample_number, data_type]
+        join_type: "full"
       - type: filter_rows
         on_column_values:
-          - column: { header: plant_data_type }
+          - column: { header: data_type }
             values: 
               - "In-season single-point measurement"
               - "End-of-season measurement"
               - "Derived metric"
-      - type: lookup_and_add
-        lookup_data_source: { section: PLANT_SM_GROWTH }
+      - type: join
+        source: { section: PLANT_SM_GROWTH }
         on_key:
-          source_key: [plant_data_id_long]
-          lookup_key: [plant_data_id_long]
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
         select_columns:
           plant_density_harvest: plant_density_harvest
           tops_dry_weight_maturity: tops_dry_weight_maturity
@@ -2357,12 +2486,11 @@ rules:
           harvest_yld_stdev: harvest_yld_stdev
           harv_yield_harv_f_wt: harv_yield_harv_f_wt
           harv_yield_harv_f_wt_sd: harv_yield_harv_f_wt_sd
-          # observation_note: observation_note
-      - type: lookup_and_add
-        lookup_data_source: { section: PLANT_SM_DEV }
+      - type: join
+        source: { section: PLANT_SM_DEV }
         on_key:
-          source_key: [plant_data_id_long]
-          lookup_key: [plant_data_id_long]
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
         select_columns:
           anthesis_date: anthesis_date
           anthesis_day_of_year: anthesis_day_of_year
@@ -2417,12 +2545,11 @@ rules:
           zadoks_39_growth_stage: zadoks_39_growth_stage
           first_square_date: first_square_date
           growing_season_duration: growing_season_duration
-          # observation_note: observation_note
-      - type: lookup_and_add
-        lookup_data_source: { section: PLANT_SM_NUTRIENTS }
+      - type: join
+        source: { section: PLANT_SM_NUTRIENTS }
         on_key:
-          source_key: [plant_data_id_long]
-          lookup_key: [plant_data_id_long]
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
         select_columns:
           planting_material_dry_wt: planting_material_dry_wt
           tillage_operations_no: tillage_operations_no
@@ -2450,7 +2577,26 @@ rules:
           shoots_P_at_maturity: shoots_P_at_maturity
           tuber_P_at_harvest: tuber_P_at_harvest
           N_fixed_during_season: N_fixed_during_season
-          # observation_note: observation_note
+      - type: join
+        source: { section: ENV_SM_WATER_DYNAMICS }
+        on_key:
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
+        select_columns:
+          rainfall_in_season: rainfall_in_season
+          rainfall_plant_harvest: rainfall_plant_harvest
+          evapotrans_cumul_matur: evapotrans_cumul_matur
+          evapotrans_cumul_pl_harv: evapotrans_cumul_pl_harv
+          transpirat_cumul_matur: transpirat_cumul_matur
+          transpirat_cumul_pl_harv: transpirat_cumul_pl_harv
+          transpiration_cumulative: transpiration_cumulative
+          soil_evap_cumul_matur: soil_evap_cumul_matur
+          soil_evap_cumul_pl_matur: soil_evap_cumul_pl_matur
+          potential_evapotrans_avg: potential_evapotrans_avg
+          runoff_season: runoff_season
+          drainage_over_season: drainage_over_season
+          tile_drain_over_season: tile_drain_over_season
+          initial_profile_wtr_cont_sim: initial_profile_wtr_cont_sim
       # Resolve treatment number  
       - type: add_column_conditional
         output_header: plot_id
@@ -2465,8 +2611,8 @@ rules:
             if_equals: 'Treatment'
             then_value: obs_unit_id
       ## Lookup plot-treatment links for plot-level observation
-      - type: lookup_and_add
-        lookup_data_source: { section: PLOT_SETUP }
+      - type: join
+        source: { section: PLOT_SETUP }
         on_key:
           source_key: [experiment_id, plot_id]
           lookup_key: [experiment_id, plot_id]
@@ -2479,8 +2625,8 @@ rules:
           source_1: temp_treatment_local
           source_2: temp_treatment_lookup
       # Break down crop_season_id
-      - type: lookup_and_add
-        lookup_data_source: { section: EXPERIMENTAL_DESIGN }
+      - type: join
+        source: { section: EXPERIMENTAL_DESIGN }
         on_key:
           source_key: [experiment_id, crop_season_id, treatment_number]
           lookup_key: [experiment_id, crop_season_id, treatment_number]
@@ -2496,16 +2642,22 @@ rules:
     target:
       section: TIME_SERIES
     actions:
+      - type: join
+        source: { section: ENV_DATA }
+        on_key:
+          source_key: [experiment_id, data_id_long, crop_season_id, obs_unit_type, obs_unit_id, date_of_measurement, sample_number, data_type]
+          lookup_key: [experiment_id, data_id_long, crop_season_id, obs_unit_type, obs_unit_id, date_of_measurement, sample_number, data_type]
+        join_type: "full"
       - type: filter_rows
         on_column_values:
-          - column: { header: plant_data_type, synonyms: [type, measurement_type] }
+          - column: { header: data_type, synonyms: [type, measurement_type] }
             values: 
               - "In-season monitoring"
-      - type: lookup_and_add
-        lookup_data_source: { section: PLANT_TS_GROWTH_DEV }
+      - type: join
+        source: { section: PLANT_TS_GROWTH_DEV }
         on_key:
-          source_key: [plant_data_id_long]
-          lookup_key: [plant_data_id_long]
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
         select_columns:
           tops_C: tops_C
           tops_dry_weight: tops_dry_weight
@@ -2649,12 +2801,11 @@ rules:
           root_cost_glu_eqiv: root_cost_glu_eqiv
           pod_cost_glu_eqiv: pod_cost_glu_eqiv
           seed_cost_glu_eqiv: seed_cost_glu_eqiv
-          obs_time_series_comment: obs_time_series_comment
-      - type: lookup_and_add
-        lookup_data_source: { section: PLANT_TS_NUTRIENTS }
+      - type: join
+        source: { section: PLANT_TS_NUTRIENTS }
         on_key:
-          source_key: [plant_data_id_long]
-          lookup_key: [plant_data_id_long]
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
         select_columns:
           chaff_N_concentration: chaff_N_concentration
           tops_N_concentration: tops_N_concentration
@@ -2740,12 +2891,11 @@ rules:
           tops_Zn: tops_Zn
           grain_K: grain_K
           grain_S: grain_S
-          obs_time_series_comment: obs_time_series_comment
-      - type: lookup_and_add
-        lookup_data_source: { section: PLANT_TS_PESTS_DISEASES }
+      - type: join
+        source: { section: PLANT_TS_PESTS_DISEASES }
         on_key:
-          source_key: [plant_data_id_long]
-          lookup_key: [plant_data_id_long]
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
         select_columns:
           plant_pop_reduct_cum: plant_pop_reduct_cum
           incr_disease_lf_ar_pcent: incr_disease_lf_ar_pcent
@@ -2780,7 +2930,79 @@ rules:
           shell_number_consumed: shell_number_consumed
           lodging_percent: lodging_percent
           plant_population: plant_population
-          obs_time_series_comment: obs_time_series_comment
+      - type: join
+        source: { section: ENV_TS_WATER_DYNAMICS }
+        on_key:
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
+        select_columns:
+          bulk_dens_puddl_surf_lyr: bulk_dens_puddl_surf_lyr
+          infiltration_rate: infiltration_rate
+          floodwtr_runoff_ovr_bund: floodwtr_runoff_ovr_bund
+          floodwater_depth: floodwater_depth
+          floodwater_temper_index: floodwater_temper_index
+          floodwater_pH_max_day: floodwater_pH_max_day
+          floodwater_light_index: floodwater_light_index
+          floodwater_photosyn_ind: floodwater_photosyn_ind
+          floodwater_N_index: floodwater_N_index
+          floodwater_denitrif_rate: floodwater_denitrif_rate
+          floodwater_Ammoniacal_N: floodwater_Ammoniacal_N
+          floodwtr_ammonium_N_conc: floodwtr_ammonium_N_conc
+          floodwtr_aqu_NH3_N_conc: floodwtr_aqu_NH3_N_conc
+          floodwtr_nitrate_N_conc: floodwtr_nitrate_N_conc
+          floodwater_Urea_N: floodwater_Urea_N
+          urea_N_hydrol_rt_flood: urea_N_hydrol_rt_flood
+          water_table_depth_daily: water_table_depth_daily
+          drainage_cumulative: drainage_cumulative
+          drainage_daily: drainage_daily
+          tile_drainage_cumulative: tile_drainage_cumulative
+          tile_drainage_daily: tile_drainage_daily
+          floodwater_evap_cumul: floodwater_evap_cumul
+          soil_evap_cumulative: soil_evap_cumulative
+          evapotransp_cumulative: evapotransp_cumulative
+          water_avail_root_zone: water_avail_root_zone
+          runoff_cumulative: runoff_cumulative
+          floodwater_evap_rate: floodwater_evap_rate
+          potential_evapotrans: potential_evapotrans
+          transpiration_daily_avg: transpiration_daily_avg
+          transpiration_daily: transpiration_daily
+          soil_evap_daily_avg: soil_evap_daily_avg
+          soil_evaporation_daily: soil_evaporation_daily
+          evapotransp_average: evapotransp_average
+          evapotranspiration_daily: evapotranspiration_daily
+          runoff_surface: runoff_surface
+          water_stress_excess: water_stress_excess
+          irrigation_applications: irrigation_applications
+          water_avail_demand_ratio: water_avail_demand_ratio
+          water_factor_for_growth: water_factor_for_growth
+          water_factor_photosynth: water_factor_photosynth
+          water_factor_senescence: water_factor_senescence
+          water_factor_transpir: water_factor_transpir
+          water_factor_tillering: water_factor_tillering
+          water_stress_growth: water_stress_growth
+          water_stress_photosyn_lf: water_stress_photosyn_lf
+          water_stress_photosynth: water_stress_photosynth
+          water_uptake_demand_rat: water_uptake_demand_rat
+      - type: join
+        source: { section: ENV_TS_PLANT_SOIL_ATMOS }
+        on_key:
+          source_key: [data_id_long]
+          lookup_key: [data_id_long]
+        select_columns:
+          CO2_emissions_day: CO2_emissions_day
+          N2O_emissions_day: N2O_emissions_day
+          CH4_emissions_day: CH4_emissions_day
+          NH3_emissions_day: NH3_emissions_day
+          NH4_emissions_day: NH4_emissions_day
+          PAR_interception-daily: PAR_interception-daily
+          PAR_intercepted_noon: PAR_intercepted_noon
+          PAR_interception: PAR_interception
+          canopy_temp_daily_avg: canopy_temp_daily_avg
+          temperature_noon_canopy: temperature_noon_canopy
+          photosynth_gross_CH2O: photosynth_gross_CH2O
+          PAR_utiliz_efficiency: PAR_utiliz_efficiency
+          photosyn_gross_CO2_noon: photosyn_gross_CO2_noon
+          rainfall_cumulative: rainfall_cumulative
       # Resolve treatment number  
       - type: add_column_conditional
         output_header: plot_id
@@ -2795,8 +3017,8 @@ rules:
             if_equals: 'Treatment'
             then_value: obs_unit_id
       ## Lookup plot-treatment links for plot-level observation
-      - type: lookup_and_add
-        lookup_data_source: { section: PLOT_SETUP }
+      - type: join
+        source: { section: PLOT_SETUP }
         on_key:
           source_key: [experiment_id, plot_id]
           lookup_key: [experiment_id, plot_id]
@@ -2809,8 +3031,8 @@ rules:
           source_1: temp_treatment_local
           source_2: temp_treatment_lookup
       # Break down crop_season_id
-      - type: lookup_and_add
-        lookup_data_source: { section: EXPERIMENTAL_DESIGN }
+      - type: join
+        source: { section: EXPERIMENTAL_DESIGN }
         on_key:
           source_key: [experiment_id, crop_season_id, treatment_number]
           lookup_key: [experiment_id, crop_season_id, treatment_number]
@@ -3124,20 +3346,20 @@ rules:
           initial_soil_layer_base_depth: me_soil_layer_bot_depth
           initial_conditions_date: date_of_measurement  #!!
           initial_soil_stable_C: soil_stable_C
-          initial_Ntot_layer: initial_Ntot_layer
-          initial_NH4_concen_layer: initial_NH4_concen_layer
-          initial_NH4_mass_layer: initial_NH4_mass_layer
-          initial_NO3_concen_layer: initial_NO3_concen_layer
-          initial_NO3_mass_layer: initial_NO3_mass_layer
+          # initial_Ntot_layer: initial_Ntot_layer
+          initial_NH4_concen_layer: NH4_soil_by_layer
+          # initial_NH4_mass_layer: initial_NH4_mass_layer
+          initial_NO3_concen_layer: NO3_soil_by_layer
+          # initial_NO3_mass_layer: initial_NO3_mass_layer
           initial_soil_temperature: soil_temperature_by_lyr
-          initial_watr_conc_by_lyr: initial_watr_conc_by_lyr
+          initial_watr_conc_by_lyr: soil_water_by_layer
+          # initial_profile_wtr_cont: initial_profile_wtr_cont
+          initial_profile_wtr_cont_%: soil_water_profile
+          initial_water_tabl_depth: water_table_depth_daily
+          initial_prof_inorg_N: NO3_NH4_Nsoil_total
+          initial_prof_NH4: NH4_Nsoil_total
+          initial_prof_NO3: NO3_Nsoil_total
           initial_soil_comment: soil_layer_comment
-          initial_profile_wtr_cont: initial_profile_wtr_cont
-          initial_profile_wtr_cont_%: initial_profile_wtr_cont_%
-          initial_water_tabl_depth: initial_water_tabl_depth
-          initial_prof_inorg_N: initial_prof_inorg_N
-          initial_prof_NH4: initial_prof_NH4
-          initial_prof_NO3: initial_prof_NO3
 
       - type: map_headers
         target_section: TILLAGE
@@ -3160,7 +3382,7 @@ rules:
           till_op_comment: till_op_comment
 
       - type: map_headers
-        target_section: PLANTNGS
+        target_section: PLANTINGS
         rename_map:
           experiment_id: experiment_id
           planting_level: planting_level
@@ -3390,6 +3612,37 @@ rules:
           harv_operat_size_categor: harv_operat_size_categor
           harvest_cut_height: harvest_cut_height
           harvest_op_comments: harvest_op_comments
+
+      - type: map_headers
+        target_section: ENVIRON_MODIFICATIONS
+        rename_map:
+          experiment_id: experiment_id
+          environmental_modif_lev: environmental_modif_lev
+          environ_modif_name: environ_modif_name
+          environ_comments: environ_comments
+          # environ_modificat_year: environ_modificat_year
+          # environ_modificat_day: environ_modificat_day
+          environ_modificat_date: environ_modificat_date
+          # environ_parameter: environ_parameter
+          environ_mod_code_daylen1: modif_code_Daylength
+          environ_modif_daylen1: environ_parameter_value_Daylength
+          environ_mod_code_daylen: modif_code_daylen
+          environ_modif_daylen: environ_parameter_value_daylen
+          environ_mod_code_radiat: modif_code_radiat
+          environ_modif_solar_rad: environ_parameter_value_radiat
+          environ_mod_code_tmax: modif_code_tmax
+          environ_modif_max_temp: environ_parameter_value_tmax
+          environ_mod_code_tmin: modif_code_tmin
+          environ_modif_min_temp: environ_parameter_value_tmin
+          environ_modif_code_rain: modif_code_rain
+          environ_modif_rain: environ_parameter_value_rain
+          environ_modif_code_CO2: modif_code_CO2
+          environ_modif_CO2: environ_parameter_value_CO2
+          environ_mod_code_dewpt: modif_code_dewpt
+          environ_modif_dew_pt: environ_parameter_value_dewpt
+          environ_modif_code_wind: modif_code_wind
+          environ_modif_wind: environ_parameter_value_wind
+          environ_modif_comment: environ_modif_comment          
 
       - type: map_headers
         target_section: TREATMENTS
@@ -3676,6 +3929,8 @@ rules:
           root_length_dens_proj: root_length_dens_proj
           # Temperature
           soil_temperature_by_lyr: soil_temperature_by_lyr
+          # Comments
+          soil_layer_comment: soil_layer_comment
 
       - type: map_headers
         target_section: WEATHER_GENERAL
@@ -3867,7 +4122,6 @@ rules:
           harvest_yld_stdev: harvest_yld_stdev
           harv_yield_harv_f_wt: harv_yield_harv_f_wt
           harv_yield_harv_f_wt_sd: harv_yield_harv_f_wt_sd
-          # observation_note: observation_note
           # Development
           anthesis_date: anthesis_date
           anthesis_day_of_year: anthesis_day_of_year
@@ -3949,9 +4203,23 @@ rules:
           shoots_P_at_maturity: shoots_P_at_maturity
           tuber_P_at_harvest: tuber_P_at_harvest
           N_fixed_during_season: N_fixed_during_season
+          # Water dynamics
+          rainfall_in_season: rainfall_in_season
+          rainfall_plant_harvest: rainfall_plant_harvest
+          evapotrans_cumul_matur: evapotrans_cumul_matur
+          evapotrans_cumul_pl_harv: evapotrans_cumul_pl_harv
+          transpirat_cumul_matur: transpirat_cumul_matur
+          transpirat_cumul_pl_harv: transpirat_cumul_pl_harv
+          transpiration_cumulative: transpiration_cumulative
+          soil_evap_cumul_matur: soil_evap_cumul_matur
+          soil_evap_cumul_pl_matur: soil_evap_cumul_pl_matur
+          potential_evapotrans_avg: potential_evapotrans_avg
+          runoff_season: runoff_season
+          drainage_over_season: drainage_over_season
+          tile_drain_over_season: tile_drain_over_season
+          initial_profile_wtr_cont_sim: initial_profile_wtr_cont_sim
           # Comments
-          # TODO: coalesce notes from different subsets OR add to parent instead
-          # observation_note: observation_note
+          observation_note: observation_note
 
       - type: map_headers
         target_section: TIME_SERIES
@@ -4223,7 +4491,70 @@ rules:
           shell_number_consumed: shell_number_consumed
           lodging_percent: lodging_percent
           plant_population: plant_population
+          # Plant-soil-atmosphere
+          CO2_emissions_day: CO2_emissions_day
+          N2O_emissions_day: N2O_emissions_day
+          CH4_emissions_day: CH4_emissions_day
+          NH3_emissions_day: NH3_emissions_day
+          NH4_emissions_day: NH4_emissions_day
+          PAR_interception-daily: PAR_interception-daily
+          PAR_intercepted_noon: PAR_intercepted_noon
+          PAR_interception: PAR_interception
+          canopy_temp_daily_avg: canopy_temp_daily_avg
+          temperature_noon_canopy: temperature_noon_canopy
+          photosynth_gross_CH2O: photosynth_gross_CH2O
+          PAR_utiliz_efficiency: PAR_utiliz_efficiency
+          photosyn_gross_CO2_noon: photosyn_gross_CO2_noon
+          rainfall_cumulative: rainfall_cumulative
+          # Water dynamics
+          bulk_dens_puddl_surf_lyr: bulk_dens_puddl_surf_lyr
+          infiltration_rate: infiltration_rate
+          floodwtr_runoff_ovr_bund: floodwtr_runoff_ovr_bund
+          floodwater_depth: floodwater_depth
+          floodwater_temper_index: floodwater_temper_index
+          floodwater_pH_max_day: floodwater_pH_max_day
+          floodwater_light_index: floodwater_light_index
+          floodwater_photosyn_ind: floodwater_photosyn_ind
+          floodwater_N_index: floodwater_N_index
+          floodwater_denitrif_rate: floodwater_denitrif_rate
+          floodwater_Ammoniacal_N: floodwater_Ammoniacal_N
+          floodwtr_ammonium_N_conc: floodwtr_ammonium_N_conc
+          floodwtr_aqu_NH3_N_conc: floodwtr_aqu_NH3_N_conc
+          floodwtr_nitrate_N_conc: floodwtr_nitrate_N_conc
+          floodwater_Urea_N: floodwater_Urea_N
+          urea_N_hydrol_rt_flood: urea_N_hydrol_rt_flood
+          water_table_depth_daily: water_table_depth_daily
+          drainage_cumulative: drainage_cumulative
+          drainage_daily: drainage_daily
+          tile_drainage_cumulative: tile_drainage_cumulative
+          tile_drainage_daily: tile_drainage_daily
+          floodwater_evap_cumul: floodwater_evap_cumul
+          soil_evap_cumulative: soil_evap_cumulative
+          evapotransp_cumulative: evapotransp_cumulative
+          water_avail_root_zone: water_avail_root_zone
+          runoff_cumulative: runoff_cumulative
+          floodwater_evap_rate: floodwater_evap_rate
+          potential_evapotrans: potential_evapotrans
+          transpiration_daily_avg: transpiration_daily_avg
+          transpiration_daily: transpiration_daily
+          soil_evap_daily_avg: soil_evap_daily_avg
+          soil_evaporation_daily: soil_evaporation_daily
+          evapotransp_average: evapotransp_average
+          evapotranspiration_daily: evapotranspiration_daily
+          runoff_surface: runoff_surface
+          water_stress_excess: water_stress_excess
+          irrigation_applications: irrigation_applications
+          water_avail_demand_ratio: water_avail_demand_ratio
+          water_factor_for_growth: water_factor_for_growth
+          water_factor_photosynth: water_factor_photosynth
+          water_factor_senescence: water_factor_senescence
+          water_factor_transpir: water_factor_transpir
+          water_factor_tillering: water_factor_tillering
+          water_stress_growth: water_stress_growth
+          water_stress_photosyn_lf: water_stress_photosyn_lf
+          water_stress_photosynth: water_stress_photosynth
+          water_uptake_demand_rat: water_uptake_demand_rat
           ## Comments
           # TODO: coalesce notes from different subsets OR add to parent instead
-          obs_time_series_comment: obs_time_series_comment
+          obs_time_series_comment: observation_note
 

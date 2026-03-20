@@ -1,21 +1,53 @@
-#' Validate DSSAT Entity Codes
+#' Validate DSSAT identifier format
 #'
-#' @description
-#' Checks whether a character string matches the standard format for a given DSSAT entity code.
+#' Checks whether a given identifier conforms to DSSAT naming conventions for
+#' experiments, cultivars, fields, soil profiles, or weather stations.
+#'
+#' @param x Character string to validate. Returns `FALSE` if `NULL` or `NA`.
+#' @param item Character string specifying identifier type. One of:
+#'   \itemize{
+#'     \item `"experiment"`: Experiment ID (e.g., "IBSA0101")
+#'     \item `"cultivar"`: Cultivar/genotype code (e.g., "IB0001")
+#'     \item `"field"`: Field identifier (e.g., "IBSA0001")
+#'     \item `"soil"`: Soil profile ID (e.g., "IBSA000001" or "IB00000001")
+#'     \item `"weather_station"`: Weather station code (e.g., "IBSA")
+#'   }
+#' @param framework Character string. Currently only `"dssat"` supported (reserved
+#'   for future extension to other frameworks).
+#'
+#' @return Logical. `TRUE` if `x` matches the DSSAT pattern for `item`, 
+#'   `FALSE` otherwise (including for `NULL` or `NA` inputs).
 #'
 #' @details
-#' The function uses regular expressions to validate codes against DSSAT conventions:
-#' - `experiment`: institute (2L) site (2L) experiment year (2D) experiment number (2D) (e.g., "UFGA8201").
-#' - `cultivar`: institute (2L) cultivar number (4D) (e.g., "IB0015").
-#' - `field`: institute (2L) site (2L) field number (4D) (e.g., "UFGA0001").
-#' - `soil`: institute (2L) site (2L) epxeriment year (2D) soil profile number (4D)
-#' - `weather_station`: institute (2L) site (2L) (e.g., "UFGA").
+#' **DSSAT naming patterns:**
+#' \describe{
+#'   \item{**Experiment**}{4 uppercase letters + 4 digits (e.g., "UFGA8301")}
+#'   \item{**Cultivar**}{2 uppercase letters + 4 digits (e.g., "IB0001")}
+#'   \item{**Field**}{4 uppercase letters + 4 digits (e.g., "IBSN0001")}
+#'   \item{**Soil**}{Either:
+#'     \itemize{
+#'       \item 4 letters + 6 digits (e.g., "IBSA000001")
+#'       \item 2 letters + 8 digits (e.g., "IB00000001")
+#'     }
+#'   }
+#'   \item{**Weather station**}{4 uppercase letters (e.g., "IBSA")}
+#' }
 #'
-#' @param x A character vector of codes to validate.
-#' @param item The type of entity. One of "experiment", "cultivar", "field", "soil", or "weather_station".
-#' @param framework The modeling framework (currently only "dssat" is supported).
+#' Patterns enforce strict formatting: exact character counts, uppercase letters,
+#' and numeric digits in prescribed positions.
 #'
-#' @return A logical vector indicating `TRUE` for each valid code.
+#' @examples
+#' \dontrun{
+#' is_valid_dssat_id("UFGA8301", "experiment")  # TRUE
+#' is_valid_dssat_id("ufga8301", "experiment")  # FALSE (lowercase)
+#' is_valid_dssat_id("IB0001", "cultivar")      # TRUE
+#' is_valid_dssat_id("IBSA", "weather_station") # TRUE
+#' is_valid_dssat_id(NA, "field")               # FALSE
+#' }
+#'
+#' @seealso [generate_dssat_id()], [.resolve_dssat_exp_codes()]
+#'
+#' @noRd
 #'
 
 is_valid_dssat_id <- function(x, item, framework = "dssat"){
@@ -36,31 +68,81 @@ is_valid_dssat_id <- function(x, item, framework = "dssat"){
     "weather_station" = "^[A-Z]{4}$"
   )
   is_valid <- grepl(pattern, x)
-  is_valid[is.na(is_valid)] <- FALSE  # Return FALSE if NA
+  is_valid[is.na(is_valid)] <- FALSE
   
   return(is_valid)
 }
 
 
-# ------------------------------------------------------------------------------------------------------------------------
-
-#' Generate a Standard DSSAT Identifier
+#' Generate DSSAT-compliant identifier codes
 #'
-#' @description
-#' Creates a standardized, 8-character DSSAT-compliant code for an experiment, field, cultivar, soil profile,
-#' or weather station.
+#' Creates standardized DSSAT identifiers for experiments, cultivars, fields,
+#' soil profiles, or weather stations based on metadata components.
 #'
-#' @param type The type of entity code to generate.
-#' @param institution The name of the institution (used for a 2-letter abbreviation).
-#' @param site The name of the site (used for a 2-letter abbreviation).
-#' @param year The year of the experiment (used for a 2-digit code).
-#' @param sequence_no A numeric sequence or ID to ensure uniqueness.
+#' @param type Character string specifying identifier type. One of:
+#'   \itemize{
+#'     \item `"experiment"`: Experiment ID (8 characters; e.g., "IBSA0101")
+#'     \item `"field"`: Field identifier (8 characters; e.g., "IBSA0001")
+#'     \item `"cultivar"`: Cultivar/genotype code (6 characters; e.g., "IB0001")
+#'     \item `"soil"`: Soil profile ID (10 characters; e.g., "IBSA000001" or "IB00000001")
+#'     \item `"weather_station"`: Weather station code (4 characters; e.g., "IBSA")
+#'   }
+#' @param institution Character string. Institution name or code (defaults to 
+#'   "XX" if `NA`). Abbreviated to 2 uppercase letters.
+#' @param site Character string. Site name or code (defaults to "XX" if `NA`).
+#'   First word extracted and abbreviated to 2 uppercase letters. Not used for cultivar codes.
+#' @param year Numeric or character. Year associated with identifier (defaults
+#'   to "XX" if `NA`). Last 2 digits used for experiment and soil codes.
+#' @param sequence_no Numeric. Sequential number for uniqueness within groups.
+#'   Used for experiment, field, cultivar, and soil codes.
 #'
-#' @return An 8-character, uppercase DSSAT identifier string.
+#' @return Character string containing the generated DSSAT identifier in uppercase.
 #'
-#' @importFrom dplyr case_when
-#' 
-
+#' @details
+#' **Generated ID formats:**
+#' \describe{
+#'   \item{**Experiment**}{`IISSYYSS` - Institution (2) + Site (2) + Year (2) + 
+#'         Sequence (2), e.g., "IBSA2301"}
+#'   \item{**Field**}{`IISSSSSS` - Institution (2) + Site (2) + Sequence (4), e.g., "IBSA0001"}
+#'   \item{**Cultivar**}{`IISSSS` - Institution (2) + Sequence (4), e.g., "IB0001"}
+#'   \item{**Soil**}{`IISSYYSSSS` - Institution (2) + Site (2) + Year (2) + 
+#'         Sequence (4), e.g., "IBSA230001"}
+#'   \item{**Weather station**}{`IISS` - Institution (2) + Site (2), e.g., "IBSA"}
+#' }
+#'
+#' **Abbreviation logic:**
+#' \itemize{
+#'   \item Institution/site names abbreviated to 2 characters via `strict_abbreviate()`
+#'   \item Site names preprocessed to extract first word (`sub(" .*", "")`)
+#'   \item All output converted to uppercase
+#'   \item Missing values replaced with "XX" placeholders
+#' }
+#'
+#' **Sequence numbering:**
+#' \itemize{
+#'   \item Experiment: 2-digit sequence (01-99)
+#'   \item Field: 4-digit sequence (0001-9999)
+#'   \item Cultivar: 4-digit sequence (0001-9999)
+#'   \item Soil: 4-digit sequence (0001-9999)
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' generate_dssat_id("experiment", "ICRISAT", "Bambey", 2023, 1)
+#' # Returns: "ICBA2301"
+#'
+#' generate_dssat_id("cultivar", "AgResults", sequence_no = 42)
+#' # Returns: "AG0042"
+#'
+#' generate_dssat_id("weather_station", "ICRISAT", "Samanko")
+#' # Returns: "ICSA"
+#' }
+#'
+#' @seealso [is_valid_dssat_id()], [strict_abbreviate()],
+#'   [.resolve_dssat_exp_codes()]
+#'
+#' @noRd
+#'
 
 generate_dssat_id <- function(type, institution, site = NA, year = NA, sequence_no = NA) {
   

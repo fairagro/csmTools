@@ -1,6 +1,6 @@
 *WEATHER MODULE DAILY OUTPUT FILE
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:39
 
 *RUN   1        : No N                      WHAPS048 HWOC2501    1
  MODEL          : WHAPS048 - Wheat
@@ -302,7 +302,7 @@
  2025 220   291    0.0   14.6   16.1   23.8   47.6   0.17   28.8   13.5   21.4   23.7   13.5   21.4   23.7   86.4  420.5   0.39   1.74 -99.00 2025220
  2025 221   292    0.0   14.5   16.0   22.1   44.2   0.23   30.4   16.8   23.8   25.9   16.8   23.8   25.9   86.4  420.5   0.39   1.74 -99.00 2025221
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:40
 
 *RUN   2        : 147 kg[N]/ha - broadcast  WHAPS048 HWOC2501    3
  MODEL          : WHAPS048 - Wheat
@@ -604,7 +604,7 @@
  2025 220   291    0.0   14.6   16.1   23.8   47.6   0.17   28.8   13.5   21.4   23.7   13.5   21.4   23.7   86.4  420.5   0.39   1.74 -99.00 2025220
  2025 221   292    0.0   14.5   16.0   22.1   44.2   0.23   30.4   16.8   23.8   25.9   16.8   23.8   25.9   86.4  420.5   0.39   1.74 -99.00 2025221
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:40
 
 *RUN   3        : 180 kg[N]/ha - broadcast  WHAPS048 HWOC2501    7
  MODEL          : WHAPS048 - Wheat

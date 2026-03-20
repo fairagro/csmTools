@@ -31,6 +31,8 @@ split_dssat_components <-  function(dataset,
 
 #'
 #'
+#' @noRd
+#'
 
 .extract_dssat_obs <- function(dataset, sec = c("SUMMARY", "TIME_SERIES")) {
   
@@ -42,6 +44,8 @@ split_dssat_components <-  function(dataset,
 
 
 #'
+#'
+#' @noRd
 #'
 
 .extract_dssat_mngt <- function(dataset, merge = TRUE) {
@@ -72,6 +76,8 @@ split_dssat_components <-  function(dataset,
 
 #'
 #'
+#' @noRd
+#'
 
 .extract_dssat_mngt_core <- function(dataset, merge = TRUE) {
   
@@ -101,6 +107,7 @@ split_dssat_components <-  function(dataset,
 
 #'
 #'
+#' @noRd
 #'
 
 .extract_dssat_soil <- function(dataset, merge = TRUE) {
@@ -124,6 +131,8 @@ split_dssat_components <-  function(dataset,
 }
 
 #'
+#'
+#' @noRd
 #'
 
 .extract_dssat_wth <- function(dataset, merge = TRUE) {

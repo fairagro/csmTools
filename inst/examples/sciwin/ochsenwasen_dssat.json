@@ -179,7 +179,7 @@
     "attributes": {
       "experiment": "HWOC2501",
       "file_name": "HWOC2501.WHX",
-      "comments": "Dataset processed on 2026-01-19 with csmtools."
+      "comments": "Dataset processed on 2026-01-23 with csmtools."
     }
   },
   "SUMMARY": {
@@ -196,53 +196,52 @@
     },
     "attributes": {
       "_class_attribute": ["tbl_df", "tbl", "data.frame"],
-      "comments": "Dataset processed on 2026-01-19 with csmtools.",
+      "comments": "Dataset processed on 2026-01-23 with csmtools.",
       "experiment": "HWOC2501",
       "file_name": "HWOC2501.WHA"
     }
   },
   "SOIL": {
     "data": {
-      "PEDON": ["DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767"],
-      "SOURCE": ["IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT", "IBSNAT"],
-      "TEXTURE": ["SL", "SL", "SL", "SL", "SL", "SL", "SL", "SL", "SL", "SL", "SL", "SL", "SL", "SL", "SL"],
-      "DEPTH": [210, 210, 210, 210, 210, 210, 210, 210, 210, 210, 210, 210, 210, 210, 210],
-      "DESCRIPTION": ["DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM", "DEFAULT - DEEP SANDY LOAM"],
-      "SITE": ["Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic"],
-      "COUNTRY": ["Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic"],
-      "LAT": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-      "LONG": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-      "SCS FAMILY": ["Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Generic"],
-      "SCOM": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-      "SALB": [0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13],
-      "SLU1": [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
-      "SLDR": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-      "SLRO": [68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68],
-      "SLNF": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      "SLPF": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      "SMHB": ["IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001"],
-      "SMPX": ["IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001"],
-      "SMKE": ["IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001", "IB001"],
-      "SLB": [5, 10, 20, 30, 40, 50, 60, 70, 90, 110, 130, 150, 170, 190, 210],
-      "SLMH": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-      "SLLL": [0.052, 0.052, 0.052, 0.052, 0.066, 0.073, 0.073, 0.0913, 0.128, 0.138, 0.1413, 0.138, 0.138, 0.138, 0.138],
-      "SDUL": [0.2112, 0.2112, 0.2112, 0.2112, 0.224, 0.2304, 0.2304, 0.2464, 0.2784, 0.2872, 0.2916, 0.2916, 0.2924, 0.2928, 0.2928],
-      "SSAT": [0.4308, 0.4308, 0.4308, 0.4308, 0.4316, 0.432, 0.432, 0.4324, 0.4332, 0.4316, 0.4312, 0.432, 0.4328, 0.4332, 0.4332],
-      "SRGF": [1, 1, 0.8793, 0.638, 0.5273, 0.4313, 0.35, 0.3077, 0.223, 0.1557, 0.1037, 0.067, 0.047, 0.0313, 0.02],
-      "SSKS": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-      "SBDM": [1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.6167, 1.62, 1.62, 1.62, 1.62, 1.62],
-      "SLOC": [0.7, 0.7, 0.6867, 0.66, 0.6067, 0.58, 0.58, 0.53, 0.43, 0.3167, 0.2133, 0.12, 0.0667, 0.03, 0.01],
-      "SLCL": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
-      "SLSI": [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
-      "SLCF": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "SLNI": [0.07, 0.07, 0.07, 0.07, 0.0633, 0.06, 0.06, 0.0533, 0.04, 0.0333, 0.0233, 0.01, 0.0033, 0, 0],
-      "SLHW": [6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5],
-      "SLHB": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-      "SCEC": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-      "SADC": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+      "file_name": ["LL.SOL", "LL.SOL", "LL.SOL", "LL.SOL", "LL.SOL", "LL.SOL"],
+      "EXP_ID": ["HWOC2501", "HWOC2501", "HWOC2501", "HWOC2501", "HWOC2501", "HWOC2501"],
+      "INST_NAME": ["Landwirtschaftliche Lehranstalten", "Landwirtschaftliche Lehranstalten", "Landwirtschaftliche Lehranstalten", "Landwirtschaftliche Lehranstalten", "Landwirtschaftliche Lehranstalten", "Landwirtschaftliche Lehranstalten"],
+      "PEDON": ["DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767", "DE02114767"],
+      "SOURCE": ["DEU", "DEU", "DEU", "DEU", "DEU", "DEU"],
+      "TEXTURE": ["Loam", "Loam", "Loam", "Loam", "Loam", "Loam"],
+      "DEPTH": [200, 200, 200, 200, 200, 200],
+      "SITE": ["Weidenbach,Bayern", "Weidenbach,Bayern", "Weidenbach,Bayern", "Weidenbach,Bayern", "Weidenbach,Bayern", "Weidenbach,Bayern"],
+      "COUNTRY": ["DE", "DE", "DE", "DE", "DE", "DE"],
+      "LAT": [49.208, 49.208, 49.208, 49.208, 49.208, 49.208],
+      "LONG": [10.625, 10.625, 10.625, 10.625, 10.625, 10.625],
+      "SCOM": ["BK", "BK", "BK", "BK", "BK", "BK"],
+      "SALB": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      "SLU1": [6, 6, 6, 6, 6, 6],
+      "SLDR": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+      "SLRO": [75, 75, 75, 75, 75, 75],
+      "SLNF": [1, 1, 1, 1, 1, 1],
+      "SLPF": [1, 1, 1, 1, 1, 1],
+      "SMHB": ["SA001", "SA001", "SA001", "SA001", "SA001", "SA001"],
+      "SMPX": ["SA001", "SA001", "SA001", "SA001", "SA001", "SA001"],
+      "SMKE": ["SA001", "SA001", "SA001", "SA001", "SA001", "SA001"],
+      "SCS FAMILY": ["HC_GEN0011", "HC_GEN0011", "HC_GEN0011", "HC_GEN0011", "HC_GEN0011", "HC_GEN0011"],
+      "SLB": [5, 15, 30, 60, 100, 200],
+      "SLMH": ["A", "A", "AB", "BA", "B", "BC"],
+      "SLLL": [0.1, 0.109, 0.123, 0.136, 0.136, 0.125],
+      "SDUL": [0.221, 0.231, 0.245, 0.258, 0.257, 0.243],
+      "SSAT": [0.389, 0.391, 0.395, 0.399, 0.398, 0.394],
+      "SRGF": [1, 0.85, 0.7, 0.5, 0.38, 0.05],
+      "SSKS": [1.44, 1.24, 1, 0.82, 0.84, 1.02],
+      "SBDM": [1.32, 1.34, 1.37, 1.42, 1.48, 1.53],
+      "SLOC": [3.65, 3.08, 2.36, 1.51, 0.88, 0.5],
+      "SLCL": [16.35, 17.95, 20.32, 22.5, 22.47, 20.65],
+      "SLSI": [37.61, 36.85, 35.74, 34.47, 33.78, 33.43],
+      "SLNI": [0.12, 0.09, 0.07, 0.06, 0.05, 0.05],
+      "SLHW": [6.21, 6.28, 6.38, 6.49, 6.63, 6.81],
+      "SCEC": [17, 14.9, 14.5, 15.1, 15.2, 15.2]
     },
     "attributes": {
-      "_class_attribute": "data.frame",
+      "_class_attribute": ["tbl_df", "tbl", "data.frame"],
       "code_map": {
         "data": {
           "EXP_ID": "HWOC2501",
@@ -253,7 +252,7 @@
           "_class_attribute": ["tbl_df", "tbl", "data.frame"]
         }
       },
-      "comments": "Dataset processed on 2026-01-19 with csmtools.",
+      "comments": "Dataset processed on 2026-01-23 with csmtools.",
       "title": "DE02114767 Weidenbach,Bayern",
       "file_name": "LL.SOL"
     }
@@ -313,7 +312,7 @@
           }
         },
         "location": "91746, WEIDENBACH, BAYERN, DEUTSCHLAND",
-        "comments": "Dataset processed on 2026-01-19 with csmtools.",
+        "comments": "Dataset processed on 2026-01-23 with csmtools.",
         "file_name": "LL912401.WTH"
       }
     },
@@ -371,7 +370,7 @@
           }
         },
         "location": "91746, WEIDENBACH, BAYERN, DEUTSCHLAND",
-        "comments": "Dataset processed on 2026-01-19 with csmtools.",
+        "comments": "Dataset processed on 2026-01-23 with csmtools.",
         "file_name": "LL912501.WTH"
       }
     }

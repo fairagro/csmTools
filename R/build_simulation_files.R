@@ -72,25 +72,15 @@ build_simulation_files <- function(
     control_config = NULL
 ) {
   
-  # Resolve dataset
+  # Resolve dataset and simulation configuration (if provided)
   dataset <- resolve_input(dataset)
-  
-  # Load control parameters if config file is provided
   control_args <- list()
   if (!is.null(control_config)) {
-    if (!file.exists(control_config)) {
-      stop("Control configuration file not found at: ", control_config)
-    }
-    
-    config_ext <- tolower(file_ext(control_config))
-    if (config_ext == "yaml" || config_ext == "yml") {
-      control_args <- read_yaml(control_config)
-    } else if (config_ext == "json") {
-      control_args <- fromJSON(txt = readLines(control_config))
-    } else {
-      stop("Unsupported configuration file format. Use YAML (.yaml/.yml) or JSON (.json)")
-    }
+    control_args <- resolve_input(control_config)
   }
+  
+  # Check integrity of field-env links
+  dataset <- check_ref_integrity(dataset, enforce = TRUE)
   
   # Build parser-ready format (DSSAT_tbl class)
   dataset_fmt <- build_dssat_dataset(dataset)
@@ -115,4 +105,208 @@ build_simulation_files <- function(
   }
   
   return(dataset_fmt)
+}
+
+
+#' Check and enforce referential integrity in DSSAT dataset
+#'
+#' Validates that soil and weather station references in FIELDS table match existing resources in
+#' SOIL and WEATHER components. Optionally enforces integrity by filtering to valid references only.
+#'
+#' @param dataset List of DSSAT dataset components (SOIL, WEATHER, MANAGEMENT)
+#' @param enforce Logical; if `TRUE`, removes FIELDS rows with invalid soil or weather references
+#'   and issues warnings. If `FALSE`, performs checks without modification (default: `TRUE`)
+#'
+#' @return Modified dataset with updated MANAGEMENT$FIELDS table. If
+#'   `enforce = TRUE`, invalid references are removed; otherwise unchanged.
+#'
+#' @details
+#' **Reference building:**
+#' \enumerate{
+#'   \item **Soil profiles:** Extract metadata via `get_soil_meta()`, flatten
+#'         nested structure, deduplicate (profiles repeated across layers)
+#'   \item **Weather stations:** Extract metadata via `get_weather_meta()`,
+#'         flatten, aggregate coordinates by station ID (stations span multiple
+#'         years)
+#' }
+#'
+#' **Integrity enforcement:**
+#' Uses `enforce_integrity()` to validate FIELDS table against reference tables:
+#' \itemize{
+#'   \item Checks `ID_SOIL` against soil profile IDs
+#'   \item Checks `WSTA` against weather station IDs
+#'   \item Issues warnings for orphaned references when enforcing
+#' }
+#'
+#' **Rationale:** DSSAT simulations fail if FIELDS references non-existent soil or weather data.
+#' This function ensures all linkages resolve before file writing.
+#'
+#' @noRd
+#'
+
+check_ref_integrity <- function(dataset, enforce = TRUE) {
+  
+  # =================================================================
+  # 1- Build reference tables
+  # =================================================================
+  
+  # --- Soil profile(s) ---
+  soil_tree <- apply_recursive(dataset$SOIL, get_soil_meta)
+  soil_ref  <- do.call(rbind, flatten_tree(soil_tree))
+  # Remove duplicates (metadata repeated when multiple layers)
+  soil_ref <- unique(soil_ref)
+  
+  # --- Weather station(s) ---
+  weather_tree <- apply_recursive(dataset$WEATHER, get_weather_meta)
+  weather_ref  <- do.call(rbind, flatten_tree(weather_tree))
+  # Handle duplicates (same station across multiple years)
+  if (!is.null(weather_ref) && nrow(weather_ref) > 0) {
+    weather_ref <- aggregate(cbind(LAT, LONG) ~ ID, data = weather_ref, FUN = mean, na.rm = TRUE)
+  }
+  
+  # =================================================================
+  # 2- Execute reference checks
+  # =================================================================
+  
+  fields <- dataset$MANAGEMENT[["FIELDS"]]
+  
+  if (enforce) {
+    fields <- enforce_integrity(fields, soil_ref, "ID_SOIL", "Soil")
+    fields <- enforce_integrity(fields, weather_ref, "WSTA", "Weather Station")
+  }
+  dataset$MANAGEMENT[["FIELDS"]] <- fields
+  
+  return(dataset)
+}
+
+
+#' Enforce referential integrity for soil or weather station IDs
+#'
+#' Validates and corrects ID mismatches in FIELDS table by assigning valid reference IDs based on
+#' availability and proximity. Issues warnings when corrections are applied.
+#'
+#' @param fields Data frame containing field site information (FIELDS table)
+#' @param ref Data frame of valid reference IDs with coordinates (ID, LAT, LONG)
+#' @param col Character; name of column in `fields` to validate (e.g., "ID_SOIL" or "WSTA")
+#' @param label Character; descriptive label for warning messages (e.g., "Soil" or "Weather Station")
+#'
+#' @return Modified `fields` data frame with corrected IDs in `col`. Invalid references replaced
+#'   using assignment strategy.
+#'
+#' @details
+#' **Assignment strategy when mismatches detected:**
+#' \describe{
+#'   \item{**Single reference available**}{Assign that ID to all mismatched rows
+#'         (forces homogeneous assignment)}
+#'   \item{**Multiple references available**}{Use `haversine_dist()` to find nearest reference based on
+#'         field coordinates (YCRD, XCRD) vs. reference coordinates (LAT, LONG). Assign closest match per row.}
+#'   \item{**Missing coordinates**}{Skip assignment and warn for that specific field row}
+#' }
+#'
+#' **Warning behavior:** Issues warnings for each correction type but allows processing to continue.
+#' All invalid references are resolved or flagged.
+#'
+#' @noRd
+#'
+
+
+enforce_integrity <- function(fields, ref, col, label) {
+  
+  # Identify indices where the ID is not in the reference ID list
+  bad_idx <- which(!fields[[col]] %in% ref$ID)
+  
+  if (length(bad_idx) > 0) {
+    
+    # Case 1: only one reference option available -> force assignment
+    if (nrow(ref) == 1) {
+      warning(
+        paste0("Mismatch detected in ", label, " IDs: assigning ", ref$ID[1], "to the 'FIELDS' table."),
+        call. = FALSE
+      )
+      fields[[col]][bad_idx] <- ref$ID[1]
+      
+      # Case 2: multiple options -> use closest location
+    } else if (nrow(ref) > 1) {
+      warning(
+        paste0("Mismatch detected in ", label, " IDs: assigning closest ", label, " based on coordinates."),
+        call. = FALSE
+      )
+      
+      for (i in bad_idx) {
+        # Calculate distance from this field to ALL references
+        dists <- sapply(1:nrow(ref), function(k) {
+          haversine_dist(fields$YCRD[i], fields$XCRD[i], ref$LAT[k], ref$LONG[k])
+        })
+        
+        min_dist <- min(dists, na.rm = TRUE)
+        
+        if (!is.infinite(min_dist)) {
+          # Assign the ID of the closest reference
+          fields[[col]][i] <- ref$ID[which.min(dists)]
+        } else {
+          warning(
+            paste0("Cannot assigne closest ", label, "for field row ", i, ": missing geocoordinates."),
+            call. = FALSE
+            )
+        }
+      }
+    }
+  }
+  return(fields)
+}
+
+
+#' Flatten nested list structure to simple list of data frames
+#'
+#' Recursively extracts data frames from arbitrarily nested lists produced by
+#' `apply_recursive()`, discarding intermediate list structure.
+#'
+#' @param x Nested list potentially containing data frames at any depth
+#'
+#' @return Flat list of data frames, or `NULL` if no data frames found
+#'
+#' @noRd
+#'
+
+flatten_tree <- function(x) {
+  if (is.data.frame(x)) return(list(x))
+  if (is.list(x)) return(unlist(lapply(x, flatten_tree), recursive = FALSE))
+  return(NULL)
+}
+
+
+#' Extract soil profile metadata for referential integrity checks
+#'
+#' Returns first-row values of PEDON ID and coordinates.
+#'
+#' @param df Soil profile data frame (typically one profile with multiple layers)
+#'
+#' @return Single-row data frame with columns ID, LAT, LONG, or `NULL` if required columns missing
+#'
+#' @noRd
+#'
+
+get_soil_meta <- function(df) {
+  # Check if required columns exist to avoid errors
+  if(!all(c("PEDON", "LAT", "LONG") %in% names(df))) return(NULL)
+  data.frame(ID = df$PEDON[1], LAT = df$LAT[1], LONG = df$LONG[1], stringsAsFactors = FALSE)
+}
+
+#' Extract weather station metadata for referential integrity checks
+#'
+#' Retrieves station ID and coordinates from GENERAL attribute. Handles both INSI (legacy) and ID column names.
+#'
+#' @param df Weather data frame with GENERAL attribute containing station metadata
+#'
+#' @return Single-row data frame with columns ID, LAT, LONG, or `NULL` if GENERAL attribute missing
+#'
+#' @noRd
+#'
+
+get_weather_meta <- function(df) {
+  meta <- attr(df, "GENERAL")
+  if (is.null(meta)) return(NULL)
+  # Standardize column name INSI -> ID
+  id_val <- if("INSI" %in% names(meta)) meta$INSI else meta$ID
+  data.frame(ID = id_val, LAT = meta$LAT, LONG = meta$LONG, stringsAsFactors = FALSE)
 }

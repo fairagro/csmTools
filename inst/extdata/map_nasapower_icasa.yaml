@@ -21,11 +21,19 @@ rules:
     source:
       section: WEATHER_DAILY 
     target:
-      section: WEATHER_METADATA
+      section: WEATHER_INSTITUTIONS
     actions:
       - type: add_column
         output_header: institute_name
         value: 'NASA POWER'
+
+  - mapping_uid: '2'
+    notes: "Builds an ICASA STATION metadata (pre-aggregation) from Nasa POWER data"
+    source:
+      section: WEATHER_DAILY 
+    target:
+      section: STATION_METADATA
+    actions:
       # If any 2m temperature column is present.
       - type: add_column
         output_header: temperature_sensor_ht
@@ -72,7 +80,12 @@ rules:
     actions:
 
       - type: map_headers
-        target_section: WEATHER_METADATA
+        target_section: WEATHER_INSTITUTIONS
+        rename_map:
+          institute_name: institute_name
+
+      - type: map_headers
+        target_section: STATION_METADATA
         rename_map:
           weather_sta_longitude: LON
           weather_sta_latitude: LAT

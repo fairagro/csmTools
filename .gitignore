@@ -30,14 +30,16 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 # pkgdown site
-docs/
-# archived and dev scripts
-/archive/
-/dev/
+#docs/
+# archived and dev scripts; temp files
+**/archive/
+**/dev/
+**/temp/
 # test data and manuscript files
 inst/extdata/test_data/
 inst/extdata/test_fixtures/
-/ms/
+ms/
+docs/
 # translation temp files
 po/*~
 # RStudio Connect folder

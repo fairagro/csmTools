@@ -49,8 +49,8 @@ definitions:
 
   # Note 2025-09-18: placeholding map; to design
   chemical_material_map: &chemical_material_map
-    'Inzektizid1': 'FE001'
-    'Inzektizid2': 'FE002'
+    'Inzektizid1': 'CH001'
+    'Inzektizid2': 'CH002'
   chemical_material_default: &chemical_material_default NA
 
   harvest_method_map: &harvest_method_map
@@ -84,11 +84,11 @@ rules:
           Date_revised: "%Y-%m-%d"
 
   - mapping_uid: '2'
-    notes: "Generates PERSONS table from contact information in the METADATA table."
+    notes: "Generates EXPERIMENT_PERSONS table from contact information in the METADATA table."
     source:
-      section: PERSONS
+      section: METADATA  #!!
     target:
-      section: PERSONS
+      section: EXPERIMENT_PERSONS
     actions:
       # Split name components
       # TODO: add to select rule
@@ -112,18 +112,18 @@ rules:
         pattern: '^\S+\s+(.*)\s+\S+$'
 
   - mapping_uid: '3'
-    notes: "Selects and renames columns from METADATA for the INSTITUTIONS section."
+    notes: "Selects and renames columns from METADATA for the EXPERIMENT_INSTITUTIONS section."
     source:
-      section: INSTITUTIONS
+      section: METADATA  #!!
     target:
-      section: INSTITUTIONS
+      section: EXPERIMENT_INSTITUTIONS
 
   - mapping_uid: '4'
-    notes: "Selects and renames columns from METADATA for the DOCUMENTS section."
+    notes: "Selects and renames columns from METADATA for the EXPERIMENT_DOCUMENTS section."
     source:
       section: METADATA
     target:
-      section: DOCUMENTS
+      section: EXPERIMENT_DOCUMENTS
 
 
 ## --- SECTION: TREATMENTS ---
@@ -136,8 +136,8 @@ rules:
       section: TREATMENTS
     actions:
       # Look up and add data from the PARZELLE table.
-      - type: lookup_and_add
-        lookup_data_source: { section: PARZELLE }
+      - type: join
+        source: { section: PARZELLE }
         on_key:
           source_key: [Pruefglied_ID, Parzelle_ID]
           lookup_key: [Pruefglied_ID, Parzelle_ID]
@@ -147,27 +147,27 @@ rules:
           Mittelpunkt_y_GK: Mittelpunkt_y_GK
           plot_geocoord_system: { type: static, value: 'GK' }
       # Step 3: Perform the two-step join to get Factor IDs and then their descriptions into temporary columns.
-      - type: lookup_and_add
-        lookup_data_source: { section: PRUEFGLIED }
+      - type: join
+        source: { section: PRUEFGLIED }
         on_key: { source_key: Pruefglied_ID, lookup_key: Pruefglied_ID }
         select_columns:
           Faktor1_Stufe_ID: Faktor1_Stufe_ID
           Faktor2_Stufe_ID: Faktor2_Stufe_ID
           Faktor3_Stufe_ID: Faktor3_Stufe_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: FAKTOR1_STUFE }
+      - type: join
+        source: { section: FAKTOR1_STUFE }
         on_key: { source_key: Faktor1_Stufe_ID, lookup_key: Faktor1_Stufe_ID }
         select_columns:
           temp_name1: Name
           temp_desc1: Beschreibung
-      - type: lookup_and_add
-        lookup_data_source: { section: FAKTOR2_STUFE }
+      - type: join
+        source: { section: FAKTOR2_STUFE }
         on_key: { source_key: Faktor2_Stufe_ID, lookup_key: Faktor2_Stufe_ID }
         select_columns:
           temp_name2: Name
           temp_desc2: Beschreibung
-      - type: lookup_and_add
-        lookup_data_source: { section: FAKTOR3_STUFE }
+      - type: join
+        source: { section: FAKTOR3_STUFE }
         on_key: { source_key: Faktor3_Stufe_ID, lookup_key: Faktor3_Stufe_ID }
         select_columns:
           temp_name3: Name
@@ -190,21 +190,21 @@ rules:
         separator: "; "
         on_missing: proceed
       # Look up all management and resource level IDs.
-      - type: lookup_and_add
-        lookup_data_source: { section: AUSSAAT }
+      - type: join
+        source: { section: AUSSAAT }
         on_key:
           source_key: [Versuchsjahr, Parzelle_ID]
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           Aussaat_ID: Aussaat_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: SORTE }
+      - type: join
+        source: { section: SORTE }
         on_key: { source_key: Kultur_ID, lookup_key: Kultur_ID }
         select_columns:
           Sorte_ID: Sorte_ID
       ## Split DUENGUNG IDs into fertilizers and organic_materials
-      - type: lookup_and_add
-        lookup_data_source: { section: DUENGUNG }
+      - type: join
+        source: { section: DUENGUNG }
         filter: 
           on_presence_of_columns:
             - { header: Masse_mineralisch, synonyms: [Menge_Duengemittel] }
@@ -216,8 +216,8 @@ rules:
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           fertilizer_id: Duengung_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: DUENGUNG }
+      - type: join
+        source: { section: DUENGUNG }
         filter:
           on_presence_of_columns: [Frischmasse, Trockenmasse, Trockensubstanz]
         on_key:
@@ -225,44 +225,54 @@ rules:
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           organic_material_id: Duengung_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: BEREGNUNG }
+      - type: join
+        source: { section: BEREGNUNG }
         on_key:
           source_key: [Versuchsjahr, Parzelle_ID]
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           Beregnung_ID: Beregnung_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: PFLANZENSCHUTZ }
+      - type: join
+        source: { section: PFLANZENSCHUTZ }
         on_key:
           source_key: [Versuchsjahr, Parzelle_ID]
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           Pflanzenschutz_ID: Pflanzenschutz_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: BODENBEARBEITUNG }
+      - type: join
+        source: { section: BODENBEARBEITUNG }
         on_key:
           source_key: [Versuchsjahr, Parzelle_ID]
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           Bodenbearbeitung_ID: Bodenbearbeitung_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: ERNTE }
+      - type: join
+        source: { section: ERNTE }
         on_key:
           source_key: [Versuchsjahr, Parzelle_ID]
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           Ernte_ID: Ernte_ID
-      # Look up the crop_code using the prioritized coalesce map.
-      - type: lookup_and_add
-        lookup_data_source: { section: KULTUR }
+      # Look up the different crop attributes, map, and coalesce into one column
+      - type: join
+        source: { section: KULTUR }
         on_key: { source_key: Kultur_ID, lookup_key: Kultur_ID }
         select_columns:
-          crop_code:
-            type: coalesce_map
-            maps:
-              - { from: Kultur, map: *crop_name_map_de }
-              - { from: Icc_Code, map: *crop_name_map_icc }
+          Kultur: Kultur
+          Icc_Code: Icc_Code
+      - type: map_values
+        input_map: { x: Kultur }
+        output_header: Kultur
+        map: *crop_name_map_de
+      - type: map_values
+        input_map: { x: Icc_Code }
+        output_header: Icc_Code
+        map: *crop_name_map_icc
+      - type: coalesce_columns
+        output_header: crop_code
+        input_map:
+          x: Kultur
+          y: Icc_Code
 
 
 ## --- SECTION: FIELDS ---
@@ -275,8 +285,8 @@ rules:
       section: FIELDS
     actions:
       # Joins the necessary spatial data from the PARZELLE table.
-      - type: lookup_and_add
-        lookup_data_source: { section: PARZELLE }
+      - type: join
+        source: { section: PARZELLE }
         on_key: { source_key: Parzelle_ID, lookup_key: Parzelle_ID }
         select_columns:
           # Use intermediate names as inputs for downstream aggregation logic
@@ -306,35 +316,46 @@ rules:
       section: GENOTYPES
     actions:
       # Look up the treatment level to process management regime IDs
-      - type: lookup_and_add
-        lookup_data_source: { section: VERSUCHSAUFBAU }
+      - type: join
+        source: { section: VERSUCHSAUFBAU }
         on_key:
           source_key: [Versuchsjahr, Parzelle_ID]
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           Pruefglied_ID: Pruefglied_ID
       # Append crop name through chain join and map crop codes
-      - type: lookup_and_add
-        lookup_data_source: { section: SAAT_PFLANZGUT }
+      - type: join
+        source: { section: SAAT_PFLANZGUT }
         on_key: { source_key: Saat_Pflanzgut_ID, lookup_key: Saat_Pflanzgut_ID }
         select_columns:
           Sorte_ID: Sorte_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: SORTE }
+      - type: join
+        source: { section: SORTE }
         on_key: { source_key: Sorte_ID, lookup_key: Sorte_ID }
         select_columns:
           Sorte_ID: Sorte_ID
           Sorte: Sorte
           Kultur_ID: Kultur_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: KULTUR }
+      # Look up the different crop attributes, map, and coalesce into one column
+      - type: join
+        source: { section: KULTUR }
         on_key: { source_key: Kultur_ID, lookup_key: Kultur_ID }
         select_columns:
-          crop_code:
-            type: coalesce_map
-            maps:
-              - { from: Icc_Code, map: *crop_name_map_icc }
-              - { from: Kultur, map: *crop_name_map_de }
+          Kultur: Kultur
+          Icc_Code: Icc_Code
+      - type: map_values
+        input_map: { x: Kultur }
+        output_header: Kultur
+        map: *crop_name_map_de
+      - type: map_values
+        input_map: { x: Icc_Code }
+        output_header: Icc_Code
+        map: *crop_name_map_icc
+      - type: coalesce_columns
+        output_header: crop_code
+        input_map:
+          x: Kultur
+          y: Icc_Code
  
 
 ## --- SECTION: INITIAL_CONDITIONS ---
@@ -347,8 +368,8 @@ rules:
       section: INITIAL_CONDITIONS
     actions:
       # Look up the treatment level to process management regime IDs
-      - type: lookup_and_add
-        lookup_data_source: { section: VERSUCHSAUFBAU }
+      - type: join
+        source: { section: VERSUCHSAUFBAU }
         on_key:
           source_key: [Versuchsjahr, Kultur_ID]
           lookup_key: [Versuchsjahr, Kultur_ID]
@@ -366,23 +387,23 @@ rules:
         output_header: temp_prev_year
         input_map: { x: Versuchsjahr }
         formula: "x - 1"
-      - type: lookup_and_add
-        lookup_data_source: { section: FRUCHTFOLGE }
+      - type: join
+        source: { section: FRUCHTFOLGE }
         on_key:
           source_key: [temp_prev_year]
           lookup_key: [Versuchsjahr]
-        filter_lookup:
+        filter_rows:
           column: Vorfrucht
           equals: 0
         select_columns:
           temp_last_year_crop: Kultur_ID
       # STEP 3: Get the cover crop from the SAME year
-      - type: lookup_and_add
-        lookup_data_source: { section: FRUCHTFOLGE }
+      - type: join
+        source: { section: FRUCHTFOLGE }
         on_key:
           source_key: [Versuchsjahr]
           lookup_key: [Versuchsjahr]
-        filter_lookup:
+        filter_rows:
           column: Vorfrucht
           equals: 1
         select_columns:
@@ -400,16 +421,26 @@ rules:
         input_map:
           x: temp_final_same_year_crop
           y: temp_last_year_crop
-      # STEP 6: Look up the name of the previous crop
-      - type: lookup_and_add
-        lookup_data_source: { section: KULTUR }
+      # STEP 6: Look up the different crop attributes, map, and coalesce into one column
+      - type: join
+        source: { section: KULTUR }
         on_key: { source_key: previous_crop_id, lookup_key: Kultur_ID }
         select_columns:
-          previous_crop_code:
-            type: coalesce_map
-            maps:
-              - { from: Icc_Code, map: *crop_name_map_icc }
-              - { from: Kultur, map: *crop_name_map_de }
+          Kultur: Kultur
+          Icc_Code: Icc_Code
+      - type: map_values
+        input_map: { x: Kultur }
+        output_header: Kultur
+        map: *crop_name_map_de
+      - type: map_values
+        input_map: { x: Icc_Code }
+        output_header: Icc_Code
+        map: *crop_name_map_icc
+      - type: coalesce_columns
+        output_header: crop_code
+        input_map:
+          x: Kultur
+          y: Icc_Code
 
 
 ## --- SECTION: PLANTINGS ---
@@ -422,27 +453,27 @@ rules:
       section: PLANTINGS
     actions:
       # Look up the treatment level to process management regime IDs
-      - type: lookup_and_add
-        lookup_data_source: { section: VERSUCHSAUFBAU }
+      - type: join
+        source: { section: VERSUCHSAUFBAU }
         on_key:
           source_key: [Versuchsjahr, Parzelle_ID]
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           Pruefglied_ID: Pruefglied_ID
       # Look up and organize comments from the event and the planting stock
-      - type: lookup_and_add
-        lookup_data_source: { section: SAAT_PFLANZGUT }
+      - type: join
+        source: { section: SAAT_PFLANZGUT }
         on_key: { source_key: Saat_Pflanzgut_ID, lookup_key: Saat_Pflanzgut_ID }
         select_columns:
           Sorte_ID: Sorte_ID
           stock_comment_id: Bemerkungen_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           event_comment_text: Bemerkungen
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: stock_comment_id, lookup_key: Bemerkungen_ID }
         select_columns:
           stock_comment_text: Bemerkungen
@@ -454,23 +485,33 @@ rules:
         separator: "; "
         on_missing: proceed
       # Look up and recode crop name via chained join
-      - type: lookup_and_add
-        lookup_data_source: { section: SORTE }
+      - type: join
+        source: { section: SORTE }
         on_key: { source_key: Sorte_ID, lookup_key: Sorte_ID }
         select_columns:
           Kultur_ID: Kultur_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: KULTUR }
+      - type: join
+        source: { section: KULTUR }
         on_key: { source_key: Kultur_ID, lookup_key: Kultur_ID }
         select_columns:
-          crop_code:
-            type: coalesce_map
-            maps:
-              - { from: Icc_Code, map: *crop_name_map_icc }
-              - { from: Kultur, map: *crop_name_map_de }
+          Kultur: Kultur
+          Icc_Code: Icc_Code
+      - type: map_values
+        input_map: { x: Kultur }
+        output_header: Kultur
+        map: *crop_name_map_de
+      - type: map_values
+        input_map: { x: Icc_Code }
+        output_header: Icc_Code
+        map: *crop_name_map_icc
+      - type: coalesce_columns
+        output_header: crop_code
+        input_map:
+          x: Kultur
+          y: Icc_Code
       # Look up and map machinery data
-      - type: lookup_and_add
-        lookup_data_source: { section: TECHNIK }
+      - type: join
+        source: { section: TECHNIK }
         on_key: { source_key: Technik_ID, lookup_key: Technik_ID }
         select_columns:
           temp_technik: Technik
@@ -501,16 +542,16 @@ rules:
       section: IRRIGATIONS
     actions:
       # Look up the general irrigation flag from the main design table.  # TODO: drop??
-      - type: lookup_and_add
-        lookup_data_source: { section: VERSUCHSAUFBAU }
+      - type: join
+        source: { section: VERSUCHSAUFBAU }
         on_key:
           source_key: [Versuchsjahr, Pruefglied_ID, Parzelle_ID, Kultur_ID]
           lookup_key: [Versuchsjahr, Pruefglied_ID, Parzelle_ID, Kultur_ID]
         select_columns:
           Bewaesserung: Bewaesserung
       # Look up the comment text for the irrigation event.
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           Bemerkungen: Bemerkungen
@@ -537,16 +578,16 @@ rules:
           - { header: Phosphor,          synonyms: [P] }
           - { header: Kalium,            synonyms: [K] }
       # Look up the treatment level to process management regime IDs
-      - type: lookup_and_add
-        lookup_data_source: { section: VERSUCHSAUFBAU }
+      - type: join
+        source: { section: VERSUCHSAUFBAU }
         on_key:
           source_key: [Versuchsjahr, Parzelle_ID]
           lookup_key: [Versuchsjahr, Parzelle_ID]
         select_columns:
           Pruefglied_ID: Pruefglied_ID
       # Look up the fertilizer material name and the material's comment ID.
-      - type: lookup_and_add
-        lookup_data_source: { section: DUENGEMITTEL }
+      - type: join
+        source: { section: DUENGEMITTEL }
         on_key: { source_key: Duengemittel_ID, lookup_key: Duengemittel_ID }
         select_columns:
           fertilizer_material:
@@ -556,13 +597,13 @@ rules:
             default_value: *fertilizer_material_default
           temp_material_comment_id: Bemerkungen_ID
       # Look up both event and material comments, then concatenate them.
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_event_comment_text: Bemerkungen
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: temp_material_comment_id, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_material_comment_text: Bemerkungen
@@ -574,8 +615,8 @@ rules:
         separator: "; "
         on_missing: proceed
       # Look up and build the application method description.
-      - type: lookup_and_add
-        lookup_data_source: { section: TECHNIK }
+      - type: join
+        source: { section: TECHNIK }
         on_key: { source_key: Technik_ID, lookup_key: Technik_ID }
         select_columns:
           temp_technik: Technik
@@ -652,8 +693,8 @@ rules:
           - Trockenmasse
           - Trockensubstanz   
       # Look up material name and comments.
-      - type: lookup_and_add
-        lookup_data_source: { section: DUENGEMITTEL }
+      - type: join
+        source: { section: DUENGEMITTEL }
         on_key: { source_key: Duengemittel_ID, lookup_key: Duengemittel_ID }
         select_columns:
           organic_material:
@@ -661,13 +702,13 @@ rules:
             input_map: { x: Name }
             map: *fertilizer_material_map # TODO: Change to an organic material map when needed
           temp_material_comment_id: Bemerkungen_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_event_comment_text: Bemerkungen
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: temp_material_comment_id, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_material_comment_text: Bemerkungen
@@ -679,8 +720,8 @@ rules:
         separator: "; "
         on_missing: proceed
       # Look up and build the application method description.
-      - type: lookup_and_add
-        lookup_data_source: { section: TECHNIK }
+      - type: join
+        source: { section: TECHNIK }
         on_key: { source_key: Technik_ID, lookup_key: Technik_ID }
         select_columns:
           temp_technik: Technik
@@ -737,21 +778,21 @@ rules:
       section: CHEMICALS
     actions:
       # Look up material details and the material's comment ID.
-      - type: lookup_and_add
-        lookup_data_source: { section: PFLANZENSCHUTZMITTEL }
+      - type: join
+        source: { section: PFLANZENSCHUTZMITTEL }
         on_key: { source_key: Pflanzenschutz_Mittel_ID, lookup_key: Pflanzenschutz_Mittel_ID }
         select_columns:
           temp_chemical_name: Name
           temp_active_substance_name: Wirkstoff
           temp_material_comment_id: Bemerkungen_ID
       # Look up and concatenate event and material comments.
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_event_comment_text: Bemerkungen
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: temp_material_comment_id, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_material_comment_text: Bemerkungen
@@ -783,8 +824,8 @@ rules:
           dose_kg: Menge_kg_ha
           dose_l: Menge_l_ha
       # Look up and concatenate the application method.
-      - type: lookup_and_add
-        lookup_data_source: { section: TECHNIK }
+      - type: join
+        source: { section: TECHNIK }
         on_key: { source_key: Technik_ID, lookup_key: Technik_ID }
         select_columns:
           temp_technik: Technik
@@ -814,20 +855,20 @@ rules:
       section: TILLAGE
     actions:  
       # Look up the operation name and its specific comment ID.
-      - type: lookup_and_add
-        lookup_data_source: { section: BODENBEARBEITUNG_MASSNAHME }
+      - type: join
+        source: { section: BODENBEARBEITUNG_MASSNAHME }
         on_key: { source_key: Bodenbearbeitung_Massnahme_ID, lookup_key: Bodenbearbeitung_Massnahme_ID }
         select_columns:
           Massnahme: Massnahme
           temp_operation_comment_id: Bemerkungen_ID
       # Look up and concatenate event and operation comments.
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_event_comment_text: Bemerkungen
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: temp_operation_comment_id, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_operation_comment_text: Bemerkungen
@@ -839,8 +880,8 @@ rules:
         separator: "; "
         on_missing: proceed
       # Look up and concatenate the implement details.
-      - type: lookup_and_add
-        lookup_data_source: { section: TECHNIK }
+      - type: join
+        source: { section: TECHNIK }
         on_key: { source_key: Technik_ID, lookup_key: Technik_ID }
         select_columns:
           temp_technik: Technik
@@ -870,36 +911,47 @@ rules:
       section: HARVESTS
     actions:      
       # Look up and recode crop name via chained join
-      - type: lookup_and_add
-        lookup_data_source: { section: SAAT_PFLANZGUT }
+      - type: join
+        source: { section: SAAT_PFLANZGUT }
         on_key: { source_key: Saat_Pflanzgut_ID, lookup_key: Saat_Pflanzgut_ID }
         select_columns:
           Sorte_ID: Sorte_ID
           Saat_Pflanzgut_ID: Saat_Pflanzgut_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: SORTE }
+      - type: join
+        source: { section: SORTE }
         on_key: { source_key: Sorte_ID, lookup_key: Sorte_ID }
         select_columns:
           Kultur_ID: Kultur_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: KULTUR }
+      # Join crop attributes, map and coalesce
+      - type: join
+        source: { section: KULTUR }
         on_key: { source_key: Kultur_ID, lookup_key: Kultur_ID }
         select_columns:
-          crop_code:
-            type: coalesce_map
-            maps:
-              - { from: Icc_Code, map: *crop_name_map_icc }
-              - { from: Kultur, map: *crop_name_map_de }
+          Kultur: Kultur
+          Icc_Code: Icc_Code
+      - type: map_values
+        input_map: { x: Kultur }
+        output_header: Kultur
+        map: *crop_name_map_de
+      - type: map_values
+        input_map: { x: Icc_Code }
+        output_header: Icc_Code
+        map: *crop_name_map_icc
+      - type: coalesce_columns
+        output_header: crop_code
+        input_map:
+          x: Kultur
+          y: Icc_Code
       # Document cover crop based on information in AUSSAAT and FRUCHTFOLGE tables
-      - type: lookup_and_add
-        lookup_data_source: { section: AUSSAAT }
+      - type: join
+        source: { section: AUSSAAT }
         on_key:
           source_key: [Parzelle_ID, Versuchsjahr, Saat_Pflanzgut_ID]
           lookup_key: [Parzelle_ID, Versuchsjahr, Saat_Pflanzgut_ID]
         select_columns:
           temp_vorfrucht_aussaat: Vorfrucht
-      - type: lookup_and_add
-        lookup_data_source: { section: FRUCHTFOLGE }
+      - type: join
+        source: { section: FRUCHTFOLGE }
         on_key:
           source_key: [Versuchsjahr, Kultur_ID]
           lookup_key: [Versuchsjahr, Kultur_ID]
@@ -917,14 +969,14 @@ rules:
             if_equals: 1
             then_value: 'CO'
       # Look up and join comments
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           Bemerkungen: Bemerkungen
       # Look up and join machinery data
-      - type: lookup_and_add
-        lookup_data_source: { section: TECHNIK }
+      - type: join
+        source: { section: TECHNIK }
         on_key: { source_key: Technik_ID, lookup_key: Technik_ID }
         select_columns:
           temp_technik: Technik
@@ -971,8 +1023,8 @@ rules:
           x: Wind
         formula: "x * 86.4"
       # Look up and join comments.
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           Bemerkungen: Bemerkungen
@@ -1016,8 +1068,8 @@ rules:
       section: SOIL_PROFILE_LAYERS
     actions:
       # Look up the sampling context (plot, year, depth).
-      - type: lookup_and_add
-        lookup_data_source: { section: PROBENAHME_BODEN }
+      - type: join
+        source: { section: PROBENAHME_BODEN }
         on_key: { source_key: Probenahme_Boden_ID, lookup_key: Probenahme_Boden_ID }
         select_columns:
           Versuchsjahr: Versuchsjahr
@@ -1027,13 +1079,13 @@ rules:
           Untergrenze: Untergrenze
           temp_sampling_comment_id: Bemerkungen_ID
       # Look up and concatenate lab and sampling comments.
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_lab_comment_text: Bemerkungen
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: temp_sampling_comment_id, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_sampling_comment_text: Bemerkungen
@@ -1045,8 +1097,8 @@ rules:
         separator: "; "
         on_missing: proceed
       # Perform a chained join to find the treatment_number.
-      - type: lookup_and_add
-        lookup_data_source: { section: PARZELLE }
+      - type: join
+        source: { section: PARZELLE }
         on_key: { source_key: plot_id, lookup_key: Parzelle_ID }
         select_columns:
           Pruefglied_ID: Pruefglied_ID
@@ -1066,21 +1118,21 @@ rules:
       section: SUMMARY
     actions:   
       # Look up and join comments.
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           Bemerkungen: Bemerkungen
       # Chain lookups to get harvest, plot, and treatment context.
-      - type: lookup_and_add
-        lookup_data_source: { section: ERNTE }
+      - type: join
+        source: { section: ERNTE }
         on_key: { source_key: Ernte_ID, lookup_key: Ernte_ID }
         select_columns:
           Parzelle_ID: Parzelle_ID
           Termin: Termin
           Versuchsjahr: Versuchsjahr # Bring in the year
-      - type: lookup_and_add
-        lookup_data_source: { section: PARZELLE }
+      - type: join
+        source: { section: PARZELLE }
         on_key: { source_key: plot_id, lookup_key: Parzelle_ID }
         select_columns:
           Pruefglied_ID: Pruefglied_ID
@@ -1119,21 +1171,21 @@ rules:
       section: TIME_SERIES
     actions:
       # Look up context and comments
-      - type: lookup_and_add
-        lookup_data_source: { section: PROBENAHME_PFLANZEN }
+      - type: join
+        source: { section: PROBENAHME_PFLANZEN }
         on_key: { source_key: Probenahme_Pflanzen_ID, lookup_key: Probenahme_Pflanzen_ID }
         select_columns:
           Versuchsjahr: Versuchsjahr
           Parzelle_ID: Parzelle_ID
           Termin: Termin
           temp_sampling_comment_id: Bemerkungen_ID
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: Bemerkungen_ID, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_lab_comment_text: Bemerkungen
-      - type: lookup_and_add
-        lookup_data_source: { section: BEMERKUNGEN }
+      - type: join
+        source: { section: BEMERKUNGEN }
         on_key: { source_key: temp_sampling_comment_id, lookup_key: Bemerkungen_ID }
         select_columns:
           temp_sampling_comment_text: Bemerkungen
@@ -1145,8 +1197,8 @@ rules:
         separator: "; "
         on_missing: proceed
       # Look up and join treatment IDs
-      - type: lookup_and_add
-        lookup_data_source: { section: PARZELLE }
+      - type: join
+        source: { section: PARZELLE }
         on_key: { source_key: plot_id, lookup_key: Parzelle_ID }
         select_columns:
           Pruefglied_ID: Pruefglied_ID
@@ -1218,19 +1270,19 @@ rules:
           distrib_restrictions: Legal_constrainsts
 
       - type: map_headers
-        target_section: PERSONS
+        target_section: EXPERIMENT_PERSONS
         rename_map:
           experiment_id: Experiment_name
           e_mail_address: Contact_email
 
       - type: map_headers
-        target_section: INSTITUTIONS
+        target_section: EXPERIMENT_INSTITUTIONS
         rename_map:
           experiment_id: Experiment_name
           institute_name: Institutions
 
       - type: map_headers
-        target_section: DOCUMENTS
+        target_section: EXPERIMENT_DOCUMENTS
         rename_map:
           experiment_id: Experiment_name
           digital_object_id: Experiment_doi

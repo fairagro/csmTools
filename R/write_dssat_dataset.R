@@ -16,10 +16,10 @@ write_dssat_dataset <- function(dataset, sol_append = FALSE) {
   # Map dataset names to the corresponding DSSAT write function
   write_funs <- list(
     MANAGEMENT = DSSAT::write_filex,
-    SUMMARY    = DSSAT::write_filea,
-    TIME_SERIES= DSSAT::write_filet,
-    SOIL       = DSSAT::write_sol,
-    WEATHER    = DSSAT::write_wth
+    SUMMARY = DSSAT::write_filea,
+    TIME_SERIES = DSSAT::write_filet,
+    SOIL = write_sol2,
+    WEATHER = write_wth2
   )
   
   # Write files iteratively
