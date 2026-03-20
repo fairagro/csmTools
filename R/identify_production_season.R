@@ -1,32 +1,37 @@
-#' Identify Production Season from Management Dates
+#' Identify production season bounds from management dates
 #'
-#' @description
-#' Finds the earliest and latest dates across a list of crop management data frames to define the production season.
+#' Finds the earliest and latest dates across a list of crop management dataframes to define the production
+#' season, returning either start and end dates or the full daily sequence between them.
 #'
-#' @param mngt_list A list of data frames containing date columns.
-#' @param period Character string. Reserved for future use.
-#' @param output Character string specifying return format: `"bounds"` (default) for start/end dates
-#'   or `"date_sequence"` for the full daily sequence.
+#' @param mngt_list A named list of management data frames, each containing one or more date columns.
+#' @param period Character. Season definition to apply. One of
+#'   \code{"cultivation_season"} (default, spans all management dates) or
+#'   \code{"growing_season"} (spans planting to the last management date, requires a \code{PLANTING_DETAILS}
+#'   element with a \code{PDATE} column).
+#' @param output Character. Return format. One of \code{"bounds"} (default, returns the start and end dates)
+#'   or \code{"date_sequence"} (returns the full daily sequence between them).
+#' @param dssat_date_fmt Logical. If \code{TRUE}, date columns are parsed from DSSAT format (\code{"\%y\%j"}).
+#'   Defaults to \code{FALSE}.
 #'
-#' @return A vector of `Date` objects, either the two boundary dates or the full sequence of dates between them.
+#' @return A vector of \code{Date} objects: the two boundary dates if
+#'   \code{output = "bounds"}, or the full daily sequence if
+#'   \code{output = "date_sequence"}.
 #'
 #' @importFrom purrr reduce map
 #' @importFrom dplyr across bind_rows mutate coalesce select filter distinct pull
 #' @importFrom tidyr everything
 #'
 #' @examples
-#' # Helper function for the example to work
-#' is_date <- function(x) inherits(x, 'Date')
-#'
-#' # Sample list of management data frames
+#' \dontrun{
 #' mngt <- list(
 #'   data.frame(planting_date = as.Date("2023-05-10")),
-#'   data.frame(harvest_date = as.Date("2023-09-25"))
+#'   data.frame(harvest_date  = as.Date("2023-09-25"))
 #' )
 #'
-#' # Get the start and end dates
 #' identify_production_season(mngt)
-#' 
+#' identify_production_season(mngt, output = "date_sequence")
+#' }
+#'
 #' @export
 #'
 

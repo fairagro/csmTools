@@ -1,5 +1,6 @@
 ### Model analysis
-
+library(dplyr)
+library(ggplot2)
 
 # Load data
 sims <- DSSAT::read_output(file_name = file.path("./inst/examples/sciwin", "PlantGro.OUT"))  # simulated

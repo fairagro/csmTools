@@ -40,7 +40,9 @@ library(sf)  # coordinate transformations
 # ---- Read data ----------------------------------------------------------------------------------------------------
 
 # --- Raw data tables ---
-duernast_raw <- read_exp_data(dir = "./data/0_raw", extension = "csv")
+#duernast_raw <- read_exp_data(dir = "./data/0_raw", extension = "csv")
+duernast_raw <- read_exp_data(dir = "./inst/extdata/test_data/lte_duernast/0_raw", extension = "csv")
+
 
 # --- Metadata and raw data variable key ---
 duernast_metadata_url <- "https://maps.bonares.de/finder/resources/dataform/xml/7e526e38-4bf1-492b-b903-d8dbcfd36b6d"
@@ -58,7 +60,7 @@ duernast_key <- meta$variable_key
 wb <- wb_workbook() |> 
   wb_add_worksheet("Sheet1") |> 
   wb_add_data(sheet = "Sheet1", x = duernast_key)
-wb_save(wb, "./data/0_raw/lte_duernast_variableKey.xlsx")
+#wb_save(wb, "./data/0_raw/lte_duernast_variableKey.xlsx")
 
 # --- Combine data and metadata ---
 
@@ -117,6 +119,21 @@ duernast_dssat <- convert_dataset(
   unmatched_code = "default_value"
 )
 
+
+# ---- Manual edits for simulation ----------------------------------------------------------------------------------
+
+df <- duernast_dssat$`2015`$SOIL_LAYERS
+soil_normalized <- normalize_soil_profile(duernast_dssat$`2015`$SOIL_LAYERS)
+tmp <- 
+  build_dssat_file(soil_normalized$data, SOIL_template, DSSAT:::sol_v_fmt())
+ma_path <-
+  "C:/Users/bmlle/Documents/0_DATA/TUM/HEF/FAIRagro/2-UseCases/UC6_IntegratedModeling/Resources/Students/MScThesis_Muhammad Arslan/duernast_exp_modeling/data/2_dssat/TU.SOL"
+write_sol(tmp, ma_path)
+
+##SIMULATE LAYAERS
+
+
+
 # ---- Write data files ---------------------------------------------------------------------------------------------
 
 # --- ICASA format ---
@@ -142,11 +159,10 @@ for (nm in names(duernast_icasa_files)) {
 duernast_dssat <- duernast_dssat[names(duernast_dssat) != "TUDU1801"]
 
 duernast_dssat_fmt <- lapply(duernast_dssat, function(dataset) {
-  compile_model_dataset(
+  compile_dssat_dataset(
     dataset,
-    framework = "dssat",
     sol_append = FALSE,
     write = TRUE, path = "./data/2_dssat",
-    args = list(RSEED = 1234)
+    control_args = list(RSEED = 1234)
   )
 })

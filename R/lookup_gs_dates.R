@@ -1,37 +1,42 @@
 #' Lookup cereal growth stage dates
 #'
-#' Extracts and standardizes growth stage dates from phenological data using specified growth stage scales (e.g., BBCH) and selection rules.
+#' Extracts and standardizes growth stage dates from phenological data using specified growth stage
+#' scales (e.g., BBCH) and selection rules.
 #'
-#' @param data Data frame containing phenological observations including the following columns:
+#' @param data Data frame containing phenological observations output from the `phenocover` tool,
+#'   i.e., daily time series where each day is labeled with a cereal growth stage derived from NDVI
+#'   time-series of a focal cereal canopy 
 #'   \itemize{
 #'     \item `Date` (character or Date) - Observation dates in DD/MM/YYYY format
-#'     \item `Growth_Stage` (character) - Growth stage names (must match the terminology of 'gs_scale' data). See data(growth_stages) for
-#'       details.
+#'     \item `Growth_Stage` (character) - Growth stage names. See data(growth_stages) for terminology.
 #'   }
-#' @param gs_scale (character) Growth stage scale to use.
+#' @param gs_scale Character. Growth stage scale to use.
 #'   \itemize{
 #'     \item `bbch` BBCH scale for cereals
 #'     \item `zadoks` Zadoks scale for cereals
 #'   }
-#' @param gs_codes (numeric) Optional vector of specific growth stage codes to extract. If `NULL` (default), all available codes are used.
-#' @param date_select_rule (character) Rule for selecting dates when multiple observations exist for a growth stage. Options:
+#' @param gs_codes Numeric. Optional vector of specific growth stage codes to extract.
+#'   If `NULL` (default), all available codes are used.
+#' @param date_select_rule Character. Rule for selecting dates when multiple observations exist
+#'   for a growth stage. Options:
 #'   \itemize{
 #'     \item `"median"` (default) - Use median date
 #'     \item `"first"` - Use earliest date
 #'     \item `"last"` - Use latest date
 #'     \item `"all"` - Return all dates
 #'   }
-#' @param output_path (character) Optional path to save output. If `NULL` (default), returns data as a list.
+#' @param output_path Character. Optional path to save output. If `NULL` (default), returns data as a list.
 #'
-#' @details
-#' The function:
-#' 1. Maps growth stages to standardized codes using reference scales
-#' 2. Calculates scaled codes within each growth stage range
-#' 3. Applies selected rule to handle multiple observations
-#' 4. Returns dates in both original and day-of-year formats
+#' @details This function performs the following steps:
+#' \itemize{
+#'   \item Maps growth stages to standardized codes using reference scales
+#'   \item Calculates scaled codes within each growth stage range
+#'   \item Applies selected rule to handle multiple observations
+#'   \item Returns dates in both original and day-of-year formats
+#' }
 #'
-#' Scaled codes are calculated by linearly interpolating between the minimum and maximum codes for each growth stage based on the
-#' relative position of each observation date within the stage's date range.
+#' Scaled codes are calculated by linearly interpolating between the minimum and maximum codes for
+#' each growth stage based on the relative position of each observation date within the stage's date range.
 #'
 #' @return
 #' A named list containing:

@@ -1,195 +1,149 @@
+#' Join data with a lookup table from the dataset
 #'
+#' Performs a database-style join between a data frame and a lookup table,
+#' with support for filtering, column selection, renaming, and multiple join types.
+#'
+#' @param action List containing:
+#'   - `source$section`: Name of the section in dataset containing the lookup table
+#'   - `on_key`: List with `source_key` and `lookup_key` vectors defining join keys
+#'   - `select_columns`: Named list mapping new column names to lookup table column names
+#'   - `join_type`: Type of join ("left", "right", "inner", "full"); defaults to "left"
+#'   - `filter_rows`: Optional list with `column` and `equals` for pre-filtering lookup table
+#' @param df Data frame to join to (the main/source data)
+#' @param dataset List containing data tables, where names correspond to sections
+#'
+#' @return Data frame resulting from the join operation, or the input `df` unchanged
+#'   if the lookup table doesn't exist
+#'
+#' @details
+#' The function:
+#' 1. Extracts and validates the lookup table from the dataset
+#' 2. Optionally filters lookup table rows based on `filter_rows` criteria
+#' 3. Selects only requested columns (plus join keys) from the lookup table
+#' 4. Deduplicates the lookup table
+#' 5. Renames selected columns according to `select_columns` mapping
+#' 6. Executes the specified join type
+#'
+#' Column name collisions between tables trigger a warning and add ".x" and ".y"
+#' suffixes to distinguish them.
 #'
 #' @noRd
 #' 
 
-.action_lookup_and_add <- function(action, df, dataset) {
-
-  lookup_section <- action$lookup_data_source$section
-  cols_to_select <- action$select_columns
-
-  # Identify join keys
-  if (is.null(action$on_key)) {
-    # warning("In 'lookup_and_add', the 'on_key' section defining source and lookup keys must be specified.", call. = FALSE)
-    stop()
+.action_join <- function(action, df, dataset) {
+  
+  lookup_section <- action$source$section
+  lookup_table <- dataset[[lookup_section]]
+  
+  # Return input if lookup table does not exist
+  if (is.null(lookup_table)) {
+    return(df)
   }
+  
+  # --- Setup & validation ---
+  cols_map <- action$select_columns 
+  
+  join_type <- tolower(action$join_type %||% "left")  # left join as default
+  valid_joins <- c("left", "right", "inner", "full")
+  if (!join_type %in% valid_joins) {
+    stop(paste0("Invalid join_type: '", join_type, "'; must be one of: ",
+                paste(valid_joins, collapse = ", ")),
+         call. = FALSE)
+  }
+  
+  # Keys
+  if (is.null(action$on_key)) stop("Missing 'on_key' definition.", call. = FALSE)
   source_keys <- unlist(action$on_key$source_key)
   lookup_keys <- unlist(action$on_key$lookup_key)
-
-  if (all(source_keys %in% names(df))) {
-
-    lookup_table <- dataset[[lookup_section]]
-    if (is.null(lookup_table)) {
-      # warning(paste0("Lookup section '", lookup_section,
-      #                "' not found in the dataset. Creating NA columns and proceeding."),
-      #         call. = FALSE)
-      if (!is.null(cols_to_select)) {
-        for (new_name in names(cols_to_select)) {
-          df[[new_name]] <- NA
-        }
-      }
-    } else {
-
-      # Filter lookup
-      if (!is.null(action$filter_lookup)) {
-        filter_params <- action$filter_lookup
-        col_to_filter <- filter_params$column
-
-        if (!is.null(col_to_filter) && col_to_filter %in% names(lookup_table)) {
-
-          # TODO: add more conditions!
-          if (!is.null(filter_params$equals)) {
-            lookup_table <- dplyr::filter(lookup_table, .data[[col_to_filter]] == filter_params$equals)
-          }
-
-        } else {
-          # warning(paste0("In filter_lookup, column '", col_to_filter, "' not found in lookup section '",
-          #                lookup_section, "'. Filter not applied."),
-          #         call. = FALSE)
-        }
-      }
-
-      # Apply filters to lookup tables
-      if (!is.null(action$filter)) {
-        if (!is.null(action$filter$on_presence_of_columns)) {
-          resolved_cols <- sapply(action$filter$on_presence_of_columns, .resolve_column_name, names(lookup_table))
-          cols_to_check <- unlist(resolved_cols[!sapply(resolved_cols, is.null)])
-
-          if (length(cols_to_check) > 0) {
-            lookup_table <- dplyr::filter(lookup_table, dplyr::if_any(tidyr::all_of(cols_to_check), ~ !is.na(.)))
-          } else {
-            lookup_table <- lookup_table[0, ]
-          }
-        }
-        # Other filter types to add here...
-      }
-
-
-      available_lookup_cols <- names(lookup_table)
-
-      # Critical check: stop if join key missing from lookup table
-      missing_keys <- setdiff(lookup_keys, available_lookup_cols)
-      if (length(missing_keys) > 0) {
-        # warning(paste0("The join key(s) '", paste(missing_keys, collapse = ", "),
-        #                "' were not found in lookup section '", lookup_section, "'. Cannot proceed."),
-        #         call. = FALSE)
-        stop()
-      }
-
-      # Non-critical check: warn if requested data columns are missing
-      values_to_get <- unique(unlist(cols_to_select))
-      missing_select_cols <- setdiff(values_to_get, available_lookup_cols)
-
-      # if (length(missing_select_cols) > 0) {
-      #   warning(paste0("In 'lookup_and_add', the following columns were not found in lookup section '",
-      #                  lookup_section, "' and will be skipped: ",
-      #                  paste(missing_select_cols, collapse = ", ")),
-      #           call. = FALSE)
-      # }
-
-      # Create a "safe" list of columns that are confirmed to exist
-      safe_values_to_get <- intersect(values_to_get, available_lookup_cols)
-      safe_cols_to_keep <- unique(c(lookup_keys, safe_values_to_get))
-
-      lookup_table <- lookup_table %>%
-        dplyr::select(tidyr::all_of(safe_cols_to_keep)) %>%
-        dplyr::distinct(dplyr::across(tidyr::all_of(lookup_keys)), .keep_all = TRUE)
-
-      # Perform the join
-      joined_df <- dplyr::left_join(
-        df,
-        lookup_table,
-        by = stats::setNames(lookup_keys, source_keys)
-      )
-
-      # Create new column based on 'select_columns' param
-      mutated_df <- joined_df
-      if (!is.null(cols_to_select)) {
-        for (new_name in names(cols_to_select)) {
-          col_def <- cols_to_select[[new_name]]
-
-          if (is.character(col_def)) {
-            if (col_def %in% names(mutated_df)) {
-              mutated_df <- dplyr::mutate(mutated_df, !!new_name := .data[[col_def]])
-
-              # Remove original column after renaming to prevent name collisions in subsequent joins
-              is_a_key <- col_def %in% source_keys || col_def %in% lookup_keys
-              if (new_name != col_def && !is_a_key) {
-                mutated_df <- dplyr::select(mutated_df, -tidyr::all_of(col_def))
-              }
-
-            } else {
-              mutated_df <- dplyr::mutate(mutated_df, !!new_name := NA)
-            }
-
-          } else if (is.list(col_def) && !is.null(col_def$type)) {
-
-            if (col_def$type == "static") {
-              # Case B: Static value
-              mutated_df <- dplyr::mutate(mutated_df, !!new_name := col_def$value)
-
-            } else if (col_def$type == "coalesce_map") {
-              # Case C: Prioritized mapping
-              coalesced_vector <- rep(NA_character_, nrow(mutated_df))
-
-              for (map_item in col_def$maps) {
-                source_col_name <- map_item$from
-                map_vector <- unlist(map_item$map)
-
-                if (source_col_name %in% names(mutated_df)) {
-                  source_vector <- as.character(mutated_df[[source_col_name]])
-
-                  mapped_values <- unname(map_vector[source_vector])
-                  coalesced_vector <- dplyr::coalesce(coalesced_vector, mapped_values)
-                }
-              }
-              mutated_df <- dplyr::mutate(mutated_df, !!new_name := coalesced_vector)
-
-            } else if (col_def$type == "map_values") {
-
-              # Case D: Nested value mapping
-              inputs <- .resolve_input_map(col_def$input_map, mutated_df)
-              if (!is.null(inputs)) {
-                source_vector <- inputs[[1]]
-                final_map_vector <- unlist(col_def$map %||% list())
-
-                data_to_map <- as.character(source_vector)
-                mapped_vector <- unname(final_map_vector[data_to_map])
-
-                unmapped_indices <- which(!is.na(source_vector) & is.na(mapped_vector))
-                if (length(unmapped_indices) > 0 && !is.null(col_def$default_value)) {
-                  mapped_vector[unmapped_indices] <- col_def$default_value
-                }
-
-                mutated_df <- dplyr::mutate(mutated_df, !!new_name := mapped_vector)
-              } else {
-                mutated_df <- dplyr::mutate(mutated_df, !!new_name := NA)
-              }
-            }
-          }
-        }
-      }
-
-      # Select final columns and update the working data frame.
-      df <- mutated_df
-    }
-
-  } else {
-
-    # If a key is missing, create NA columns for all expected outputs of this action
-    if (!is.null(cols_to_select)) {
-      for (new_name in names(cols_to_select)) {
-        df[[new_name]] <- NA
-      }
+  
+  if (!all(source_keys %in% names(df))) {
+    stop(paste0("Source keys missing in main data: ",
+                paste(setdiff(source_keys, names(df)), collapse = ", ")),
+         call. = FALSE)
+  }
+  
+  
+  # --- Pre-process lookup table ---
+  ## Filter rows
+  if (!is.null(action$filter_rows)) {
+    f_col <- action$filter_rows$column
+    f_val <- action$filter_rows$equals
+    if (!is.null(f_col) && f_col %in% names(lookup_table)) {
+      lookup_table <- lookup_table[lookup_table[[f_col]] == f_val, ]
     }
   }
+  
+  ## Select columns (only those available in the source)
+  requested_old_names <- unlist(cols_map)
+  requested_new_names <- names(cols_map)
+  
+  available_cols <- intersect(requested_old_names, names(lookup_table))
+  all_cols_needed <- unique(c(lookup_keys, available_cols))
+  
+  lookup_subset <- lookup_table[, all_cols_needed, drop = FALSE]
+  
+  ## Deduplicate
+  lookup_subset <- dplyr::distinct(lookup_subset)
+  
+  # --- Rename columns to target names ---
+  found_indices <- which(requested_old_names %in% available_cols)
+  final_old_names <- requested_old_names[found_indices]
+  final_new_names <- requested_new_names[found_indices]
+  
+  rename_vec <- stats::setNames(final_old_names, final_new_names)
+  if (length(rename_vec) > 0) {
+    lookup_subset <- dplyr::rename(lookup_subset, !!!rename_vec)
+  }
+  
+  # --- Name collision handling ---
+  collisions <- intersect(names(rename_vec), names(df))
+  if (length(collisions) > 0) {
+    warning(paste0(
+      "Join collisions detected: the following columns exist in both data tables: ",
+      paste(collisions, collapse = ", ")
+    ), call. = FALSE)
+    print(df)  #tmp
+  }
+  
+  # ---  Execute join ---
+  join_by <- stats::setNames(lookup_keys, source_keys)
 
-  return(df)
+  joined_df <- switch(
+    join_type,
+    "left"  = dplyr::left_join(df, lookup_subset, by = join_by, suffix = c(".x", ".y")),
+    "right" = dplyr::right_join(df, lookup_subset, by = join_by, suffix = c(".x", ".y")),
+    "inner" = dplyr::inner_join(df, lookup_subset, by = join_by, suffix = c(".x", ".y")),
+    "full"  = dplyr::full_join(df, lookup_subset, by = join_by, suffix = c(".x", ".y"))
+  )
+  
+  return(joined_df)
 }
 
 
+#' Map values from a source column to a new column
 #'
+#' Creates or updates a column by mapping source values to target values using
+#' a lookup dictionary. Handles unmapped values according to specified behavior.
 #'
+#' @param action List containing:
+#'   - `input_map`: Named list identifying the source column
+#'   - `map`: Named list of value mappings (source -> target)
+#'   - `identity`: Optional vector of values that map to themselves
+#'   - `output_header`: Name of the output column
+#'   - `unmatched_code`: How to handle unmapped values ("na", "pass_through", "default_value")
+#'   - `default_value`: Value to use when `unmatched_code = "default_value"`
+#' @param df Data frame to transform
+#' @param ... Additional arguments (unused)
+#'
+#' @return Data frame with the mapped column added or updated
+#'
+#' @details
+#' The mapping dictionary is built by combining `identity` (values mapping to
+#' themselves) and `map` (explicit mappings). Source values are coerced to
+#' character for lookup. Unmapped values are handled according to `unmatched_code`:
+#' - "na": Leave as NA (default)
+#' - "pass_through": Keep original value
+#' - "default_value": Use `default_value`
 #'
 #' @noRd
 #' 
@@ -222,14 +176,6 @@
   
   final_map_vector <- unlist(final_map_list)
   
-  # --- Handle case sensitivity --- Note: drop?
-  # is_case_sensitive <- !is.null(action$case_sensitive) && action$case_sensitive == TRUE
-  # data_to_map <- as.character(source_vector)
-  # if (!is_case_sensitive) {
-  #   names(final_map_vector) <- toupper(names(final_map_vector))
-  #   data_to_map <- toupper(data_to_map)
-  # }
-  
   # --- Apply mapping ---
   data_to_map <- as.character(source_vector)
   mapped_vector <- unname(final_map_vector[data_to_map])
@@ -256,8 +202,19 @@
 }
 
 
+#' Add a column with a constant value
 #'
+#' Creates a new column with a single constant value applied to all rows.
+#' Optionally conditional on the presence of other columns.
 #'
+#' @param action List containing:
+#'   - `output_header`: Name of the new column
+#'   - `value`: The constant value to assign to all rows
+#'   - `condition_on_presence_of`: Optional vector of column names; action only
+#'     executes if at least one of these columns exists in the data frame
+#' @param df Data frame to transform
+#'
+#' @return Data frame with the new column added, or unchanged if condition not met
 #'
 #' @noRd
 #' 
@@ -277,8 +234,35 @@
 }
 
 
+#' Add a column with conditional values
 #'
+#' Creates a new column by evaluating one or more conditions and assigning values
+#' when conditions are met. Multiple condition results can be concatenated.
 #'
+#' @param action List containing:
+#'   - `output_header`: Name of the new column to create
+#'   - `conditions`: List of condition specifications, each containing:
+#'     - `on_column`: Column name (or synonym) to evaluate
+#'     - One operator: `if_equals`, `if_not_equals`, `if_higher_than`, 
+#'       `if_higher_equals`, `if_lower_than`, or `if_lower_equals`
+#'     - `then_value`: Value to assign when condition is met (can be a literal
+#'       value or a column name to pull values from)
+#'   - `separator`: String used to join multiple condition results; defaults to "; "
+#' @param df Data frame to transform
+#'
+#' @return Data frame with the new conditional column added
+#'
+#' @details
+#' For each condition:
+#' 1. The `on_column` is resolved to an actual column name (handles synonyms)
+#' 2. The specified comparison operator is applied
+#' 3. When the condition is TRUE, `then_value` is assigned (either as a literal
+#'    or by looking up the value from another column)
+#' 4. NA values in comparisons are treated as FALSE
+#'
+#' When multiple conditions are specified, rows where multiple conditions are met
+#' have their results concatenated using `separator`. Empty results become NA.
+#' The final column is type-converted to preserve numeric types when appropriate.
 #'
 #' @noRd
 #' 
@@ -351,7 +335,17 @@
 }
 
 
+#' Rename a column
 #'
+#' Renames a single column if it exists in the data frame.
+#'
+#' @param action List containing:
+#'   - `input_name`: Current name of the column to rename
+#'   - `output_name`: New name for the column
+#' @param df Data frame to transform
+#'
+#' @return Data frame with the column renamed, or unchanged if the input column
+#'   doesn't exist
 #'
 #' @noRd
 #' 
@@ -366,7 +360,16 @@
 }
 
 
+#' Delete columns from a data frame
 #'
+#' Removes one or more columns if they exist in the data frame.
+#'
+#' @param action List containing:
+#'   - `columns`: Character vector or list of column names to delete
+#' @param df Data frame to transform
+#'
+#' @return Data frame with specified columns removed, or unchanged if none of
+#'   the specified columns exist
 #'
 #' @noRd
 #' 
@@ -384,7 +387,32 @@
 }
 
 
+#' Apply a rowwise transformation using a formula
 #'
+#' Creates a new column by evaluating a formula expression rowwise using values
+#' from one or more input columns.
+#'
+#' @param action List containing:
+#'   - `input_map`: Named list mapping formula variable names to actual column
+#'     names (or synonyms)
+#'   - `formula`: String expression to evaluate; should reference the names
+#'     defined in `input_map`
+#'   - `output_header`: Name of the new column to create
+#' @param df Data frame to transform
+#'
+#' @return Data frame with the new transformed column added, or unchanged if
+#'   input columns cannot be resolved
+#'
+#' @details
+#' The function:
+#' 1. Resolves all input columns from `input_map` using column name synonyms
+#' 2. Creates a temporary tibble with the resolved columns
+#' 3. Evaluates the formula expression rowwise within this tibble context
+#' 4. Adds the results as a new column to the original data frame
+#'
+#' The formula can use any valid R expression that operates on the mapped
+#' column names, although good practice should privilege universal syntax whenever
+#' possible to allow the portability of the YAML maps.
 #'
 #' @noRd
 #'
@@ -412,11 +440,35 @@
 }
 
 
+#' Concatenate multiple columns into one
 #'
+#' Combines values from multiple columns into a single column, separated by a
+#' specified delimiter. NA values are automatically excluded from concatenation.
+#'
+#' @param action List containing:
+#'   - `output_header`: Name of the new concatenated column
+#'   - `input_map`: Named list mapping local variable names to actual column
+#'     names (or synonyms) to concatenate
+#'   - `separator`: String to use between values (default: `" "`)
+#'   - `on_missing`: How to handle missing input columns; `"skip"` (default)
+#'     returns the data frame unchanged with a warning, `"proceed"` continues
+#'     with available columns
+#' @param df Data frame to transform
+#'
+#' @return Data frame with the new concatenated column added, or unchanged if
+#'   required columns are missing and `on_missing = "skip"`
+#'
+#' @details
+#' The function:
+#' - Resolves all input columns from `input_map` using column name synonyms
+#' - Concatenates non-NA values from each row with the specified separator
+#' - Sets the result to NA if all values in a row are NA or the concatenation
+#'   is empty
+#' - Issues a warning and returns unchanged data if columns are missing and
+#'   `on_missing = "skip"`
 #'
 #' @noRd
 #'
-
 
 .action_concatenate_columns <- function(action, df) {
   
@@ -462,7 +514,29 @@
 }
 
 
+#' Coalesce multiple columns into one
 #'
+#' Creates a new column by selecting the first non-NA value from a set of
+#' input columns for each row.
+#'
+#' @param action List containing:
+#'   - `output_header`: Name of the new coalesced column
+#'   - `input_map`: Named list mapping local variable names to actual column
+#'     names (or synonyms) to coalesce, in priority order
+#' @param df Data frame to transform
+#'
+#' @return Data frame with the new coalesced column added, or unchanged if
+#'   no valid input columns are found
+#'
+#' @details
+#' The function:
+#' - Resolves all input columns from `input_map` using column name synonyms
+#' - For each row, selects the first non-NA value from the resolved columns
+#'   in the order they appear in `input_map`
+#' - Returns the original data frame if no valid input columns can be resolved
+#'
+#' This is useful for consolidating information from multiple potential source
+#' columns into a single standardized column.
 #'
 #' @noRd
 #'
@@ -493,46 +567,65 @@
 }
 
 
+#' Extract a substring using a regular expression
 #'
+#' Creates a new column by extracting a substring from an input column using
+#' a regular expression pattern with capture groups.
+#'
+#' @param action List containing:
+#'   - `input_map`: Named list mapping to the source column name (or synonym)
+#'   - `pattern`: Regular expression pattern with optional capture groups
+#'   - `group_index`: Which capture group to extract (default: `1` for the
+#'     first capture group, `0` for the full match)
+#'   - `output_col`: Name of the new column to create
+#' @param df Data frame to transform
+#'
+#' @return Data frame with the new extracted column added, or unchanged if
+#'   the input column cannot be resolved
+#'
+#' @details
+#' The function:
+#' - Resolves the input column from `input_map` using column name synonyms
+#' - Applies the regex pattern with Perl-compatible regular expressions
+#' - Extracts the specified capture group (1-indexed) from each match
+#' - Sets the result to NA for rows where no match is found or the requested
+#'   group doesn't exist
+#'
+#' Use `group_index = 0` to extract the full match, or `group_index = 1` (default)
+#' to extract the first parenthesized capture group.
 #'
 #' @noRd
 #'
 
 .action_extract_string <- function(action, df) {
   
-  # 1. Resolve Input
+  # --- Resolve input ---
   inputs <- .resolve_input_map(action$input_map, df)
   if (is.null(inputs)) return(df)
   source_vector <- inputs[[1]]
   
-  # 2. Setup Regex
+  # --- Setup regex ---
   pattern <- action$pattern
   # Default to extracting Group 1 (the part in parentheses), 
   # or Group 0 (full match) if specified.
   group_idx <- action$group_index %||% 1 
   
-  # 3. Perform Extraction (Base R)
-  # regexec finds the positions of the match AND the capture groups
+  # --- Perform extraction ---
   match_data <- regexec(pattern, source_vector, perl = TRUE)
-  
-  # regmatches extracts the strings based on those positions
   extracted_list <- regmatches(source_vector, match_data)
   
-  # 4. Flatten Result
-  # If a match is found, extract the specific group index. If not, NA.
+  # --- Flatten result ---
   result_vector <- sapply(seq_along(source_vector), function(i) {
     matches <- extracted_list[[i]]
     if (length(matches) == 0) return(NA_character_) # No match found
-    
-    # Matches is a vector: [Full_Match, Group_1, Group_2, ...]
-    # R uses 1-based indexing, so Group 0 is index 1, Group 1 is index 2.
+
     target_index <- group_idx + 1 
     
     if (target_index > length(matches)) return(NA_character_)
     return(matches[target_index])
   })
   
-  # 5. Assign to Output
+  # --- Assign to output ---
   output_col <- action$output_col
   df[[output_col]] <- result_vector
   
@@ -540,9 +633,24 @@
 }
 
 
-
-
+#' Sort rows by a specified column
 #'
+#' Reorders the rows of a data frame based on the values in a single column,
+#' in ascending order.
+#'
+#' @param action List containing:
+#'   - `by_col`: Name of the column to sort by
+#' @param df Data frame to sort
+#'
+#' @return Data frame with rows sorted by the specified column, or unchanged
+#'   if the column is not found (with a warning)
+#'
+#' @details
+#' The function:
+#' - Sorts rows in ascending order based on the values in `by_col`
+#' - Issues a warning and returns the original data frame if `by_col` doesn't
+#'   exist in the data
+#' - Uses standard `dplyr::arrange()` sorting behavior (NA values sorted to end)
 #'
 #' @noRd
 #' 
@@ -561,10 +669,41 @@
 }
 
 
+#' Filter rows based on column presence or values
 #'
+#' Removes rows from a data frame based on either the presence of non-NA values
+#' in specified columns or matching values in specified columns.
+#'
+#' @param action List that may contain:
+#'   - `on_presence_of_columns`: Character vector of column names (or synonyms).
+#'     Keeps rows with at least one non-NA value in these columns
+#'   - `on_column_values`: List of filter specifications, each containing:
+#'     - `column`: Column name (or synonym) to filter on
+#'     - `values`: Vector of values to match
+#' @param df Data frame to filter
+#'
+#' @return Filtered data frame with rows removed based on the specified criteria
+#'
+#' @details
+#' The function applies two types of filters sequentially:
+#'
+#' **Presence filter** (`on_presence_of_columns`):
+#' - Resolves column names using synonyms
+#' - Keeps only rows where at least one of the specified columns has a non-NA value
+#' - Returns an empty data frame if none of the columns exist
+#'
+#' **Value filter** (`on_column_values`):
+#' - For each filter item, keeps only rows where the specified column's value
+#'   is in the provided list of values
+#' - Resolves column names using synonyms
+#' - Returns an empty data frame if any required column doesn't exist
+#'
+#' Both filters can be used together, in which case they are applied sequentially
+#' (presence filter first, then value filters).
 #'
 #' @noRd
-#' 
+#'
+ 
 
 .action_filter_rows <- function(action, df) {
   
@@ -604,7 +743,29 @@
 }
 
 
+#' Format column values using format strings
 #'
+#' Applies formatting to columns, either overwriting the original or creating
+#' new formatted columns. Supports date formatting (strftime) and numeric
+#' formatting (sprintf).
+#'
+#' @param action List containing:
+#'   - `formats`: Named list where each element is either:
+#'     - A format string (overwrites original column)
+#'     - A list with `format` and `output_header` (creates new column)
+#' @param df Data frame to format
+#'
+#' @return Data frame with formatted column(s)
+#'
+#' @details
+#' \itemize{
+#'   \item **Date formatting**: Format strings containing `%` are treated as strftime
+#'     patterns. Dates are parsed using `lubridate::parse_date_time()` with common
+#'     date formats and forced to UTC.
+#'   \item **Numeric formatting**: Format strings without `%` are treated as sprintf
+#'     patterns applied to numeric values.
+#'   \item Missing columns are silently skipped.
+#' }
 #'
 #' @noRd
 #' 
@@ -657,7 +818,30 @@
 }
 
 
-#' (Action) Convert the data type of one or more columns
+#' Convert column data types
+#'
+#' Converts one or more columns to specified data types, with special handling
+#' for datetime parsing.
+#'
+#' @param action List containing:
+#'   - `columns`: Named list mapping column names (or synonyms) to target types.
+#'     Supported types: "datetime", "numeric", "character"
+#' @param df Data frame to modify
+#'
+#' @return Data frame with converted column types
+#'
+#' @details
+#' \itemize{
+#'   \item **Datetime conversion**: Parses strings using `lubridate::parse_date_time()`
+#'     with common date/datetime formats (YMD, DMY, MDY variants with optional times).
+#'     All datetimes are standardized to UTC.
+#'   \item **Numeric conversion**: Uses `as.numeric()`, which may produce NA for
+#'     non-numeric strings.
+#'   \item **Character conversion**: Uses `as.character()`.
+#'     Column names are resolved using synonym matching. Missing columns trigger
+#'     a warning and are skipped. Missing column map triggers a warning and returns
+#'     the data frame unchanged.
+#' }
 #'
 #' @noRd
 #' 
@@ -713,10 +897,33 @@
 }
 
 
+#' Summarise data by groups
 #'
+#' Groups data by specified columns and applies aggregation functions to
+#' compute summary statistics.
+#'
+#' @param action List containing:
+#'   - `group_by`: Character vector of column names to group by
+#'   - `summarise`: List of aggregation operations, each with:
+#'     - `fun`: Function name ("max", "min", "sum", "mean", "first", "count_rows")
+#'     - `columns`: Column(s) to aggregate (not needed for "count_rows")
+#'     - `output_header`: Name for the aggregated column (optional, defaults to
+#'       original column name)
+#'     - `na_rm`: Whether to remove NAs (optional, defaults to TRUE)
+#' @param df Data frame to summarise
+#'
+#' @return Summarised data frame with one row per group
+#'
+#' @details
+#' Only grouping columns that exist in the data frame are used. If no valid
+#' grouping columns are found, a warning is issued and the original data frame
+#' is returned unchanged.
+#'
+#' For "first", the function returns the first non-NA value in each group.
+#' For "count_rows", the output name defaults to "row_count" if not specified.
 #'
 #' @noRd
-#' 
+#'
 
 .action_summarise <- function(action, df) {
   
@@ -764,7 +971,22 @@
 }
 
 
+#' Replace NA values in columns
 #'
+#' Replaces NA values in specified columns with a given value.
+#'
+#' @param action List containing:
+#'   - `columns`: Character vector of column names to process
+#'   - `with_value`: Value to use in place of NA
+#' @param df Data frame to modify
+#'
+#' @return Data frame with NAs replaced in specified columns
+#'
+#' @details
+#' Only columns that exist in the data frame are processed. Non-existent
+#' columns are silently skipped.
+#'
+#' The replacement value can be of any type compatible with the target columns.
 #'
 #' @noRd
 #' 
@@ -788,7 +1010,20 @@
 }
 
 
+#' Remove duplicate rows
 #'
+#' Removes duplicate rows from the data frame, keeping only the first
+#' occurrence of each unique row.
+#'
+#' @param action List (Note: currently unused, included for consistency with
+#'   action handler interface)
+#' @param df Data frame to deduplicate
+#'
+#' @return Data frame with duplicate rows removed
+#'
+#' @details
+#' Uses `dplyr::distinct()` to identify and remove duplicates based on all
+#' columns. The first occurrence of each unique row combination is retained.
 #'
 #' @noRd
 #' 
@@ -798,7 +1033,32 @@
 }
 
 
+#' Apply a custom function to create a new column
 #'
+#' Calls a registered custom function and stores its result in a new column.
+#'
+#' @param action List containing:
+#'   - `function_name`: Name of the custom function (must be registered in
+#'     `.custom_functions`)
+#'   - `output_header`: Name for the output column
+#'   - `params`: Named list of static parameters to pass to the function (optional)
+#'   - `input_map`: Named list mapping parameter names to column specifications
+#'     (optional)
+#' @param df Data frame to process
+#'
+#' @return Data frame with new column containing function results
+#'
+#' @details
+#' The function must be registered in the `.custom_functions` registry before
+#' use. If the function is not found, an error is thrown.
+#'
+#' Arguments are constructed by combining static parameters (`params`) with
+#' resolved column data from `input_map`. If `input_map` resolution fails
+#' (e.g., required columns don't exist), the original data frame is returned
+#' unchanged.
+#'
+#' The custom function should return a vector of the same length as the number
+#' of rows in the data frame.
 #'
 #' @noRd
 #' 
@@ -838,53 +1098,120 @@
 }
 
 
+#' Pivot data from long to wide format
 #'
+#' Transforms data from long to wide format by spreading values from one or
+#' more columns into multiple columns based on names from another column.
+#'
+#' @param action List containing:
+#'   - `input_map`: Named list with:
+#'     - `names_from`: Column specification for the column whose values will
+#'       become new column names
+#'     - `values_from`: Column specification(s) for the column(s) whose values
+#'       will populate the new columns (can be a list or character vector)
+#'   - `keep_only_pivot_cols`: Logical. If TRUE, only the pivot columns are
+#'     retained; otherwise all non-pivoted columns are kept as ID columns
+#'     (optional, default FALSE)
+#' @param df Data frame to pivot
+#'
+#' @return Data frame in wide format
+#'
+#' @details
+#' Uses `tidyr::pivot_wider()` to reshape the data. The `names_from` column
+#' provides the names for new columns, and `values_from` column(s) provide
+#' the values to fill them.
+#'
+#' If `keep_only_pivot_cols` is FALSE (default), all columns not involved in
+#' the pivot are retained as ID columns. If TRUE, only the pivoted columns
+#' appear in the result.
+#'
+#' If required columns cannot be resolved, the original data frame is returned
+#' unchanged.
 #'
 #' @noRd
 #'
 
 .action_pivot_wider <- function(action, df) {
   
-  # Resolve columns
   map <- action$input_map
-  col_names_source <- .resolve_column_name(map$names_from, names(df))
-  col_values_source <- .resolve_column_name(map$values_from, names(df))
   
-  if (is.null(col_names_source) || is.null(col_values_source)) {
-    warning("pivot_wider: could not find specified columns.")
+  # --- Resolve 'names_from' ---
+  col_names_source <- .resolve_column_name(map$names_from, names(df))
+  
+  # --- Resolve 'values_from' ---
+  if (is.list(map$values_from) || is.character(map$values_from)) {
+    resolved_vals <- lapply(map$values_from, function(x) {
+      .resolve_column_name(x, names(df))
+    })
+    col_values_source <- unlist(resolved_vals)
+  } else {
+    col_values_source <- NULL
+  }
+  
+  # Validation
+  if (is.null(col_names_source) || length(col_values_source) == 0) {
+    # warning("pivot_wider: could not find specified columns.")
     return(df)
   }
   
-  # Enforce other column preservation/selection based on config
+  # --- Handle ID columns ---
   keep_only <- isTRUE(action$keep_only_pivot_cols)
   
   if (keep_only) {
-    df <- df[, c(col_names_source, col_values_source), drop = FALSE]
     id_cols_arg <- NULL
   } else {
-    # Keep ID columns (default)
     id_cols_arg <- setdiff(names(df), c(col_names_source, col_values_source))
   }
   
+  # --- Perform pivot ---
   df_pivoted <- tidyr::pivot_wider(
     data = df,
-    id_cols = if(keep_only) NULL else all_of(id_cols_arg),
-    names_from = all_of(col_names_source),
-    values_from = all_of(col_values_source)
+    id_cols = if(keep_only) NULL else dplyr::all_of(id_cols_arg),
+    names_from = dplyr::all_of(col_names_source),
+    values_from = dplyr::all_of(col_values_source)
   )
   
   return(df_pivoted)
 }
 
 
+#' Pivot data from wide to long format
 #'
+#' Transforms data from wide to long format by gathering multiple columns into
+#' two columns: one for the original column names and one for their values.
+#'
+#' @param action List containing:
+#'   - `columns_to_pivot`: Vector of column specifications to pivot into long
+#'     format
+#'   - `output_map`: Named list with:
+#'     - `names_to`: Name for the output column that will contain the original
+#'       column names (optional, default "name")
+#'     - `values_to`: Name for the output column that will contain the values
+#'       (optional, default "value")
+#'   - `values_drop_na`: Logical. If TRUE, rows with NA values are dropped
+#'     (optional, default FALSE)
+#' @param df Data frame to pivot
+#'
+#' @return Data frame in long format
+#'
+#' @details
+#' Uses `tidyr::pivot_longer()` to reshape the data. Each specified column is
+#' converted into multiple rows, with the column name stored in the `names_to`
+#' column and the value stored in the `values_to` column.
+#'
+#' Column specifications are resolved to handle synonyms. If no matching
+#' columns are found, a warning is issued and the original data frame is
+#' returned unchanged.
+#'
+#' When `values_drop_na` is TRUE, rows where the value column contains NA are
+#' automatically removed from the result.
 #'
 #' @noRd
 #' 
 
 .action_pivot_longer <- function(action, df) {
   
-  # Resolve columns
+  # --- Resolve columns ---
   targets_raw <- action$columns_to_pivot
   real_cols_to_pivot <- unlist(lapply(targets_raw, function(x) {
     .resolve_column_name(x, names(df))
@@ -895,11 +1222,11 @@
     return(df)
   }
   
-  # Set output names
+  # --- Set output names ---
   name_dest <- action$output_map$names_to %||% "name"
   value_dest <- action$output_map$values_to %||% "value"
   
-  # Enforce NA handling
+  # --- Enforce NA handling ---
   drop_na <- isTRUE(action$values_drop_na)
   
   df_long <- tidyr::pivot_longer(

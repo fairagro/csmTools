@@ -1,0 +1,89 @@
+*SOIL ORGANIC N BALANCE
+
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 17:32:35
+
+*RUN   1        : No N                      WHAPS048 HWOC2501    1
+ MODEL          : WHAPS048 - Wheat
+ EXPERIMENT     : HWOC2501 WH
+ DATA PATH      : C:/DSSAT48/Wheat/
+ TREATMENT  1   : No N                      WHAPS048
+  
+
+
+!                                        INITIAL Year/Doy      FINAL Year/Doy
+!                                                2024/296            2025/221
+!SOIL N BALANCE                                 -----------kg N/ha-----------
+
+!   Soil Humus N                                 10484.16            10456.34
+!   Soil Litter N                                   50.80               14.03
+!   N in Surface Residue                             0.00                0.00
+
+!   Added to / Removed from Soil:
+!   N in Harvest Residues from Previous Crop         0.00
+!   N from Organic Applications                      0.00
+!   N from senesced plant matter                     0.00
+!   N immobilized                                    0.00
+!   N mineralized                                                       64.60
+
+!   Total N balance                              10534.96            10534.96
+!   Balance                                                             0.000
+
+!===============================================================================
+
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 17:32:35
+
+*RUN   2        : 147 kg[N]/ha - broadcast  WHAPS048 HWOC2501    3
+ MODEL          : WHAPS048 - Wheat
+ EXPERIMENT     : HWOC2501 WH
+ DATA PATH      : C:/DSSAT48/Wheat/
+ TREATMENT  3   : 147 kg[N]/ha - broadcast  WHAPS048
+  
+
+
+!                                        INITIAL Year/Doy      FINAL Year/Doy
+!                                                2024/296            2025/221
+!SOIL N BALANCE                                 -----------kg N/ha-----------
+
+!   Soil Humus N                                 10484.16            10465.51
+!   Soil Litter N                                   50.80               20.05
+!   N in Surface Residue                             0.00                0.00
+
+!   Added to / Removed from Soil:
+!   N in Harvest Residues from Previous Crop         0.00
+!   N from Organic Applications                      0.00
+!   N from senesced plant matter                     0.00
+!   N immobilized                                    0.00
+!   N mineralized                                                       49.41
+
+!   Total N balance                              10534.96            10534.96
+!   Balance                                                            -0.001
+
+!===============================================================================
+
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 17:32:35
+
+*RUN   3        : 180 kg[N]/ha - broadcast  WHAPS048 HWOC2501    7
+ MODEL          : WHAPS048 - Wheat
+ EXPERIMENT     : HWOC2501 WH
+ DATA PATH      : C:/DSSAT48/Wheat/
+ TREATMENT  7   : 180 kg[N]/ha - broadcast  WHAPS048
+  
+
+
+!                                        INITIAL Year/Doy      FINAL Year/Doy
+!                                                2024/296            2025/221
+!SOIL N BALANCE                                 -----------kg N/ha-----------
+
+!   Soil Humus N                                 10484.16            10466.33
+!   Soil Litter N                                   50.80               21.00
+!   N in Surface Residue                             0.00                0.00
+
+!   Added to / Removed from Soil:
+!   N in Harvest Residues from Previous Crop         0.00
+!   N from Organic Applications                      0.00
+!   N from senesced plant matter                     0.00
+!   N immobilized                                    0.00
+!   N mineralized                                                       47.63
+
+!   Total N balance                              10534.96            10534.96
+!   Balance                                                            -0.001

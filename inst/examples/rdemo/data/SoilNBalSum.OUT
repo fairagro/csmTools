@@ -1,0 +1,12 @@
+
+*SOIL N BALANCE - CENTURY ROUTINES
+
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 17:32:35
+
+!                              |--------------- Initial N State Variables ----------------|----------------- Final N State Variables -----------------|------------- N Additions -------------|---------------- N Subtractions -----------------|--Mineralization---|----- Seasonal Balance -----|
+!                              |----------------- Organic ----------------------|         |------------------ Organic ----------------------|         |  Harvest   Applied                    |              Tile-     Plant     N gas     Flood|   Miner-    Immob-|                            |
+!                              | Surface      SOM1      SOM2      SOM3    Litter     Inorg|  Surface      SOM1      SOM2      SOM3    Litter     Inorg|  Residue   Residue  Fertiliz   Senesed|  Leached   drained    Uptake    Losses    Losses|   alized    ilized|Inorganic   Organic   Overall
+@Run FILEX               TN CR     SN0Di    S1NTDi    S2NTDi    S3NTDi     LNTDi     NIADi      SN0D     S1NTD     S2NTD     S3NTD      LNTD      NIAD      HRNH     RESNC      NICM     SNNTC      NLCM      TDFC      NUCM     NGasC      RNRO      NMNC      NIMC    InNBal   OrgNBal     SNBAL
+   1 HWOC2501.WHX         1 WH      0.00      0.00  10484.16      0.00     50.80     54.97      0.00      0.00  10456.34      0.00     14.03     59.64      0.00      0.00      0.00      0.00     10.30      0.00     49.49      0.12      0.00     64.60      0.00     -0.00      0.00     -0.00
+   2 HWOC2501.WHX         3 WH      0.00      0.00  10484.16      0.00     50.80     54.97      0.00      0.00  10465.51      0.00     20.05     52.90      0.00      0.00    147.00      0.00     10.30      0.00    186.49      1.68      0.00     49.41      0.00     -0.00     -0.00     -0.00
+   3 HWOC2501.WHX         7 WH      0.00      0.00  10484.16      0.00     50.80     54.97      0.00      0.00  10466.33      0.00     21.00     53.60      0.00      0.00    180.00      0.00     10.30      0.00    216.90      1.80      0.00     47.63      0.00     -0.00     -0.00     -0.00

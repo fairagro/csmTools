@@ -1,5 +1,43 @@
-#' (Internal) Run Phase 2 Formatting Rules
+#' Apply mapping rules to transform input data to output data model
+#'
+#' Executes a two-phase transformation process: first applying all data transformation
+#' rules in sequence, then applying a final schema rule to select and rename columns
+#' according to the target data model.
+#'
+#' @param input_data A list of data frames in the source data model
+#' @param rules A list of mapping rules read from a YAML mapping file, each containing:
+#'   \itemize{
+#'     \item `mapping_uid`: Unique identifier for the rule (always "999" for schema rule)
+#'     \item `source$section`: Name of the source table
+#'     \item `target$section`: Name of the target table
+#'     \item `actions`: List of transformation actions to apply
+#'     \item `order`: Optional execution order (default: 0 for independent rules)
+#'   }
+#' @param ... Additional arguments passed to `process_actions()`
+#'
+#' @return A list of data frames in the target data model format, with columns selected
+#'   and renamed according to the schema rule (if present).
+#'
+#' @details
+#' **Phase 1: Transformation Rules**
+#' \itemize{
+#'   \item Rules are sorted by their `order` field (rules without order = 0 run first)
+#'   \item Each rule processes its source table through a series of actions listed sequentially in the YAML map
+#'   \item Rules can be chained: later rules (order n+1) can use output from earlier rules (order n) as input
+#'   \item For lookup operations, both input and intermediate output data are available
+#'   \item Results are consolidated into output tables, combining multiple rules if needed
+#' }
+#'
+#' **Phase 2: Schema Application**
+#' \itemize{
+#'   \item A special rule with `mapping_uid = "999"` defines the final schema
+#'   \item Uses `map_headers` actions to select and rename columns
+#'   \item Only columns specified in the schema are included in the final output
+#'   \item If no schema rule exists, transformed data is returned as-is
+#' }
+#'
 #' @noRd
+#'
 
 .apply_mapping_rules <- function(input_data, rules, ...) {
   
@@ -21,6 +59,10 @@
     output_data <- input_data
   } else {
     for (rule in transformation_rules) {
+      
+      # Debugging helper
+      print(rule$mapping_uid)
+      
       # If source exists in intermediate output data, use as input (= chained rules)
       if (!is.null(rule$source$section) && rule$source$section %in% names(output_data)) {
         input_df <- output_data[[rule$source$section]]
@@ -55,7 +97,7 @@
       )
     }
   }
-  
+
   # =================================================================
   # PHASE 2: Final schema application select and rename columns
   # =================================================================
@@ -97,23 +139,32 @@
 }
 
 
-#' Update a Section in the Output Dataset
+#' Update output data by adding or merging transformed data into a target section
 #'
-#' @description
-#' Intelligently merges or adds a data frame to a target section within the main output list.
+#' Consolidates data from multiple mapping rules into a single output table. If the
+#' target section doesn't exist, creates it. If it exists, performs an intelligent
+#' merge based on common columns.
+#'
+#' @param mapping_uid Character string identifying the current mapping rule (used for warnings)
+#' @param output_data A list of data frames representing the current output state
+#' @param target_section Character string naming the target table to update
+#' @param data_to_add A data frame containing the new data to add or merge
+#'
+#' @return The updated `output_data` list with the target section modified
 #'
 #' @details
-#' This function updates the main `output_data` list. If the `target_section` does not yet exist, it is created.
-#' If it does exist, the function joins the new data (`data_to_add`) with the existing data. The join is performed on all
-#' common columns. If no common columns exist, a column-bind (`bind_cols`) is performed instead. It also suppresses and
-#' replaces the default `dplyr` many-to-many join warning with a more informative message.
+#' The function uses three strategies depending on the state of the target section:
+#' \itemize{
+#'   \item **New section**: If `target_section` doesn't exist, creates it with `data_to_add`
+#'   \item **Merge with common keys**: If common columns exist between the existing data
+#'     and new data, performs a `full_join` to combine all rows
+#'   \item **Append columns**: If no common columns exist, uses `bind_cols` to add
+#'     new columns side-by-side
+#' }
 #'
-#' @param mapping_uid The UID of the current mapping rule, used for context in warnings.
-#' @param output_data The list object representing the entire output dataset.
-#' @param target_section The character name of the list element (data frame) to update.
-#' @param data_to_add The data frame to be added or merged.
-#'
-#' @return The `output_data` list with the target section updated.
+#' Many-to-many join warnings are intercepted and replaced with a more informative
+#' message indicating the rule and section where this occurred, as this situation is
+#' often expected (e.g., when multiple management events relate to the same treatment).
 #'
 #' @noRd
 #'

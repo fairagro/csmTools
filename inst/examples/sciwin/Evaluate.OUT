@@ -1,4 +1,4 @@
-*EVALUATION : HWOC2501WH                                                              DSSAT Cropping System Model Ver. 4.8.2.000   -release    JAN 19, 2026; 13:40:14
+*EVALUATION : HWOC2501WH                                                              DSSAT Cropping System Model Ver. 4.8.2.000   -release    JAN 23, 2026; 14:20:40
 
 @RUN EXCODE        TN RN CR   ADAPS   ADAPM   PD1PS   PD1PM   PDFPS   PDFPM   MDAPS   MDAPM   HWAMS   HWAMM   PWAMS   PWAMM   H#AMS   H#AMM   HWUMS   HWUMM   H#UMS   H#UMM   CWAMS   CWAMM   BWAMS   BWAMM   LAIXS   LAIXM   HIAMS   HIAMM   THAMS   THAMM   GNAMS   GNAMM   CNAMS   CNAMM   SNAMS   SNAMM   GN%MS   GN%MM   CWAAS   CWAAM   CNAAS   CNAAM   L#SMS   L#SMM   EDAPS   EDAPM
    1 HWOC2501WH     1  1 WH     221     225     -99     -99     -99     -99     266     260    1820     -99     -99     -99    4908     -99    37.1     -99    12.9     -99    4003     -99       0     -99    0.86     -99   0.455     -99     -99     -99      28     -99      36     -99       0     -99     1.5     -99       2     -99      33     -99    0.00     -99       5       6

@@ -3,7 +3,9 @@
 # ================================================================
 
 bonares-lte_de:
-  # --- Definitional Properties ---
+  # BonaRes LTE is a data model used to annotate single long-term experiments
+  # It includes global data sheets on environment data (e.g., weather) with no explicit links
+  # to the experiment --> Experiment_name is used as a master key
   master_key: "experiment"
   key_source_table: "METADATA" 
   design_keys:
@@ -57,7 +59,6 @@ icasa:
   shared_tables:
     - PROFILE_METADATA
     - SOIL_GENERAL
-    - PROFILE_METADATA
     - SOIL_PROFILE
     - WEATHER_GENERAL
     - STATION_METADATA
@@ -69,8 +70,8 @@ icasa:
     - INSTITUTIONS
     - DOCUMENTS
     - TREATMENTS
-    - GENOTYPES
     - FIELDS
+    - GENOTYPES
     - PLANTINGS
     - IRRIGATIONS
     - FERTILIZERS
@@ -98,27 +99,18 @@ icasa:
 # ================================================================
 
 icasa-agro:
-  master_key: "experiment"
-  key_source_table: "EXPERIMENTS"
-  design_keys:
-    experiment: "experiment_id"
-    year: "experiment_year"
-    treatment: "treatment_number"
-    plot: "plot_id"
-  shared_tables:
-    - FIELDS
-    - GENOTYPES
-    - SOILS
-    - WEATHER
-    - WEATHER_MONTHLY
-    - WEATHER_DAILY
+  # ICASA-agro is used to annotate multiple experiments
+  # No data sheets is truly global: link between experiment and external resources are explicitly
+  # defined with join keys --> no master key
+  master_key: none
   data_tables:
     - EXPERIMENTS
     - INSTITUTIONS
     - PERSONS
     - DOCUMENTS
-    - TREATMENTS
+    - FIELDS
     - CROP_SEASON
+    - GENOTYPES
     - TILLAGE
     - TILLAGE_EVENTS
     - CROP_RESIDUES
@@ -142,14 +134,14 @@ icasa-agro:
     - PLOTS
     - PLOT_SETUP
     - PLANT_DATA
-    - SOIL_DATA
-    - ENV_DATA
     - PLANT_SM_GROWTH
     - PLANT_SM_DEV
     - PLANT_SM_NUTRIENTS
     - PLANT_TS_GROWTH_DEV
     - PLANT_TS_NUTRIENTS
     - PLANT_TS_PESTS_DISEASES
+    - SOILS
+    - SOIL_DATA
     - SOIL_LYR_PHYSICAL
     - SOIL_LYR_CHEMICAL
     - SOIL_LYR_TEMPERATURE
@@ -161,9 +153,13 @@ icasa-agro:
     - SOIL_LYR_CARBON
     - SOIL_LYR_WATER
     - SOIL_LYR_ROOTS
+    - ENV_DATA
     - ENV_SM_WATER_DYNAMICS
     - ENV_TS_WATER_DYNAMICS
     - ENV_TS_PLANT_SOIL_ATMOS
+    - WEATHER
+    - WEATHER_MONTHLY
+    - WEATHER_DAILY
   dict_source: null
 
 

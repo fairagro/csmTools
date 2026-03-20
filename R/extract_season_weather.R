@@ -1,16 +1,29 @@
-#' Split Weather Data by Cultivation Year
+#' Extract and split weather data for the cultivation season
 #'
-#' Filters weather tables within an experiment list (dssat_exp) 
-#' for the relevant cultivation season years, then returns 
-#' a flattened list of data frames, one for each year, 
-#' with the full year as a suffix in the name.
+#' Filters weather tables in a DSSAT experiment list to the years spanned by the
+#' cultivation season, splits them by year, computes yearly weather statistics, and
+#' merges those statistics into the metadata tables. The original weather tables are
+#' replaced by the split, annotated versions in the returned list.
 #'
-#' @param dssat_exp A list element representing a single experiment, 
-#'            containing weather tables (names matching "WEATHER") 
-#'            and data needed by identify_production_season.
+#' @param dssat_exp A named list representing a DSSAT experiment, containing one or more
+#'   tables whose names include `"WEATHER"` (expected to contain `"DAILY"` and `"METADATA"`
+#'   sub-tables) alongside other experiment components.
 #'
-#' @return A flat list of weather data frames (e.g., 
-#'         $WEATHER_DAILY_2023, $WEATHER_DAILY_2024).
+#' @return A named list structured as `dssat_exp`, with the original `"WEATHER"` tables
+#'   removed and replaced by:
+#'   \itemize{
+#'     \item Per-year `METADATA` tables (with yearly weather statistics joined in)
+#'     \item Per-year `DAILY` tables
+#'   }
+#'   Table names are suffixed with the full 4-digit year (e.g., `"WEATHER_DAILY_2012"`).
+#'
+#' @details
+#' The cultivation season bounds are determined by [identify_production_season()] using
+#' `period = "cultivation_season"`. Weather data is filtered to years overlapping that
+#' season using the 2-digit `YEAR` column present in DSSAT weather tables.
+#'
+#' Yearly statistics are computed by [calculate_wth_stats()] and joined to each
+#' corresponding metadata table on all shared columns.
 #'
 #' @noRd
 #' 

@@ -1,18 +1,20 @@
 #' Apply a DSSAT template to a data.frame
 #'
-#' Internal helper to format a DSSAT-terminology data.frame based on a DSSAT template.
+#' Internal helper to format a DSSAT-terminology dataframe based on a DSSAT table template.
 #'
-#' This function performs several key formatting steps:
-#' 1.  Collapses list-columns (e.g., for composite DSSAT sections) as defined in the template.
-#' 2  Coerces all matching columns to the data types specified in the template.
-#' 3.  Orders columns according to the template, leaving any extra (non-DSSAT) attributes at the end.
-#' 4.  Fills `NULL` list-columns with `NA` for consistent structure.
-#' 5.  Converts the final object to a 'DSSAT_tbl' and reattaches original custom attributes.
+#' @param df A dataframe to be formatted.
+#' @param template A template dataframe specifying the desired structure and column types.
+#' 
+#' @details This function performs the following formatting steps:
+#' \itemize{
+#'   \item Collapses list-columns (e.g., for composite DSSAT sections) as defined in the template.
+#'   \item Coerces all matching columns to the data types specified in the template.
+#'   \item Orders columns according to the template, leaving any extra (non-DSSAT) attributes at the end.
+#'   \item Fills \code{NULL} list-columns with \code{NA} for consistent structure.
+#'   \item Converts the final object to a \code{DSSAT_tbl} and reattaches original custom attributes.
+#' }
 #'
-#' @param df A data.frame to be formatted.
-#' @param template A template data.frame specifying the desired structure and column types.
-#'
-#' @return A formatted 'DSSAT_tbl'.
+#' @return A formatted \code{DSSAT_tbl}.
 #'
 #' @noRd
 #' 

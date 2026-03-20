@@ -45,6 +45,7 @@ convert_dataset <- function(dataset, input_model, output_model, output_path = NU
   config <- .config_input(dataset, input_model, output_model)
   data_config <- config$data
   data_map <- config$map
+  
   rules <- data_map$rules
   
   # Check if mapping is implemented
@@ -79,18 +80,40 @@ convert_dataset <- function(dataset, input_model, output_model, output_path = NU
   mapped_data <- lapply(mapped_data, function(df) unique(df))
   
   # --- Apply post-processing logic, if applicable ---
-  dataset_std <- standardize_data(dataset = mapped_data, data_model = output_model)
+  mapped_data_std <- standardize_data(dataset = mapped_data, data_model = output_model)
   
   # --- Deduplicate and drop NAs ---
-  mapped_data_clean <- lapply(mapped_data, remove_all_na_cols)  # TODO: fix deleting exp_year if empty
+  mapped_data_std_clean <- lapply(mapped_data_std, remove_all_na_cols)  # TODO: fix deleting exp_year if empty
   
   # --- Return output ---
-  out <- export_output(dataset_std, output_path)
+  out <- export_output(mapped_data_std_clean, output_path)
   return(out)
 }
 
 
+#' Load and prepare configuration for data model conversion
 #'
+#' Retrieves configuration files for both input and output data models, loads the
+#' appropriate mapping file, and applies master key logic if defined in the input model.
+#'
+#' @param dataset A list of data frames to be converted
+#' @param input_model Character string naming the source data model (e.g., "bonares-lte_de")
+#' @param output_model Character string naming the target data model (e.g., "icasa")
+#'
+#' @return A list with two elements:
+#'   \itemize{
+#'     \item `data`: The input dataset, potentially modified with master key applied
+#'     \item `map`: The mapping rules loaded from the YAML mapping file
+#'   }
+#'
+#' @details
+#' This function performs three main steps:
+#' 1. Loads the main data model configurations from `datamodels.yaml`
+#' 2. Identifies and loads the appropriate mapping file for the input-to-output conversion
+#' 3. If the input model defines a master key, applies it across all tables in the dataset
+#'
+#' The master key is a column that should be present across all tables in a data model
+#' to enable proper relational structure.
 #'
 #' @noRd
 #'
@@ -124,22 +147,36 @@ convert_dataset <- function(dataset, input_model, output_model, output_path = NU
 }
 
 
-# ' Propagate the Master Key Through a Dataset
+#' Apply master key across all tables in a dataset
 #'
-#' @description
-#' A pre-processing step that intelligently links all tables in a dataset by ensuring the master key is present.
+#' Propagates a master key column from a source table to all other tables in the dataset,
+#' ensuring relational integrity. Handles both single and multi-experiment scenarios.
+#'
+#' @param dataset A list of data frames representing the input dataset
+#' @param model_config A list containing the data model configuration with elements:
+#'   \itemize{
+#'     \item `master_key`: Conceptual name of the master key
+#'     \item `key_source_table`: Name of the table containing the master key values
+#'     \item `design_keys`: Named list mapping conceptual keys to actual column names
+#'     \item `shared_tables`: Vector of table names that should be duplicated for each key value
+#'   }
+#'
+#' @return The dataset with the master key propagated to all tables and positioned as
+#'   the first column in each table that contains it.
 #'
 #' @details
-#' The function's behavior depends on the number of unique master keys found:
-#' - **Single-Experiment:** For tables missing the key, it adds a column containing the single unique master key value.
-#' - **Multi-Experiment:** For "shared" tables (e.g., `WEATHER`, `SOIL`), it performs a `cross_join` to link every
-#'    master key to the shared data.
+#' The function handles three scenarios:
+#' \itemize{
+#'   \item **Single experiment**: If only one unique key value exists, it's added to all
+#'     tables that don't already have it
+#'   \item **Multiple experiments with shared tables**: Tables marked as "shared" are
+#'     cross-joined with all key values to create copies for each experiment
+#'   \item **Tables with existing keys**: Left unchanged to preserve existing relationships
+#' }
 #'
-#' @param dataset The input dataset as a list of data frames.
-#' @param model_config The configuration block for the input data model.
+#' If master key configuration is incomplete or the source table is missing, the function
+#' issues a warning and returns the dataset unchanged.
 #'
-#' @return The dataset with the master key propagated to all relevant tables.
-#' 
 #' @noRd
 #'
 

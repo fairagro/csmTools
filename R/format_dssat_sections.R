@@ -1,8 +1,30 @@
+#' Format a DSSAT dataset into output-ready section objects
 #'
-#' @importFrom purrr compact
+#' Processes a parsed DSSAT dataset list into formatted, output-ready objects for each
+#' section (management, observed data, soil, weather). Each section is handled by a
+#' dedicated internal formatter, and all outputs are annotated with a processing signature.
 #'
-#' @export
+#' @param dataset A named list representing a parsed DSSAT experiment. Expected to contain
+#'   some or all of: `"MANAGEMENT"`, `"SUMMARY"`, `"TIME_SERIES"`, `"SOIL_META"`,
+#'   `"SOIL_GENERAL"`, `"SOIL_LAYERS"`, and one or more `"WEATHER_*"` tables suffixed
+#'   with a 4-digit year.
+#' @param comments A comments object passed through to each section formatter.
 #'
+#' @return A compact named list (NULLs removed) with any of the following elements:
+#'   \itemize{
+#'     \item `MANAGEMENT`: formatted management file object
+#'     \item `SUMMARY`: formatted summary observed data object, or `NULL` if absent
+#'     \item `TIME_SERIES`: formatted time-series observed data object, or `NULL` if absent
+#'     \item `SOIL`: formatted soil file object
+#'     \item `WEATHER`: a named list of formatted weather file objects, one per year
+#'   }
+#'   The `"experiment"` and `"file_name"` attributes of `SUMMARY` and `TIME_SERIES` are
+#'   aligned with those of `MANAGEMENT` (file extension replaced with `"A"` and `"T"`
+#'   respectively). All top-level and weather sub-list elements receive a `"comments"`
+#'   attribute prepended with a package processing signature.
+#'
+#' @noRd
+#' 
 
 format_dssat_sections <- function(dataset, comments) {
   
@@ -66,7 +88,28 @@ format_dssat_sections <- function(dataset, comments) {
 }
 
 
-#
+#' Format a DSSAT management section list for output
+#'
+#' Prepares a parsed DSSAT management section list for file output by extracting experiment
+#' metadata and attaching file-building attributes.
+#'
+#' @param mngt A named list of management sub-section data frames, as returned by
+#'   the DSSAT management extraction helpers.
+#' @param comments A named list of comments/notes keyed by section name, as output by
+#'   `extract_dssat_comments()`
+#'    Only entries matching known management section names are retained (currently unused in output).
+#'
+#' @return The input `mngt` list with two attributes appended:
+#'   \itemize{
+#'     \item `"experiment"`: the experiment identifier, taken from `EXP_NAME` if present,
+#'       otherwise `EXP_ID`
+#'     \item `"file_name"`: the original file name, taken from `GENERAL$file_name`
+#'   }
+#'
+#' @details
+#' Comment integration into the formatted output is not yet implemented (see commented-out
+#' block). The `comments` argument is filtered to known management sections but not
+#' currently attached to the return value.
 #'
 #' @noRd
 #'
@@ -113,8 +156,21 @@ format_dssat_sections <- function(dataset, comments) {
 }
 
 
+#' Format a DSSAT summary observed data table for output
 #'
+#' Validates and prepares a parsed DSSAT observed data summary (`SUMMARY`) data frame
+#' for file output by filtering relevant comments and attaching them as an attribute.
+#' Returns `NULL` if the input is absent or degenerate.
 #'
+#' @param sm A data frame representing the `SUMMARY` observed data section, or `NULL`.
+#' @param comments A named list of comments/notes keyed by section name, as output by
+#'   `extract_dssat_comments()`
+#'
+#' @return The input `sm` data frame with a `"comments"` attribute attached, or `NULL`
+#'   if `sm` is `NULL` or contains only a single `TRNO` column (a known artefact of
+#'   multi-year data splitting).
+#'
+#' @noRd
 #'
 
 .format_dssat_sm <- function(sm, comments) {
@@ -136,9 +192,22 @@ format_dssat_sections <- function(dataset, comments) {
 }
 
 
+#' Format a DSSAT time-series observed data table for output
 #'
+#' Validates and prepares a parsed DSSAT observed data time-series (`TIME_SERIES`) data frame
+#' for file output by filtering relevant comments and attaching them as an attribute. Returns
+#' `NULL` if the input is absent or degenerate.
 #'
+#' @param ts A data frame representing the `TIME_SERIES` observed data section, or `NULL`.
+#' @param comments A named list of comments/notes keyed by section name, as output by
+#'   `extract_dssat_comments()`
 #'
+#' @return The input `ts` data frame with a `"comments"` attribute attached, or `NULL`
+#'   if `ts` is `NULL` or contains only the identifier columns `TRNO` and/or `DATE`
+#'   (a known artefact of multi-year data splitting).
+#'
+#' @noRd
+#' 
 
 .format_dssat_ts <- function(ts, comments) {
   
@@ -159,9 +228,29 @@ format_dssat_sections <- function(dataset, comments) {
 }
 
 
+#' Format a DSSAT soil section list for output
 #'
+#' Merges DSSAT soil sub-section data frames, extracts and flattens relevant comments,
+#' and attaches file-building attributes to the combined output.
 #'
+#' @param soil A named list of soil sub-section data frames, expected to contain
+#'   any of `"SOIL_META"`, `"SOIL_GENERAL"`, and `"SOIL_LAYERS"`. The `"SOIL_META"`
+#'   element must include `PEDON`, `SITE`, and `file_name` columns.
+#' @param comments A named list of comments/notes keyed by section name, as output by
+#'   `extract_dssat_comments()`
 #'
+#' @return A single merged data frame (left-joined across all soil sub-sections) with
+#'   the following attributes according to the format expected by the DSSAT file parser
+#'   (R package `DSSAT`)
+#'   \itemize{
+#'     \item `"comments"`: a character vector of flattened comment strings across all
+#'       soil sub-sections, or an empty list if none are present
+#'     \item `"title"`: constructed from `PEDON` and `SITE` metadata
+#'     \item `"file_name"`: the original file name, taken from `SOIL_META$file_name`
+#'   }
+#'
+#' @noRd
+#' 
 
 .format_dssat_soil <- function(soil, comments) {
   
@@ -191,9 +280,28 @@ format_dssat_sections <- function(dataset, comments) {
 }
 
 
-#
+#' Format a DSSAT weather section list for output
 #'
+#' Extracts daily weather data and station metadata from a grouped DSSAT weather list,
+#' flattens relevant comments, and attaches file-building attributes to the daily data frame.
 #'
+#' @param wth A named list containing weather sub-components for a single year group.
+#'   Expected to include elements named `"WEATHER_DAILY"` and `"WEATHER_METADATA"`
+#'   The metadata element must include `WST_NAME` and `file_name` columns.
+#' @param comments A named list of comments/notes keyed by section name, as output by
+#'   `extract_dssat_comments()`
+#'
+#' @return The daily weather data frame with the following attributes according to the
+#'   format expected by the DSSAT file parser (R package `DSSAT`):
+#'   \itemize{
+#'     \item `"GENERAL"`: the station metadata data frame
+#'     \item `"location"`: uppercased station name from `WST_NAME`
+#'     \item `"comments"`: a character vector of flattened comment strings from all
+#'       matching weather comment entries, or an empty list if none are present
+#'     \item `"file_name"`: the original file name, taken from `WEATHER_METADATA`
+#'   }
+#'
+#' @noRd
 #'
 
 .format_dssat_wth <- function(wth, comments) {

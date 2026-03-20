@@ -1,0 +1,106 @@
+*EXP.DETAILS: HWOC2501WH                                                             
+
+*FILES
+@N  EXP.DATA    AFILE        ADIR
+  1 EXP         HWOC2501.WHA C:/DSSAT48/Wheat/                                                               
+@N  SPECIES     SPFILE       SPDIR
+  1 SPE         WHAPS048.SPE C:\DSSAT48\GENOTYPE\                                                            
+@N  ECOTYPE     EFILE        EDIR
+  1 ECO         WHAPS048.ECO C:\DSSAT48\GENOTYPE\                                                            
+@N  CULTIVAR    CFILE        CDIR
+  1 CUL         WHAPS048.CUL C:\DSSAT48\GENOTYPE\                                                            
+@N  SOIL        SFILE        SDIR
+  1 SOIL        DE.SOL       C:\DSSAT48\SOIL\                                                                
+@N  WEATHER     WFILE        WDIR
+  1 WEATH       LL912401.WTH C:\DSSAT48\Weather\                                                             
+
+*SIMULATION CONTROL
+@N  GENERAL     NYERS NREPS START   SDATE RSEED SNAME.................... MODEL...
+  1 GE              1     1     S 2024296  7461 -99                       WHAPS048
+@N  OPTIONS     WATER NITRO SYMBI PHOSP POTAS DISES  CHEM  TILL   CO2
+  1 OP              Y     Y     N     N     N     N     N     Y     M
+@N  METHODS     WTHER INCON LIGHT EVAPO INFIL PHOTO HYDRO NSWIT SOMDY MESEV MESOL METMP MEGHG
+  1 ME              M     M     E     R     R     C     R     1     G     S     3     D     0
+@N  MANAGEMENT  PLANT IRRIG FERTI RESID HARVS
+  1 MA              R     N     R     N     R
+@N  OUTPUTS     FNAME OVVEW SUMRY FROPT GROUT CAOUT WAOUT NIOUT MIOUT DIOUT  LONG CHOUT OPOUT
+  1 OU              N     Y     Y     1     Y     N     N     Y     N     N     Y     N     N
+
+!AUTOMATIC MANAGEM
+@N  PLANTING      PFRST   PLAST PH2OL PH2OU PH2OD PSTMX PSTMN
+  1 PL              -99     -99  -99.  -99.  -99.  -99.  -99.
+@N  IRRIGATION  IMDEP ITHRL ITHRU IROFF IMETH IRAMT IREFF
+  1 IR           -99.  -99.  -99.   -99   -99 -99.0 *****
+@N  NITROGEN    NMDEP NMTHR NAMNT NCODE NAOFF
+  1 NI           -99.  -99.  -99.   -99   -99
+@N  RESIDUES    RIPCN RTIME RIDEP
+  1 RE           -99.   -99  -99.
+@N  HARVEST     HFRST   HLAST HPCNP HRCNR
+  1 HA            -99     -99  100.    0.
+
+*TREATMENTS
+@N   R O C TNAME....................  CU  FL  SA  IC  MP  MI  MF  MR  MC  MT  ME  MH  SM
+  7  1 0 0 180 kg[N]/ha - broadcast    1   1   0   1   1   0   5   0   1   1   0   1   1
+
+*CULTIVARS
+@C  CR INGENO CNAME
+  1 WH LL0001 SU Mangold      
+
+*FIELDS
+@L  ID_FIELD WSTA....  FLSA  FLOB  FLDT  FLDD  FLDS  FLST SLTX   SLDP ID_SOIL    PMALB  PMWD
+  1 -99      LL912401   0.0  -99.   -99  -99.  100.   -99 SL     -99. DE02114767-99.00 -99.0
+@L             XCRD            YCRD      ELEV              AREA  SLEN  FLWR  SLAS PRMGT
+  1        10.64577        49.20900    456.00               1.0  100.   1.0 -99.0   -99   -99
+
+*INITIAL CONDITIONS
+@C  PCR     ICDAT  ICRT  ICND  ICRN  ICRE  ICWD ICRES ICREN ICREP ICRIP ICRID
+  1 BS        -99  1200     0  1.00  1.00 -99.0  2000  2.00  0.00  100.   12.
+@C   ICBL  SH2O  SNH4  SNO3
+  1    5. 0.221   0.2   1.5
+  1   10. 0.226   0.2   1.5
+  1   20. 0.236   0.2   1.5
+  1   30. 0.245   0.2   1.5
+  1   40. 0.249   0.2   1.5
+  1   50. 0.254   0.2   1.5
+  1   60. 0.258   0.2   1.5
+  1   70. 0.258   0.2   1.5
+  1   90. 0.257   0.2   1.5
+  1  110. 0.256   0.2   1.5
+  1  130. 0.253   0.2   1.5
+  1  150. 0.250   0.2   1.5
+  1  170. 0.247   0.2   1.5
+  1  190. 0.244   0.2   1.5
+  1  210. 0.243   0.2   1.5
+
+*PLANTING DETAILS
+@P    PDATE   EDATE  PPOP  PPOE  PLME  PLDS  PLRS  PLRD  PLDP  PLWT  PAGE  PENV  PLPH  SPRL
+  1 2024297 2024303 380.0 380.0     S     R   12.  -99.   0.3    1.  -99. -99.0 -99.0 -99.0
+
+*IRRIGATION
+@I   IEFF  IDEP  ITHR  IEPT  IOFF  IAME  IAMT
+  0 1.000    0.    0.    0. GS000 IR001   0.0
+@I    IDATE  IROP IRVAL
+
+*FERTILIZERS
+@F    FDATE  FMCD  FACD  FDEP  FAMN  FAMP  FAMK  FAMC  FAMO  FOCD
+  5 2025065 FE002 AP001    2.   80.    0.    0.    0.   20.     S
+  5 2025092 FE002 AP001    2.   50.    0.    0.    0.   13.     S
+  5 2025132 FE002 AP001    2.   50.    0.    0.    0.   13.     S
+
+*RESIDUES
+@R    RDATE  RCOD  RAMT  RESN  RESP  RESK  RINP  RDEP  RMET
+
+*CHEMICALS
+@C    CDATE CHCOD CHAMT  CHME CHDEP   CHT
+
+*TILLAGE
+@T    TDATE TIMPL  TDEP
+  1 2024296 TI012  17.0
+  1 2024297 TI012  12.0
+
+*ENVIRONMENT
+@E    ODATE  EDAY  ERAD  EMAX  EMIN ERAIN  ECO2  EDEW EWIND
+
+*HARVEST
+@H    HDATE  HSTG  HCOM HSIZE   HPC  HBPC
+  1 2025221 GS006     C   -99  100.    0.

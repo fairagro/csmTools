@@ -582,7 +582,7 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     # Backup X and C files
     cfile_backup <- file.path(backup_dir, cfilename)
     xfile_backup <- file.path(backup_dir, xfilename)
-    write_cul(ctable, file_name = cfile_backup)
+    write_cul2(ctable, file_name = cfile_backup)
     write_filex(xtables, xfile_backup)
     
     message(sprintf("Original files backed-up in %s.", backup_dir))
@@ -702,8 +702,8 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     
     ###------------ Overwrite X and C files with set parameters -------------
     
-    write_cul(ctable, file_name = cfile)
-    write_filex(xtables, file_name = xfile)
+    write_cul2(ctable, file_name = cfile)
+    DSSAT::write_filex(xtables, file_name = xfile)
     
     #message(sprintf("Modified X input saved as %s.\nModified CUL file saved as %s.", xfile, cfile))
     
@@ -765,7 +765,7 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     cfile_fit <- read_cul(outpath)  # new cultivar file  TODO: check if single rec or full file
     
     # Write results
-    write_cul(cfile_fit, genpath)  # overwrite cultivar files in the original location
+    write_cul2(cfile_fit, genpath)  # overwrite cultivar files in the original location
     message(sprintf("Calibration results written in %s.", genpath))
     
     # Output the fitted parameters for visualization

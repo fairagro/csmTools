@@ -1,18 +1,17 @@
-#' Classify Soil Texture using USDA Triangle
+#' Classify soil texture using USDA Triangle
 #'
 #' This function determines the USDA soil texture class (e.g., "Loam", "Silty Clay")
 #' based on the particle size fractions of clay, silt, and sand.
 #'
-#' @param clay_frac Numeric vector of clay fraction (0-1).
-#' @param silt_frac Numeric vector of silt fraction (0-1).
-#' @param sand_frac Numeric vector of sand fraction (0-1).
+#' @param clay_frac Numeric. Clay fraction of the soil sample (0-1).
+#' @param silt_frac Numeric. Silt fraction of the soil sample (0-1).
+#' @param sand_frac Numeric. Sand fraction of the soil sample (0-1).
 #' 
 #' @return A character vector of USDA soil texture classes.
 #'
 #' @noRd
 #' 
 
-# TODO: mappings to change coding?
 .get_texture_scalar <- function(clay_frac, silt_frac, sand_frac, system = "usda") {
   
   # Check for NA/NULL inputs
@@ -31,7 +30,6 @@
   if (abs(total - 100) > 1) {
     warning(paste0("Inputs sum to ", round(total, 2), ", not 100. Review particle size input data."))
   }
-
 
   # USDA Classification Logic
   if (silt + 1.5 * clay < 15) {
@@ -65,7 +63,26 @@
   return(texture)
 }
 
+
+#' Classify soil texture from particle size fractions
 #'
+#' A vectorized wrapper around \code{.get_texture_scalar()} for classifying soil texture
+#' from clay, silt, and sand fractions.
+#'
+#' @param clay_frac Numeric. Clay fraction of the soil sample (0-1).
+#' @param silt_frac Numeric. Silt fraction of the soil sample (0-1).
+#' @param sand_frac Numeric. Sand fraction of the soil sample (0-1).
+#'
+#' @details
+#' Applies \code{.get_texture_scalar()} element-wise across vectors of particle size fractions.
+#' All three arguments are vectorized.
+#'
+#' @return A character vector of soil texture classifications.
+#'
+#' @examples
+#' \dontrun{
+#' get_soil_texture(clay_frac = c(0.2, 0.4), silt_frac = c(0.3, 0.3), sand_frac = c(0.5, 0.3))
+#' }
 #'
 #' @export
 #' 

@@ -1,3 +1,26 @@
+#' Extract notes and comments from a DSSAT data section
+#'
+#' Collects all `_NOTES` and `_COMMENTS` columns from a DSSAT data frame, reshaping them
+#' into a long-format tibble grouped by the first two identifier columns. General dataset-level
+#' comments are preserved as an attribute on the result.
+#'
+#' @param data A data frame or tibble representing a DSSAT data section. Expected to have
+#'   at least two identifier columns and optionally one or more `_NOTES`/`_COMMENTS` columns.
+#'
+#' @return A tibble in long format with columns:
+#' \itemize{
+#'   \item The first two columns of `data` (used as grouping identifiers)
+#'   \item `Column`: name of the source `_NOTES`/`_COMMENTS` column
+#'   \item `Content`: the extracted note/comment string
+#' }
+#' If no `_NOTES`/`_COMMENTS` columns exist, returns an empty tibble with the same structure.
+#' The `"general"` attribute is set to the `comments` attribute of `data` in all cases.
+#'
+#' @details
+#' Within each group, non-empty, non-NA values are collapsed with `"; "` before pivoting.
+#' After pivoting, entries matching an R `c("...", "...")` vector string (as may be stored
+#' when comments were previously serialized) are parsed and unnested into individual rows.
+#' Escaped quotes within extracted strings are unescaped.
 #'
 #' @noRd
 #'
@@ -16,7 +39,7 @@ extract_dssat_notes <- function(data) {
   if (!notes_cols_exist) {
     # Return an empty tibble with the final column structure.
     empty_df <- data[0, group_cols, drop = FALSE] 
-    empty_df$Notes_Column  <- character(0)
+    empty_df$Notes_Column <- character(0)
     empty_df$Notes_Content <- character(0)
     
     return(empty_df)

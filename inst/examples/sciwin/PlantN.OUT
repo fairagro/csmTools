@@ -1,6 +1,6 @@
 *PLANT N OUTPUT FILE
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:39
 
 *RUN   1        : No N                      WHAPS048 HWOC2501    1
  MODEL          : WHAPS048 - Wheat
@@ -301,7 +301,7 @@
  2025 220   291   289   35.9   27.6   1.51   0.38   48.8    1.5    5.5    0.4   0.40   1.68    0.00    0.00   0.00   0.00   0.00   0.00   9.06   1.34
  2025 221   292   290   35.9   27.6   1.51   0.38   48.8    1.5    5.5    0.4   0.40   1.68    0.00    0.00   0.00   0.00   0.00   0.00   9.06   1.34
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:40
 
 *RUN   2        : 147 kg[N]/ha - broadcast  WHAPS048 HWOC2501    3
  MODEL          : WHAPS048 - Wheat
@@ -602,7 +602,7 @@
  2025 220   291   289  138.4   99.1   2.20   0.41  181.2    9.0   21.6    0.4   0.41   1.18    0.00    0.00   0.00   0.00   0.00   0.00  22.58   8.72
  2025 221   292   290  138.4   99.1   2.20   0.41  181.2    9.0   21.6    0.4   0.41   1.18    0.00    0.00   0.00   0.00   0.00   0.00  22.58   8.72
 
-*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 19, 2026 13:40:14
+*DSSAT Cropping System Model Ver. 4.8.2.000 -release  JAN 23, 2026 14:20:40
 
 *RUN   3        : 180 kg[N]/ha - broadcast  WHAPS048 HWOC2501    7
  MODEL          : WHAPS048 - Wheat

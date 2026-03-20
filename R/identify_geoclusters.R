@@ -14,8 +14,11 @@
 #' # Calculate the distance between Paris and Lyon
 #' haversine_dist(48.8566, 2.3522, 45.7640, 4.8357)
 #'
+#' @noRd
+#' 
 
 haversine_dist <- function(lat1, lon1, lat2, lon2) {
+  
   R <- 6371000 # Earth radius in meters
   dLat <- (lat2 - lat1) * pi / 180
   dLon <- (lon2 - lon1) * pi / 180
