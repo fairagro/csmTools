@@ -83,7 +83,9 @@ convert_dataset <- function(dataset, input_model, output_model, output_path = NU
   mapped_data_std <- standardize_data(dataset = mapped_data, data_model = output_model)
   
   # --- Deduplicate and drop NAs ---
+  snapshot <- .store_custom_attributes(mapped_data_std)  # Store attributes
   mapped_data_std_clean <- apply_recursive(mapped_data_std, remove_all_na_cols)  # TODO: fix deleting exp_year if empty
+  mapped_data_std_clean <- .restore_custom_attributes(mapped_data_std_clean, snapshot)  # Restore attributes
   
   # --- Return output ---
   out <- export_output(mapped_data_std_clean, output_path)
