@@ -29,9 +29,9 @@
 format_dssat_sections <- function(dataset, comments) {
   
   # --- Management tables ---
-  mngt_list <- split_dssat_components(
+  mngt_list <- split_dssat_dataset(
     dataset,
-    sec = "MANAGEMENT",
+    sec = "EXPERIMENT",
     merge = FALSE
   )[[1]]
   mngt_fmt <- .format_dssat_mngt(mngt_list, comments)

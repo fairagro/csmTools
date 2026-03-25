@@ -91,21 +91,25 @@ enrich_dssat_metadata <- function(dssat_components) {
     dplyr::left_join(exp, by = intersect(names(sol), names(exp))) %>%
     dplyr::mutate(
       INST_NAME = if ("INST_NAME" %in% names(.)) INST_NAME else NA_character_,
+      INSTITUTION = if ("INSTITUTION" %in% names(.)) INSTITUTION else "XX",
       INST_NAME = dplyr::coalesce(INST_NAME, INSTITUTION),
       YEAR_FROM_DATE = if ("DATE" %in% names(.)) {
         suppressWarnings(
           as.Date(as.character(DATE), format = "%y%j") %>%
-            lubridate::year() |>
+            lubridate::year() %>%
             as.character()
         )
       } else {
         NA_character_
       },
       YEAR = if ("YEAR" %in% names(.)) YEAR else NA_character_,
+      EXP_YEAR = if ("YEAR" %in% names(.)) EXP_YEAR else "XXXX",
       YEAR = dplyr::coalesce(YEAR, YEAR_FROM_DATE, EXP_YEAR),
       LAT = if ("LAT" %in% names(.)) LAT else NA_real_,
+      YCRD = if ("YCRD" %in% names(.)) YCRD else NA_real_,
       LAT = dplyr::coalesce(LAT, YCRD),
       LONG = if ("LONG" %in% names(.)) LONG else NA_real_,
+      XCRD = if ("XCRD" %in% names(.)) XCRD else NA_real_,
       LONG = dplyr::coalesce(LONG, XCRD),
       TEXTURE = if ("TEXTURE" %in% names(.)) {
         TEXTURE
@@ -156,12 +160,15 @@ enrich_dssat_metadata <- function(dssat_components) {
     dplyr::left_join(exp, by = intersect(names(wth), names(exp))) %>%
     dplyr::mutate(
       INSI = if ("INSI" %in% names(.)) INSI else NA_character_,
+      INSTITUTION = if ("INSTITUTION" %in% names(.)) INSTITUTION else "XX",
       INSI = dplyr::coalesce(INSI, INSTITUTION),
       LAT = if ("LAT" %in% names(.)) LAT else NA_real_,
+      YCRD = if ("YCRD" %in% names(.)) YCRD else NA_real_,
       LAT = dplyr::coalesce(LAT, YCRD),
       LONG = if ("LONG" %in% names(.)) LONG else NA_real_,
+      XCRD = if ("XCRD" %in% names(.)) XCRD else NA_real_,
       LONG = dplyr::coalesce(LONG, XCRD),
-      YEAR = if ("YEAR" %in% names(.)) YEAR else NA_character_,
+      YEAR = if ("YEAR" %in% names(.)) YEAR else "XXXX",
       YEAR = substr(DATE, 1, 2),
     ) %>%
     dplyr::select(
@@ -207,6 +214,7 @@ enrich_dssat_metadata <- function(dssat_components) {
   
   exp_locations %>%
     dplyr::mutate(
+      INSTITUTION = if ("INSTITUTION" %in% names(.)) FLNAME else "XX",
       FLNAME = if ("FLNAME" %in% names(.)) FLNAME else NA_character_,
       FLNAME = ifelse(is.na(FLNAME), toupper(ShortLabel), FLNAME),
       # Fill site as address if missing
