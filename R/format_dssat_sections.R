@@ -4,24 +4,18 @@
 #' section (management, observed data, soil, weather). Each section is handled by a
 #' dedicated internal formatter, and all outputs are annotated with a processing signature.
 #'
-#' @param dataset A named list representing a parsed DSSAT experiment. Expected to contain
-#'   some or all of: `"MANAGEMENT"`, `"SUMMARY"`, `"TIME_SERIES"`, `"SOIL_META"`,
-#'   `"SOIL_GENERAL"`, `"SOIL_LAYERS"`, and one or more `"WEATHER_*"` tables suffixed
-#'   with a 4-digit year.
+#' @param dataset A named list representing a parsed DSSAT experiment with ungrouped data
+#'   components (e.g., 'FIELDS', 'SOIL_LAYERS', 'WEATHER_DAILY')
 #' @param comments A comments object passed through to each section formatter.
 #'
 #' @return A compact named list (NULLs removed) with any of the following elements:
 #'   \itemize{
-#'     \item `MANAGEMENT`: formatted management file object
+#'     \item `EXPERIMENT`: formatted experiment (i.e., metadata + management) file object
 #'     \item `SUMMARY`: formatted summary observed data object, or `NULL` if absent
 #'     \item `TIME_SERIES`: formatted time-series observed data object, or `NULL` if absent
 #'     \item `SOIL`: formatted soil file object
 #'     \item `WEATHER`: a named list of formatted weather file objects, one per year
 #'   }
-#'   The `"experiment"` and `"file_name"` attributes of `SUMMARY` and `TIME_SERIES` are
-#'   aligned with those of `MANAGEMENT` (file extension replaced with `"A"` and `"T"`
-#'   respectively). All top-level and weather sub-list elements receive a `"comments"`
-#'   attribute prepended with a package processing signature.
 #'
 #' @noRd
 #' 
@@ -34,7 +28,7 @@ format_dssat_sections <- function(dataset, comments) {
     sec = "EXPERIMENT",
     merge = FALSE
   )[[1]]
-  mngt_fmt <- .format_dssat_mngt(mngt_list, comments)
+  mngt_fmt <- .format_dssat_exp(mngt_list, comments)
   
   # --- Observed data ---
   sm_df <- dataset[["SUMMARY"]]
@@ -65,7 +59,7 @@ format_dssat_sections <- function(dataset, comments) {
 
   # --- Assemble output ---
   dataset_out <- list(
-    MANAGEMENT = mngt_fmt,
+    EXPERIMENT = mngt_fmt,
     SUMMARY = sm_fmt,
     TIME_SERIES = ts_fmt,
     SOIL = soil_fmt,
@@ -88,18 +82,18 @@ format_dssat_sections <- function(dataset, comments) {
 }
 
 
-#' Format a DSSAT management section list for output
+#' Format a DSSAT experiment section list for output
 #'
-#' Prepares a parsed DSSAT management section list for file output by extracting experiment
+#' Prepares a parsed DSSAT experiment section list for file output by extracting experiment
 #' metadata and attaching file-building attributes.
 #'
-#' @param mngt A named list of management sub-section data frames, as returned by
+#' @param exp A named list of experiment sub-section data frames, as returned by
 #'   the DSSAT management extraction helpers.
 #' @param comments A named list of comments/notes keyed by section name, as output by
 #'   `extract_dssat_comments()`
-#'    Only entries matching known management section names are retained (currently unused in output).
+#'    Only entries matching known experiment section names are retained (currently unused in output).
 #'
-#' @return The input `mngt` list with two attributes appended:
+#' @return The input `exp` list with two attributes appended:
 #'   \itemize{
 #'     \item `"experiment"`: the experiment identifier, taken from `EXP_NAME` if present,
 #'       otherwise `EXP_ID`
@@ -108,16 +102,16 @@ format_dssat_sections <- function(dataset, comments) {
 #'
 #' @details
 #' Comment integration into the formatted output is not yet implemented (see commented-out
-#' block). The `comments` argument is filtered to known management sections but not
+#' block). The `comments` argument is filtered to known experiment sections but not
 #' currently attached to the return value.
 #'
 #' @noRd
 #'
 
-.format_dssat_mngt <- function(mngt, comments) {
+.format_dssat_exp <- function(exp, comments) {
   
-  exp_metadata <- mngt[["GENERAL"]]
-  mngt_out <- mngt
+  exp_metadata <- exp[["GENERAL"]]
+  mngt_out <- exp
   
   # Extract comments
   mngt_sections <- c(

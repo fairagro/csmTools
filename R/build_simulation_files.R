@@ -87,8 +87,8 @@ build_simulation_files <- function(
   # TODO: handle cultivar file
   
   # Parameterize the simulation (overwrite default with provided values)
-  dataset_fmt$MANAGEMENT <- set_dssat_controls(
-    filex = dataset_fmt$MANAGEMENT, 
+  dataset_fmt$EXPERIMENT <- set_dssat_controls(
+    filex = dataset_fmt$EXPERIMENT, 
     args = control_args
   )
   

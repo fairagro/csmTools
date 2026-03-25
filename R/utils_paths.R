@@ -20,9 +20,9 @@ prepare_dssat_paths <- function(dataset, write_in_dssat_dir, path) {
     
     # Paths are file specific -> simulation-ready setup
     dssat_dir <- .get_dssat_dir()
-    crop_dir <- .get_dssat_crop_dir(dssat_dir, dataset$MANAGEMENT)
+    crop_dir <- .get_dssat_crop_dir(dssat_dir, dataset$EXPERIMENT)
     path_map <- list(
-      MANAGEMENT = crop_dir,
+      EXPERIMENT = crop_dir,
       SUMMARY = crop_dir,
       TIME_SERIES = crop_dir,
       SOIL = file.path(dssat_dir, "Soil"),
@@ -102,10 +102,12 @@ prepare_dssat_paths <- function(dataset, write_in_dssat_dir, path) {
   # NOTE: index as precaution; should always be unique
   
   # Suppress warnings if lookup file is not found, etc.
-  crop_lookup <- suppressWarnings(get_dssat_terms(key = "crops"))
+  # crop_lookup <- suppressWarnings(get_dssat_terms(key = "crops"))
+  dict <- suppressWarnings(fetch_dictionary("dssat"))
+  crop_lookup <- dict$DETAIL$`Crop and Weed Species`
   
   crop_name <- crop_lookup |>
-    dplyr::filter(`@CDE` == crop_id) |>
+    dplyr::filter(CDE == crop_id) |>
     dplyr::pull(DESCRIPTION)
   
   if (length(crop_name) == 0) {

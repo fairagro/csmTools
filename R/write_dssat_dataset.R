@@ -15,7 +15,7 @@ write_dssat_dataset <- function(dataset, sol_append = FALSE) {
 
   # Map dataset names to the corresponding DSSAT write function
   write_funs <- list(
-    MANAGEMENT = DSSAT::write_filex,
+    EXPERIMENT = DSSAT::write_filex,
     SUMMARY = DSSAT::write_filea,
     TIME_SERIES = DSSAT::write_filet,
     SOIL = write_sol2,
@@ -23,8 +23,8 @@ write_dssat_dataset <- function(dataset, sol_append = FALSE) {
   )
   
   # Write files iteratively
-  # .x is the data (e.g., dataset$MANAGEMENT)
-  # .y is the name (e.g., "MANAGEMENT")
+  # .x is the data (e.g., dataset$EXPERIMENT)
+  # .y is the name (e.g., "EXPERIMENT")
   purrr::iwalk(dataset, ~{
 
     # --- Set focal write function ---
@@ -44,7 +44,7 @@ write_dssat_dataset <- function(dataset, sol_append = FALSE) {
       lapply(.x, function(df) {
         write_fun(df, file_name = attr(df, "file_name"))
       })
-      # Standard case (MANAGEMENT, SUMMARY, TIME_SERIES, or single WEATHER)
+      # Standard case (EXPERIMENT, SUMMARY, TIME_SERIES, or single WEATHER)
     } else {
       # No 'file_name' arg needed; write_fun finds the attribute
       write_fun(.x, file_name = attr(.x, "file_name"))
@@ -52,7 +52,7 @@ write_dssat_dataset <- function(dataset, sol_append = FALSE) {
   })
   
   # Issue warning if required files are missing
-  required_files <- c("MANAGEMENT", "WEATHER", "SOIL")
+  required_files <- c("EXPERIMENT", "WEATHER", "SOIL")
   missing <- setdiff(required_files, names(dataset))
   
   if (length(missing) > 0) {
