@@ -1,5 +1,13 @@
 {
-  "WEATHER_METADATA": {
+  "WEATHER_INSTITUTIONS": {
+    "data": {
+      "institute_name": "NASA POWER"
+    },
+    "attributes": {
+      "_class_attribute": ["tbl_df", "tbl", "data.frame"]
+    }
+  },
+  "STATION_METADATA": {
     "data": {
       "weather_sta_longitude": 10.6451,
       "weather_sta_latitude": 49.209,
