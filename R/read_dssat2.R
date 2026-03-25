@@ -73,7 +73,7 @@ read_cul2 <- function(file_name, col_types=NULL, col_names=NULL,
     c(.,length(raw_lines))
   
   if(use_std_fmt){
-    tier_fmt <- DSSAT::cul_v_fmt(file_name)
+    tier_fmt <- DSSAT:::cul_v_fmt(file_name)
   }else{
     tier_fmt <- NULL
   }
@@ -170,13 +170,13 @@ read_sol2 <- function(file_name, id_soil = NULL, nested = TRUE){
   title <- trimws(gsub(":", "", title))
   
   # Find start/end positions for each soil profile (PEDON)
-  pedon_raw_start_end <- DSSAT::find_pedon(raw_lines)
+  pedon_raw_start_end <- DSSAT:::find_pedon(raw_lines)
   comments_lines <- find_comments(raw_lines)
   comments <- link_soil_comments(comments_lines, pedon_raw_start_end)
   
   # Drop comments and empty lines
-  clean_lines <- DSSAT::drop_empty_lines( drop_comments(raw_lines) )
-  pedon_clean_start_end <- DSSAT::find_pedon(clean_lines)
+  clean_lines <- DSSAT:::drop_empty_lines( drop_comments(raw_lines) )
+  pedon_clean_start_end <- DSSAT:::find_pedon(clean_lines)
   
   # Filter profiles based on id_soil
   if(!is.null(id_soil)){
@@ -185,16 +185,16 @@ read_sol2 <- function(file_name, id_soil = NULL, nested = TRUE){
   }
   
   # Extract general information for each PEDON
-  gen_info <- DSSAT::read_sol_gen_info(clean_lines[pedon_clean_start_end$start])
+  gen_info <- DSSAT:::read_sol_gen_info(clean_lines[pedon_clean_start_end$start])
   
   # Strip out and concatenate the lines for each PEDON
-  pedon_lines <- DSSAT::concat_lines(clean_lines, pedon_clean_start_end)
+  pedon_lines <- DSSAT:::concat_lines(clean_lines, pedon_clean_start_end)
   
   # Find start/end positions for each soil data tier within each PEDON
-  tier_start_end <- DSSAT::find_tier(pedon_lines)
+  tier_start_end <- DSSAT:::find_tier(pedon_lines)
   
   # Strip out and concatenate the lines for each soil data tier
-  tier_lines <- DSSAT::concat_lines(pedon_lines$lines, tier_start_end)
+  tier_lines <- DSSAT:::concat_lines(pedon_lines$lines, tier_start_end)
   
   # Remove empty lines
   tier_lines <- with(tier_lines,
@@ -211,7 +211,7 @@ read_sol2 <- function(file_name, id_soil = NULL, nested = TRUE){
                         tier_data <- DSSAT::read_tier_data(raw_lines,
                                                     left_justified = left_justified,
                                                     col_types = col_types,
-                                                    tier_fmt = DSSAT::sol_v_fmt(),
+                                                    tier_fmt = DSSAT:::sol_v_fmt(),
                                                     convert_date_cols = FALSE)
                         
                         tier_data$PEDON <- pedon
@@ -224,22 +224,22 @@ read_sol2 <- function(file_name, id_soil = NULL, nested = TRUE){
   layer_ind <- sapply(tiers_out, is_sol_layer)
   
   # Create layer-specific data frame with rows nested by PEDON
-  layer_data <- DSSAT::nest_rows(
+  layer_data <- DSSAT:::nest_rows(
     # Recursively merge layer-specific data
-    DSSAT::recursive_merge(
+    DSSAT:::recursive_merge(
       # Subset for list elements with layer-specific data
       tiers_out[layer_ind],
       by = c("PEDON", "SLB")),
     by = "PEDON")
   
   # Create whole profile data frame with one row per PEDON
-  profile_data <- DSSAT::recursive_merge(
+  profile_data <- DSSAT:::recursive_merge(
     c(list(gen_info),
       tiers_out[!layer_ind]),
     by = c("PEDON"))
   
   # Merge whole-profile and layer-specific data
-  tiers_out <- DSSAT::coalesce_merge(profile_data, layer_data)
+  tiers_out <- DSSAT:::coalesce_merge(profile_data, layer_data)
   
   # Return layers as nested list if nest set to TRUE
   if (!nested) {

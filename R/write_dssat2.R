@@ -46,10 +46,10 @@
 #'
 
 write_wth2 <- function(wth, file_name, force_std_fmt = FALSE,
-                      location = NULL, comments = NULL,
-                      INSI = NULL, LAT = NULL, LONG = NULL,
-                      ELEV = NULL, TAV = NULL, AMP = NULL,
-                      REFHT = NULL, WNDHT = NULL, CO2 = NULL){
+                       location = NULL, comments = NULL,
+                       INSI = NULL, LAT = NULL, LONG = NULL,
+                       ELEV = NULL, TAV = NULL, AMP = NULL,
+                       REFHT = NULL, WNDHT = NULL, CO2 = NULL){
   
   if(is.null(location)){
     location <- attr(wth, "location")
@@ -113,7 +113,7 @@ write_wth2 <- function(wth, file_name, force_std_fmt = FALSE,
     
     gen_out <-  c(
       DSSAT::write_tier(general,
-                 drop_na_rows = FALSE),
+                        drop_na_rows = FALSE),
       "")
   }else{
     if(force_std_fmt | is.null(g_v_fmt)){
@@ -241,10 +241,10 @@ write_sol2 <- function(sol, file_name, title = NULL, append = TRUE, force_std_fm
   comments <- .format_comments(sol)
   
   if(force_std_fmt | is.null(attr(sol,'v_fmt'))){
-    attr(sol,'v_fmt') <- DSSAT::sol_v_fmt()
+    attr(sol,'v_fmt') <- DSSAT:::sol_v_fmt()
   }
   if(is.null(attr(sol,'tier_info'))){
-    tier_info <- DSSAT::sol_tier_info()
+    tier_info <- DSSAT:::sol_tier_info()
     info_index <- unlist(
       lapply(tier_info,
              function(.x){
@@ -257,7 +257,7 @@ write_sol2 <- function(sol, file_name, title = NULL, append = TRUE, force_std_fm
   sol_out <- unlist(
     lapply(1:nrow(sol),
            function(.x){
-             DSSAT::write_soil_profile(sol[.x,])
+             DSSAT:::write_soil_profile(sol[.x,])
            })
   )
   
@@ -324,7 +324,7 @@ write_cul2 <- function(cul, file_name){
   switches <- paste0("!", switches)
   
   ctable <- DSSAT::write_tier(cul,
-                       pad_name = c('VAR-NAME','VRNAME'))
+                              pad_name = c('VAR-NAME','VRNAME'))
   
   tier_output <- c(
     first_line,
