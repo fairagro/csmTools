@@ -14,27 +14,33 @@ get_soil_profile(
 )
 }
 \arguments{
-\item{lon}{(numeric) Longitude (x coordinate) of the target location \link{decimal degrees E/W, range 6:15}}
+\item{lon}{Numeric. Longitude of the target location in decimal degrees.}
 
-\item{lat}{(numeric) Latitude (y coordinate) of the target location \link{decimal degrees N/S, range 47:55}}
+\item{lat}{Numeric. Latitude of the target location in decimal degrees.}
 
-\item{src}{(character) Source repository of the soil data (currently only "soil_grids" is supported)}
+\item{src}{Character. Source repository of the soil data. Currently only \code{"soil_grids"} is supported.}
 
-\item{dir}{(character) Directory in which to store and extract the profile data. If 'NULL', the raw files are saved in a temporary location
-created in the working directory.}
+\item{dir}{Character. Directory in which to store and extract the profile data. If \code{NULL},
+raw files are saved to a temporary folder created in the working directory.}
 
-\item{output_path}{(character) Optional file path to save the output.}
+\item{output_path}{Character. Optional file path to save the output.}
+
+\item{delete_raw_files}{Logical. If \code{TRUE}, raw downloaded files aredeleted after processing.
+Defaults to \code{FALSE}.}
 }
 \value{
-A list with elements \code{SOIL_METADATA}, \code{SOIL_PROFILES}, and \code{SOIL_PROFILE_LAYERS}, each as a data frame or list of data frames in ICASA format. A comment attribute is attached describing data provenance.
+A list with elements \code{SOIL_METADATA}, \code{SOIL_PROFILES}, and \code{SOIL_PROFILE_LAYERS},
+each as a data frame in ICASA format, with a comment attribute describing data provenance.
 }
 \description{
-Downloads, extracts, and maps the closest SoilGrids soil profile to a specified latitude and longitude, returning the data in ICASA format.
+Downloads, extracts, and maps the closest SoilGrids soil profile to a specified latitude and longitude,
+returning the data in ICASA format.
 }
 \details{
-The function downloads and extracts the SoilGrids by-country dataset if not already present, determines the country for the given coordinates using reverse geocoding, and loads the corresponding soil profile file. It selects the profile closest to the specified coordinates, splits the data into metadata, profile, and layer sections, and maps each section to the ICASA data model using a mapping file. The institution is set to "ISRIC" for provenance.
-
-The function uses \code{get_soilGrids_dataverse}, \code{reverse_geocode}, \code{read_sol}, \code{map_data}, and \code{load_map} for data retrieval and transformation.
+Downloads and extracts the SoilGrids by-country dataset if not already present, determines the country
+for the given coordinates via reverse geocoding, and loads the corresponding soil profile file. The profile
+closest to the specified coordinates is selected, then mapped to the ICASA data model using
+\code{convert_dataset()}. A provenance comment is attached to the output describing the data source and extraction date.
 }
 \examples{
 \dontrun{

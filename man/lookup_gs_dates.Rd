@@ -13,22 +13,25 @@ lookup_gs_dates(
 )
 }
 \arguments{
-\item{data}{Data frame containing phenological observations including the following columns:
+\item{data}{Data frame containing phenological observations output from the \code{phenocover} tool,
+i.e., daily time series where each day is labeled with a cereal growth stage derived from NDVI
+time-series of a focal cereal canopy
 \itemize{
 \item \code{Date} (character or Date) - Observation dates in DD/MM/YYYY format
-\item \code{Growth_Stage} (character) - Growth stage names (must match the terminology of 'gs_scale' data). See data(growth_stages) for
-details.
+\item \code{Growth_Stage} (character) - Growth stage names. See data(growth_stages) for terminology.
 }}
 
-\item{gs_scale}{(character) Growth stage scale to use.
+\item{gs_scale}{Character. Growth stage scale to use.
 \itemize{
 \item \code{bbch} BBCH scale for cereals
 \item \code{zadoks} Zadoks scale for cereals
 }}
 
-\item{gs_codes}{(numeric) Optional vector of specific growth stage codes to extract. If \code{NULL} (default), all available codes are used.}
+\item{gs_codes}{Numeric. Optional vector of specific growth stage codes to extract.
+If \code{NULL} (default), all available codes are used.}
 
-\item{date_select_rule}{(character) Rule for selecting dates when multiple observations exist for a growth stage. Options:
+\item{date_select_rule}{Character. Rule for selecting dates when multiple observations exist
+for a growth stage. Options:
 \itemize{
 \item \code{"median"} (default) - Use median date
 \item \code{"first"} - Use earliest date
@@ -36,7 +39,7 @@ details.
 \item \code{"all"} - Return all dates
 }}
 
-\item{output_path}{(character) Optional path to save output. If \code{NULL} (default), returns data as a list.}
+\item{output_path}{Character. Optional path to save output. If \code{NULL} (default), returns data as a list.}
 }
 \value{
 A named list containing:
@@ -55,19 +58,20 @@ A named list containing:
 If \code{output_path} is specified, saves to files in addition to returning the list
 }
 \description{
-Extracts and standardizes growth stage dates from phenological data using specified growth stage scales (e.g., BBCH) and selection rules.
+Extracts and standardizes growth stage dates from phenological data using specified growth stage
+scales (e.g., BBCH) and selection rules.
 }
 \details{
-The function:
-\enumerate{
+This function performs the following steps:
+\itemize{
 \item Maps growth stages to standardized codes using reference scales
 \item Calculates scaled codes within each growth stage range
 \item Applies selected rule to handle multiple observations
 \item Returns dates in both original and day-of-year formats
 }
 
-Scaled codes are calculated by linearly interpolating between the minimum and maximum codes for each growth stage based on the
-relative position of each observation date within the stage's date range.
+Scaled codes are calculated by linearly interpolating between the minimum and maximum codes for
+each growth stage based on the relative position of each observation date within the stage's date range.
 }
 \examples{
 # Using default BBCH scale with median dates

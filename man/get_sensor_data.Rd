@@ -24,9 +24,9 @@ get_sensor_data(
 
 \item{var}{(character vector) The names of observed properties (variables) to extract, as defined ObservedProperties on the focal STA endpoint.}
 
-\item{lon}{(numeric) Longitude (x coordinate) of the target location \link{decimal degrees E/W, range 6:15}}
+\item{lon}{(numeric) Longitude (x coordinate) of the target location (decimal degrees E/W, range 6:15)}
 
-\item{lat}{(numeric) Latitude (y coordinate) of the target location \link{decimal degrees N/S, range 47:55}}
+\item{lat}{(numeric) Latitude (y coordinate) of the target location (decimal degrees N/S, range 47:55)}
 
 \item{radius}{(numeric) Search radius around the focal coordinates, in meters.}
 

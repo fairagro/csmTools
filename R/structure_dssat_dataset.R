@@ -288,8 +288,8 @@ split_dssat_dataset <-  function(dataset,
 #' `CULTIVARS_template`, `SOIL_META_template`, `SOIL_GENERAL_template`,
 #' `SOIL_template`, `WEATHER_template`, `WEATHER_header_template`.
 #'
-#' @seealso [resolve_dssat_codes()], [.resolve_dssat_exp_codes()],
-#'   [.resolve_dssat_sol_codes()], [.resolve_dssat_wth_codes()]
+#' @seealso
+#' `resolve_dssat_codes()`, `.resolve_dssat_exp_codes()`, `.resolve_dssat_sol_codes()`, `.resolve_dssat_wth_codes()`
 #'
 #' @noRd
 #'

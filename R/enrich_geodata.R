@@ -47,7 +47,7 @@
 #'
 #' @seealso 
 #' \itemize{
-#'   \item [.query_spatial_apis()] - Internal function handling API calls
+#'   \item `.query_spatial_apis()` - Internal function handling API calls
 #'   \item [elevatr::get_elev_point()] - Elevation API documentation
 #'   \item [tidygeocoder::reverse_geocode()] - Geocoding API documentation
 #' }

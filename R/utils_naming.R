@@ -45,7 +45,7 @@
 #' is_valid_dssat_id(NA, "field")               # FALSE
 #' }
 #'
-#' @seealso [generate_dssat_id()], [.resolve_dssat_exp_codes()]
+#' @seealso `generate_dssat_id()`, `.resolve_dssat_exp_codes()`
 #'
 #' @noRd
 #'
@@ -138,8 +138,7 @@ is_valid_dssat_id <- function(x, item, framework = "dssat"){
 #' # Returns: "ICSA"
 #' }
 #'
-#' @seealso [is_valid_dssat_id()], [strict_abbreviate()],
-#'   [.resolve_dssat_exp_codes()]
+#' @seealso `is_valid_dssat_id()`, `strict_abbreviate()`, `.resolve_dssat_exp_codes()`
 #'
 #' @noRd
 #'

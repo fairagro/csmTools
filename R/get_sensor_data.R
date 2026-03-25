@@ -5,8 +5,8 @@
 #' @param url (character) The base URL of the OGC SensorThings API endpoint (should end with a slash).
 #' @param creds (list) A named list containing Keycloak authentication details (see Details).
 #' @param var (character vector) The names of observed properties (variables) to extract, as defined ObservedProperties on the focal STA endpoint.
-#' @param lon (numeric) Longitude (x coordinate) of the target location [decimal degrees E/W, range 6:15]
-#' @param lat (numeric) Latitude (y coordinate) of the target location [decimal degrees N/S, range 47:55]
+#' @param lon (numeric) Longitude (x coordinate) of the target location (decimal degrees E/W, range 6:15)
+#' @param lat (numeric) Latitude (y coordinate) of the target location (decimal degrees N/S, range 47:55)
 #' @param radius (numeric) Search radius around the focal coordinates, in meters.
 #' @param from (character or date) Start date of the desired time range as YYYY-MM-DD (inclusive).
 #' @param to (character or date) End date of the desired time range as YYYY-MM-DD (inclusive).

@@ -2,44 +2,42 @@
 % Please edit documentation in R/get_weather_data.R
 \name{get_weather_data}
 \alias{get_weather_data}
-\title{Wrapping function for downloading, formatting and imputing daily weather time series}
+\title{Download, format, and impute daily weather time series}
 \usage{
 get_weather_data(lon, lat, from, to, pars, res, src, output_path = NULL)
 }
 \arguments{
-\item{lon}{(numeric) Longitude (x coordinate) of the target location \link{decimal degrees E/W, range 6:15}}
+\item{lon}{Numeric. Longitude of the target location in decimal degrees.}
 
-\item{lat}{(numeric) Latitude (y coordinate) of the target location \link{decimal degrees N/S, range 47:55}}
+\item{lat}{Numeric. Latitude of the target location in decimal degrees.}
 
-\item{from}{(character or date) Start date of the desired time range as YYYY-MM-DD (inclusive).}
+\item{from}{Character or Date. Start date of the requested time range in
+\code{"YYYY-MM-DD"} format (inclusive).}
 
-\item{to}{(character or date) End date of the desired time range as YYYY-MM-DD (inclusive).}
+\item{to}{Character or Date. End date of the requested time range in
+\code{"YYYY-MM-DD"} format (inclusive).}
 
-\item{pars}{(character) A character string of length >= 1 specifying the target variables among:
-\itemize{
-\item \code{"air_temperature"} (default)
-\item \code{"precipitation"}
-\item \code{"solar_radiation"}
-\item \code{"dewpoint"}
-\item \code{"relative_humidity"}
-\item \code{"wind_speed"}
-\item \code{"par"} (photosynthetically active radiation)
-\item \code{"evaporation"}
-}}
+\item{pars}{Character vector. Target weather variables to retrieve. One or more of
+\code{"air_temperature"}, \code{"precipitation"}, \code{"solar_radiation"}, \code{"dewpoint"},
+\code{"relative_humidity"}, \code{"wind_speed"}, \code{"par"}, or \code{"evaporation"}.}
 
-\item{res}{(character vector) Temporal resolution for each weather variable.Must match length of \code{pars}. Supported values:
-\itemize{
-\item \code{"daily"} (default)
-\item \code{"hourly"}
-}}
+\item{res}{Character. Temporal resolution. One of \code{"daily"} or \code{"hourly"}.}
 
-\item{src}{(character) Source repository (currently only "nasa_power" is supported).}
+\item{src}{Character. Source repository. One of \code{"dwd"} or \code{"nasa_power"}.}
 
-\item{output_path}{(character) Optional file path to save the output.}
+\item{output_path}{Character. Optional file path to save the output.}
 }
 \value{
-a list of dataframes containing daily weather for the requested location, time frame and variables.
+A named list containing a \code{WEATHER_DAILY} data frame with the requested variables
+for the specified location and time range.
 }
 \description{
-Source repositories are currently limited to DWD Open Data Server, and imputation method to linear interpolation
+Fetches weather data for a target location and time range from a supported source repository
+and returns it as a named list of data frames.
+}
+\details{
+Validates \code{src}, \code{pars}, and \code{res} against supported values, then dispatches to
+the appropriate download handler. For \code{"nasa_power"}, each element of \code{pars} is mapped to its
+corresponding NASA POWER parameter code and fetched via \code{nasapower::get_power()}.
+The \code{"dwd"} source is currently a placeholder.
 }

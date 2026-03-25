@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_cultivar_parameters.R
 \name{add_treatment}
 \alias{add_treatment}
-\title{Add a New Treatment Row to the treatment matrix of a DSSAT managemenet table list}
+\title{Add a New Treatment Row to the treatment matrix of a DSSAT managemeent table list}
 \usage{
 add_treatment(xtables, args = list())
 }

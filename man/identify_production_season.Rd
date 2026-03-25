@@ -2,7 +2,7 @@
 % Please edit documentation in R/identify_production_season.R
 \name{identify_production_season}
 \alias{identify_production_season}
-\title{Identify Production Season from Management Dates}
+\title{Identify production season bounds from management dates}
 \usage{
 identify_production_season(
   mngt_list,
@@ -12,30 +12,37 @@ identify_production_season(
 )
 }
 \arguments{
-\item{mngt_list}{A list of data frames containing date columns.}
+\item{mngt_list}{A named list of management data frames, each containing one or more date columns.}
 
-\item{period}{Character string. Reserved for future use.}
+\item{period}{Character. Season definition to apply. One of
+\code{"cultivation_season"} (default, spans all management dates) or
+\code{"growing_season"} (spans planting to the last management date, requires a \code{PLANTING_DETAILS}
+element with a \code{PDATE} column).}
 
-\item{output}{Character string specifying return format: \code{"bounds"} (default) for start/end dates
-or \code{"date_sequence"} for the full daily sequence.}
+\item{output}{Character. Return format. One of \code{"bounds"} (default, returns the start and end dates)
+or \code{"date_sequence"} (returns the full daily sequence between them).}
+
+\item{dssat_date_fmt}{Logical. If \code{TRUE}, date columns are parsed from DSSAT format (\code{"\%y\%j"}).
+Defaults to \code{FALSE}.}
 }
 \value{
-A vector of \code{Date} objects, either the two boundary dates or the full sequence of dates between them.
+A vector of \code{Date} objects: the two boundary dates if
+\code{output = "bounds"}, or the full daily sequence if
+\code{output = "date_sequence"}.
 }
 \description{
-Finds the earliest and latest dates across a list of crop management data frames to define the production season.
+Finds the earliest and latest dates across a list of crop management dataframes to define the production
+season, returning either start and end dates or the full daily sequence between them.
 }
 \examples{
-# Helper function for the example to work
-is_date <- function(x) inherits(x, 'Date')
-
-# Sample list of management data frames
+\dontrun{
 mngt <- list(
   data.frame(planting_date = as.Date("2023-05-10")),
-  data.frame(harvest_date = as.Date("2023-09-25"))
+  data.frame(harvest_date  = as.Date("2023-09-25"))
 )
 
-# Get the start and end dates
 identify_production_season(mngt)
+identify_production_season(mngt, output = "date_sequence")
+}
 
 }

@@ -33,8 +33,7 @@
 #' NULL components are skipped without error.
 #'
 #' @seealso 
-#' [.resolve_dssat_exp_codes()], [.resolve_dssat_sol_codes()],
-#' [.resolve_dssat_wth_codes()]
+#' `.resolve_dssat_exp_codes()`, `.resolve_dssat_sol_codes()`, `.resolve_dssat_wth_codes()`
 #'
 #' @noRd
 #' 
@@ -126,8 +125,7 @@ resolve_dssat_codes <- function(dataset) {
 #' `sequence_no` (group ID) provides uniqueness when generating codes.
 #'
 #' @seealso 
-#' [is_valid_dssat_id()], [generate_dssat_id()], 
-#' [.resolve_dssat_soil_codes()], [.resolve_dssat_wth_codes()]
+#' `is_valid_dssat_id()`, `generate_dssat_id()`, `.resolve_dssat_soil_codes()`, `.resolve_dssat_wth_codes()`
 #'
 #' @noRd
 #'
@@ -256,8 +254,7 @@ resolve_dssat_codes <- function(dataset) {
 #' "AG.SOL") derived from the institution/region code embedded in PEDON.
 #'
 #' @seealso 
-#' [is_valid_dssat_id()], [generate_dssat_id()], 
-#' [.resolve_dssat_exp_codes()], [.resolve_dssat_wth_codes()]
+#' `is_valid_dssat_id()`, `generate_dssat_id()`, `.resolve_dssat_soil_codes()`, `.resolve_dssat_wth_codes()`
 #'
 #' @noRd
 #' 
@@ -357,8 +354,7 @@ resolve_dssat_codes <- function(dataset) {
 #' }
 #'
 #' @seealso 
-#' [is_valid_dssat_id()], [generate_dssat_id()], 
-#' [.resolve_dssat_exp_codes()], [.resolve_dssat_sol_codes()]
+#' `is_valid_dssat_id()`, `generate_dssat_id()`, `.resolve_dssat_soil_codes()`, `.resolve_dssat_wth_codes()`
 #'
 #' @noRd
 #'

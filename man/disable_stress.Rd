@@ -2,28 +2,49 @@
 % Please edit documentation in R/disable_stress.R
 \name{disable_stress}
 \alias{disable_stress}
-\title{Disable Water and/or Nitrogen Stress in DSSAT Simulations}
+\title{Disable water and/or nitrogen stress by adding management treatments}
 \usage{
 disable_stress(xtables, stress = c("water", "nitrogen"))
 }
 \arguments{
-\item{xtables}{A named list of DSSAT tables (data frames), including management and treatment sections.}
+\item{xtables}{Experiment file tables (X-file structure)}
 
-\item{stress}{Character vector. Which stresses to disable. Options are \code{"water"}, \code{"nitrogen"}, or both (default: \code{c("water", "nitrogen")}).}
+\item{stress}{Character vector specifying stress(es) to disable: \code{"water"}, \code{"nitrogen"}, or both.
+Default is \code{c("water", "nitrogen")}.}
 }
 \value{
-The input list with the new treatment(s) added to disable the specified stress(es).
+Modified \code{xtables} with added treatment(s) and associated management records (simulation
+controls for water, fertilizer applications for nitrogen)
 }
 \description{
-Modifies DSSAT management tables to add treatments with automatic irrigation
-and/or nitrogen saturation, disabling water and/or nitrogen stress.
+Creates new treatment(s) with automatic irrigation and/or nitrogen saturation fertilization to
+remove corresponding stress limitations from simulations.
 }
 \details{
-For water stress, the function adds a simulation control row with auto-irrigation enabled. For nitrogen stress, it adds a fertilizer management row with high N application. It then creates a new treatment referencing these management levels, with a descriptive treatment name. The function uses helper functions such as \code{get_xfile_sec}, \code{add_management}, and \code{add_treatment}.
+This function adds management practices that eliminate specified stress
+factors from simulations:
+
+\itemize{
+\item \strong{Water stress}: Enables automatic irrigation (IRRIG = "A") that maintains optimal
+soil moisture throughout the growing season
+\item \strong{Nitrogen stress}: Adds three fertilizer applications totaling 120 kg N/ha at different
+dates to ensure non-limiting N availability
+\item \strong{Both}: Creates a single treatment combining both practices for fully non-limiting growth conditions
+}
+
+A new treatment is automatically created with a descriptive name ("Auto-irrigation", "N saturation",
+or "Auto-irrigation + N saturation") and linked to the appropriate management records.
 }
 \examples{
 \dontrun{
-xtables <- disable_stress(xtables, stress = c("water", "nitrogen"))
+# Disable both water and nitrogen stress (default)
+xtables <- disable_stress(xtables)
+
+# Disable only water stress
+xtables <- disable_stress(xtables, stress = "water")
+
+# Disable only nitrogen stress
+xtables <- disable_stress(xtables, stress = "nitrogen")
 }
 
 }

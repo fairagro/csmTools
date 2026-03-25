@@ -22,7 +22,7 @@
 #' `period = "cultivation_season"`. Weather data is filtered to years overlapping that
 #' season using the 2-digit `YEAR` column present in DSSAT weather tables.
 #'
-#' Yearly statistics are computed by [calculate_wth_stats()] and joined to each
+#' Yearly statistics are computed by `calculate_wth_stats()` and joined to each
 #' corresponding metadata table on all shared columns.
 #'
 #' @noRd
