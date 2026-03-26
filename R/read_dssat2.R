@@ -58,7 +58,7 @@ read_cul2 <- function(file_name, col_types=NULL, col_names=NULL,
   first_line <- raw_lines %>%
     head(1)
   
-  comments <- extract_comments(raw_lines)
+  comments <- DSSAT:::extract_comments(raw_lines)
   
   switches_index <- c(grep("^Coeff", comments), grep("^Calibr", comments))
   switches <- comments[switches_index]
@@ -94,7 +94,7 @@ read_cul2 <- function(file_name, col_types=NULL, col_names=NULL,
                              # For now wporkaround rather than direct correction in
                              # read_tier_data, uncertain what impact this may have in other instances
                              store_v_fmt = FALSE)) %>%
-    reduce(combine_tiers)
+    reduce(DSSAT:::combine_tiers)
   
   attr(cul,'v_fmt') <- tier_fmt
   attr(cul,'first_line') <- first_line

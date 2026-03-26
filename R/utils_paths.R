@@ -73,6 +73,7 @@ prepare_dssat_paths <- function(dataset, write_in_dssat_dir, path) {
   dssat_dir_env <- Sys.getenv("DSSAT_CSM")
   
   if (dssat_dir_env == "") {
+    # TODO: check wheather the executable is found
     dssat_exe <- "C:\\DSSAT48\\DSCSM048.EXE"
     options(DSSAT.CSM = dssat_exe)
     message("DSSAT CSM location not specified in global environment and set to the default location: C:\\DSSAT48\\DSCSM048.EXE")

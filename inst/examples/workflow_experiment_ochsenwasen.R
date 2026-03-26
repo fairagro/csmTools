@@ -174,6 +174,71 @@ dataset_dssat <- convert_dataset(
 )
 #TODO: check why dssat mappping is 'unboxed' in json output
 
+
+###----- Adjust data ----------------------------------------------------------------
+## ----------------------------------------------------------------------------------
+## At this stage, researchers may want to tweak their input files to refine their
+## simulation results. This may involve normalizing soil profiles sequence depth,
+## generating initial condition layers based on whole soil estimates of water/N
+## content, or editing single attributes
+##
+## ----------------------------------------------------------------------------------
+
+# TODO: add default + calibration
+
+# --- Test new soil profiles ---
+generic_loam_slp <- read_sol(file_name = "C:/DSSAT48/Soil/SOIL.SOL", id_soil = "IB00000007")
+generic_loam_slp <- unnest(
+  generic_loam_slp,
+  cols = c(SLB, SLMH, SLLL, SDUL, SSAT, SRGF, SSKS, SBDM, SLOC, SLCL, SLSI, SLCF, SLNI, SLHW, SLHB, SCEC, SADC)
+)
+generic_loam_slp$PEDON <- "DE02114767"
+generic_loam_slp$SDUL - generic_loam_slp$SLLL  # Not very high...
+generic_loam_slp$SDUL <- generic_loam_slp$SDUL * 1.2
+generic_loam_slp$SSAT <- generic_loam_slp$SSAT * 1.2
+
+# --- Normalize soil profile ---
+
+# Apply standard depth sequence for NWheat
+soil_dssat_std <- normalize_soil_profile(
+  data = generic_loam_slp,
+  depth_seq = c(5,10,20,30,40,50,60,70,90,110,130,150,170,190,210),
+  method = "linear"
+)
+# Update dataset with normalized soil profile ('replace')
+dataset_dssat <- assemble_dataset(
+  components = list(dataset_dssat, soil_dssat_std),
+  keep_all = FALSE,
+  action = "replace_table"
+)
+
+
+# --- Generate initial layers ---
+
+# Generate layer water and N based on single values provided in the field book
+init_layers <- calculate_initial_layers(
+  soil_profile = soil_dssat_std,
+  percent_available_water = 100,
+  total_n_kgha = 50  # Note: value provided for 0-60 cm
+)
+# Update initial conditions with simulated layers ('merge')
+dataset_dssat <- assemble_dataset(
+  components = list(dataset_dssat, init_layers),
+  keep_all = FALSE,
+  action = "merge_properties",
+  join_type = "full"
+)
+
+
+# --- Add cultivar using default values ---
+cultivar <- edit_cultivar(
+  cname = dataset_dssat$EXPERIMENT$CULTIVARS$CNAME,
+  model = "WHAPS",
+  ccode = dataset_dssat$EXPERIMENT$CULTIVARS$INGENO,
+  write =  TRUE
+)
+
+
 ###----- Perform simulations --------------------------------------------------------
 ## ----------------------------------------------------------------------------------
 ## Compiles DSSAT input files from all the different data sections (weather, soil,
@@ -186,76 +251,37 @@ dataset_dssat <- convert_dataset(
 ##
 ## ----------------------------------------------------------------------------------
 
-###----- Adjust data ----------------------------------------------------------------
-
-# TODO: add default + calibration
-
-# --- Test new soil profiles ---
-generic_loam_slp <- read_sol(file_name = "C:/DSSAT48/Soil/SOIL.SOL", id_soil = "IB00000007")
-generic_loam_slp <- unnest(generic_loam_slp, cols = c(SLB, SLMH, SLLL, SDUL, SSAT, SRGF, SSKS, SBDM, SLOC, SLCL, SLSI, SLCF, SLNI, SLHW, SLHB, SCEC, SADC))
-generic_loam_slp$PEDON <- "DE02114767"
-generic_loam_slp$SDUL - generic_loam_slp$SLLL  # Not very high...
-generic_loam_slp$SDUL <- generic_loam_slp$SDUL * 1.2
-generic_loam_slp$SSAT <- generic_loam_slp$SSAT * 1.2
-
-# generic_loam_slp$PEDON <- "LL00000001"
-# dataset_dssat$MANAGEMENT$FIELDS$ID_SOIL <- "LL00000001"
-
-
-# --- Normalize soil profile ---
-soil_dssat_std <- normalize_soil_profile(
-  # data = "./inst/examples/sciwin/ochsenwasen_dssat.json",
-  data = generic_loam_slp,
-  depth_seq = c(5,10,20,30,40,50,60,70,90,110,130,150,170,190,210),
-  method = "linear",
-  output_path = "./inst/examples/sciwin/ochsenwasen_soil_dssat_normalized.json"
-)
-
-# Update dataset with normalized soil profile ('replace')
-dataset_dssat <- assemble_dataset(
-  components = list(
-    dataset_dssat,
-    "./inst/examples/sciwin/ochsenwasen_soil_dssat_normalized.json"
-  ),
-  keep_all = FALSE,
-  action = "replace_table",
-  # structure_arg = 1,
-  output_path = "./inst/examples/sciwin/ochsenwasen_dssat.json"
-)
-
-
-# --- Generate initial layers ---
-init_layers <- calculate_initial_layers(
-  soil_profile = "./inst/examples/sciwin/ochsenwasen_soil_dssat_normalized.json",
-  percent_available_water = 100,
-  total_n_kgha = 50,  # Value provided in field book, but only for 0-60 cm
-  output_path = "./inst/examples/sciwin/ochsenwasen_init_layers.json"
-)
-
-# Update initial conditions with simulated layers ('merge')
-dataset_dssat <- assemble_dataset(
-  components = list(
-    "./inst/examples/sciwin/ochsenwasen_dssat.json",
-    "./inst/examples/sciwin/ochsenwasen_init_layers.json"
-  ),
-  keep_all = FALSE,
-  action = "merge_properties",
-  join_type = "full",
-  output_path = "./inst/examples/sciwin/ochsenwasen_dssat.json"
-)
-
-
 ###----- Compile crop modeling data -------------------------------------------------
 
 # Assemble full input dataset
 dataset_dssat_input <- build_simulation_files(
-  dataset = "./inst/examples/sciwin/ochsenwasen_dssat.json",
+  dataset = dataset_dssat,
   sol_append = FALSE,
   write = TRUE,
   # If set to TRUE, files are written in the DSSAT locations (needed for simulation)
   write_in_dssat_dir = TRUE,
-  path = "./inst/examples/sciwin",
-  control_config = "./inst/examples/sciwin/dssat_simulation_controls.yaml"
+  path = "./inst/examples",
+  control_config = list(
+    # DSSAT Simulation Control Parameters
+    RSEED = 7461,
+    SMODEL = "WHAPS",
+    # Simulation options
+    WATER = "Y",
+    NITRO = "Y",
+    TILL = "Y",
+    # Simulation methods
+    INFIL = "R",
+    PHOTO = "C",
+    MESEV = "S",
+    MESOL = 3,
+    # Management options
+    FERTI = "R",
+    HARVS = "R",
+    # Output options
+    GROUT = "Y",
+    VBOSE = "Y",
+    NIOUT = "Y"
+  )
 )
 
 
@@ -266,7 +292,7 @@ simulations <- run_simulations(
   treatments = c(1, 3, 7),  # treatment index
   framework = "dssat",
   dssat_dir = NULL,
-  sim_dir = "./inst/examples/sciwin"
+  sim_dir = "./inst/examples"
 )
 
 
