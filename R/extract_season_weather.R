@@ -37,6 +37,7 @@ extract_season_weather <- function(dssat_exp) {
   cs_dates <- identify_production_season(
     dssat_exp,
     period = "cultivation_season",
+    output = "date_sequence",
     dssat_date_fmt = TRUE
   )
   cs_years <- unique(lubridate::year(cs_dates))
