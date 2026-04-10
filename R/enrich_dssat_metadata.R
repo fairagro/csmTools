@@ -27,6 +27,7 @@
 
 enrich_dssat_metadata <- function(dssat_components) {
   
+  # TODO: apply workaround when LAT and LONG from FIELDS are missing
   exp <- dssat_components$METADATA
   sol <- dssat_components$SOIL
   wth <- dssat_components$WEATHER
@@ -76,7 +77,7 @@ enrich_dssat_metadata <- function(dssat_components) {
 #'         EXP_YEAR if unavailable
 #'   \item **LAT/LONG**: Uses experiment coordinates (YCRD/XCRD) if missing
 #'   \item **TEXTURE**: Computed from clay/silt fractions (SLCL, SLSI) using
-#'         `get_sol_texture()` helper if not provided
+#'         `get_soil_texture()` helper if not provided
 #' }
 #'
 #' Joins soil and experiment data on all common columns to preserve
@@ -91,6 +92,7 @@ enrich_dssat_metadata <- function(dssat_components) {
     dplyr::left_join(exp, by = intersect(names(sol), names(exp))) %>%
     dplyr::mutate(
       INST_NAME = if ("INST_NAME" %in% names(.)) INST_NAME else NA_character_,
+      SOL_INSTITUTION = if ("SOL_INSTITUTION" %in% names(.)) SOL_INSTITUTION else "XX",
       INSTITUTION = if ("INSTITUTION" %in% names(.)) INSTITUTION else "XX",
       INST_NAME = dplyr::coalesce(INST_NAME, INSTITUTION),
       YEAR_FROM_DATE = if ("DATE" %in% names(.)) {
@@ -113,23 +115,27 @@ enrich_dssat_metadata <- function(dssat_components) {
       LONG = dplyr::coalesce(LONG, XCRD),
       TEXTURE = if ("TEXTURE" %in% names(.)) {
         TEXTURE
-      } else {
-        # (Assuming get_sol_texture is a helper)
-        get_sol_texture(
+      } else if (all(c("SLCL", "SLSI") %in% names(.)) &&
+                 !any(is.null(SLCL), is.null(SLSI)) &&
+                 !any(is.na(SLCL), is.na(SLSI)) &&
+                 !any(SLCL == -99, SLSI == -99)) {
+        get_soil_texture(
           clay_frac = SLCL,
           silt_frac = SLSI,
           sand_frac = 1.0 - SLCL - SLSI
         )
+      } else {
+        NA_character_
       }
     ) %>%
     dplyr::select(
-      dplyr::all_of(intersect(c("EXP_ID", "PEDON", "INST_NAME", "YEAR", "TEXTURE"), names(.))),
-      dplyr::all_of(setdiff(names(sol), c("EXP_ID", "PEDON", "INST_NAME", "YEAR", "TEXTURE"))),
+      dplyr::all_of(intersect(c("EXP_ID", "PEDON", "INST_NAME", "YEAR", "LAT", "LONG", "TEXTURE"), names(.))),
+      dplyr::all_of(setdiff(names(sol), c("EXP_ID", "PEDON", "INST_NAME", "YEAR", "LAT", "LONG", "TEXTURE"))),
     )
 }
 
 
-#' Impute missing weather metadata from experiment data
+#' Impute missing weather metadata from experiment datas
 #'
 #' Fills gaps in weather data by joining with experiment metadata and computing
 #' derived fields where direct values are unavailable.
@@ -160,6 +166,7 @@ enrich_dssat_metadata <- function(dssat_components) {
     dplyr::left_join(exp, by = intersect(names(wth), names(exp))) %>%
     dplyr::mutate(
       INSI = if ("INSI" %in% names(.)) INSI else NA_character_,
+      WTH_INSTITUTION = if ("WTH_INSTITUTION" %in% names(.)) WTH_INSTITUTION else "XX",
       INSTITUTION = if ("INSTITUTION" %in% names(.)) INSTITUTION else "XX",
       INSI = dplyr::coalesce(INSI, INSTITUTION),
       LAT = if ("LAT" %in% names(.)) LAT else NA_real_,
@@ -214,7 +221,7 @@ enrich_dssat_metadata <- function(dssat_components) {
   
   exp_locations %>%
     dplyr::mutate(
-      INSTITUTION = if ("INSTITUTION" %in% names(.)) FLNAME else "XX",
+      INSTITUTION = if ("INSTITUTION" %in% names(.)) INSTITUTION else "XX",
       FLNAME = if ("FLNAME" %in% names(.)) FLNAME else NA_character_,
       FLNAME = ifelse(is.na(FLNAME), toupper(ShortLabel), FLNAME),
       # Fill site as address if missing
