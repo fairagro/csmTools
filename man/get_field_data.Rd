@@ -2,55 +2,57 @@
 % Please edit documentation in R/get_field_data.R
 \name{get_field_data}
 \alias{get_field_data}
-\title{Extract field data from ICASA Excel template}
+\title{Read field book (meta)data from the ICASA Excel template}
 \usage{
-get_field_data(
-  path = NULL,
-  exp_id = NULL,
-  headers = c("short", "long"),
-  keep_null_events = TRUE,
-  keep_empty = TRUE,
-  output_path = NULL
-)
+get_field_data(path = NULL, raw = FALSE, keep_empty = FALSE)
 }
 \arguments{
-\item{path}{(character) Path to Excel template file. If \code{NULL} (default), uses the package's default template.}
+\item{path}{Character string. Path to the template file. If \code{NULL} (default),
+the function automatically locates or creates the managed template in the
+user's home directory (\code{~/.csmTools/}) using \code{\link{fetch_template}}.}
 
-\item{exp_id}{(character) Optional experiment ID to extract a single experiment from multi-experiment templates.}
+\item{raw}{Logical. If \code{FALSE} (default), the data is automatically converted
+from the entry-oriented \code{"icasa-agro"} model to the standard \code{"icasa"}
+model. Set to \code{TRUE} to retrieve the data exactly as it appears in the spreadsheet.}
 
-\item{headers}{(character) Column header format: \code{"short"} (default) for ICASA standard names or \code{"long"} for descriptive names.}
-
-\item{keep_null_events}{(logical) If \code{FALSE}, removes null events (e.g., "rainfed" irrigation entries). Default: \code{TRUE}.}
-
-\item{keep_empty}{(logical) If \code{FALSE}, removes empty data sections. Default: \code{TRUE}.}
-
-\item{output_path}{(character) Optional file path to save the output.}
+\item{keep_empty}{Logical. Whether to retain empty rows or fields during the
+import process. Defaults to \code{FALSE}.}
 }
 \value{
-A named list of data frames in ICASA format, and saved files if \code{output_path} is specified.
+A list-based dataset containing the parsed field data, structured according to the requested data model.
 }
 \description{
-Reads and processes field experiment data from an Excel template, converting it to ICASA-compliant format.
+Imports agronomic management and observation data from the ICASA-Agro Excel template.
+It handles template versioning, file path discovery, and conversion to the standard ICASA data model.
 }
 \details{
-The function:
+The function follows a specific workflow to ensure data integrity:
 \enumerate{
-\item Loads data from Excel template sheets
-\item Converts dropdown descriptions to ICASA codes
-\item Formats treatment and environmental modifier tables
-\item Merges related data sections (e.g., summary/time series tables)
-\item Splits multi-experiment data (if \code{exp_id} not specified)
-\item Returns or exports processed data
+\item If no path is provided, it attempts to use the template in the user's home directory.
+\item If that template was just created (first-time use), the function stops to allow the user to input data.
+\item If a custom path is provided, a warning is issued noting that this specific file will
+not receive automatic version updates from the package.
 }
 }
+\section{Data Models}{
+
+\itemize{
+\item \strong{icasa-agro}: The human-readable, entry-friendly format used inside the Excel template.
+\item \strong{icasa}: The standardized data model used by \code{csmTools}  processing functions
+(e.g., for DSSAT export).
+}
+}
+
 \examples{
-# Process all experiments using default template
-data <- get_field_data()
+\dontrun{
+# Read from the default system-managed template
+field_data <- get_field_data()
 
-# Process specific experiment with short headers
-exp1 <- get_field_data(exp_id = "EXP001", headers = "short")
+# Read from a custom file path and keep raw entry format
+raw_data <- get_field_data(path = "my_experiment_data.xlsm", raw = TRUE)
+}
 
-# Save processed data to directory
-get_field_data(output_path = "processed_data/")
-
+}
+\seealso{
+\code{\link{fetch_template}}, \code{\link{read_template}}, \code{\link{convert_dataset}}
 }

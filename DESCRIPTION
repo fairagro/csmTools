@@ -1,10 +1,10 @@
 Package: csmTools
 Title: Data Integration Utilities for Crop Modelers
-Version: 0.0.0.9000
+Version: 0.2.0
 Author: Benjamin Leroy
-Maintainer: Benjamin Leroy <benjamin.leroy@tum.de>
+Maintainer: Benjamin Leroy <benjamin.leroy@inrae.fr>
 Authors@R: 
-    person("Benjamin", "Leroy", , "benjamin.leroy@tum.de", role = c("aut", "cre"),
+    person("Benjamin", "Leroy", , "benjamin.leroy@inrae.fr", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-6007-7948"))
 Description: The package provide a series of tools to extract, structure and integrate data from various sources (IoT platform, online databases, published datasets...) to compile validation datasets for process-based crop models. The current version is mainly helpful for streamlining data preparation for research applications with the DSSAT modeling framework (https://dssat.net) and uses the ICASA dictionary (https://github.com/DSSAT/ICASA-Dictionary) as its core annotation standards.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
