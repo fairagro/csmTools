@@ -41,10 +41,11 @@ split_dataset <- function(dataset, key, data_model) {
   }
   
   # ---- Splitting logic ----
-  # 1. Find all unique levels of the split key across all tables that have it.
+  # Find all unique levels of the split key across all tables that have it.
   all_levels <- unique(unlist(lapply(dataset, function(df) {
     if (split_key %in% names(df)) {
-      return(unique(df[[split_key]]))
+      levels <- unique(df[[split_key]])
+      return(levels[!is.na(levels)])
     }
     return(NULL)
   })))
@@ -56,10 +57,10 @@ split_dataset <- function(dataset, key, data_model) {
     return(dataset) 
   }
   
-  # 2. Initialize the nested output list, with names set to the unique levels.
+  # Initialize the nested output list, with names set to the unique levels.
   output_list <- stats::setNames(lapply(all_levels, function(x) list()), all_levels)
   
-  # 3. Loop through each data frame in the original dataset.
+  # Loop through each data frame in the original dataset.
   for (table_name in names(dataset)) {
     df <- dataset[[table_name]]
     
