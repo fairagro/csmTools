@@ -22,6 +22,9 @@
 
 format_dssat_sections <- function(dataset, comments) {
   
+  # Ensure comments is a list, even if empty
+  if (is.null(comments)) comments <- list()
+  
   # --- Management tables ---
   mngt_list <- split_dssat_dataset(
     dataset,
@@ -37,6 +40,7 @@ format_dssat_sections <- function(dataset, comments) {
     attr(sm_fmt, "experiment") <- attr(mngt_fmt, "experiment")
     attr(sm_fmt, "file_name") <- sub(".$", "A", attr(mngt_fmt, "file_name"))
   }
+  
   ts_df <- dataset[["TIME_SERIES"]]
   ts_fmt <- .format_dssat_ts(ts_df, comments)
   if (!is.null(ts_fmt)) {
@@ -49,14 +53,15 @@ format_dssat_sections <- function(dataset, comments) {
   soil_fmt <- .format_dssat_soil(soil_list, comments)
   
   # --- Weather tables ---
-  # Weather components are first grouped by year
   wth_list_all <- dataset[grepl("WEATHER", names(dataset))]
-  suffixes <- sub(".*_(\\d+)$", "\\1", names(wth_list_all))
-  wth_list_by_year <- split(wth_list_all, f = suffixes)
-
-  wth_fmt <- lapply(wth_list_by_year, .format_dssat_wth, comments =  comments)
+  if (length(wth_list_all) > 0) {
+    suffixes <- sub(".*_(\\d+)$", "\\1", names(wth_list_all))
+    wth_list_by_year <- split(wth_list_all, f = suffixes)
+    wth_fmt <- lapply(wth_list_by_year, .format_dssat_wth, comments = comments)
+  } else {
+    wth_fmt <- NULL
+  }
   
-
   # --- Assemble output ---
   dataset_out <- list(
     EXPERIMENT = mngt_fmt,
@@ -65,18 +70,32 @@ format_dssat_sections <- function(dataset, comments) {
     SOIL = soil_fmt,
     WEATHER = wth_fmt
   )
-  dataset_out <- purrr::compact(dataset_out)  # Remove NULLs
+  dataset_out <- purrr::compact(dataset_out) 
   
   # --- Add package signature ---
   signature <- paste0("Dataset processed on ", Sys.Date(), " with csmtools.")
+  
   prepend_comment <- function(x, new_comment) {
-    comments <- as.character(unlist(attr(x, "comments")))
-    attr(x, "comments") <- c(new_comment, comments)
+    
+    # Safely extract existing comments as a character vector
+    existing <- attr(x, "comments")
+    if (is.null(existing)) {
+      existing <- character(0)
+    } else {
+      existing <- as.character(unlist(existing))
+    }
+    attr(x, "comments") <- c(new_comment, existing)
     return(x)
   }
-  dataset_out <- lapply(dataset_out, prepend_comment, new_comment = signature)
-  # Special case: nested weather dfs
-  dataset_out$WEATHER <- lapply(dataset_out$WEATHER, prepend_comment, new_comment = signature)
+  
+  # Apply to top-level elements
+  dataset_out <- lapply(dataset_out, function(elem) {
+
+    if (is.list(elem) && !is.data.frame(elem) && any(sapply(elem, is.data.frame))) {
+      return(lapply(elem, prepend_comment, new_comment = signature))
+    }
+    return(prepend_comment(elem, new_comment = signature))
+  })
   
   return(dataset_out)
 }
@@ -113,7 +132,6 @@ format_dssat_sections <- function(dataset, comments) {
   exp_metadata <- exp[["GENERAL"]]
   mngt_out <- exp
   
-  # Extract comments
   mngt_sections <- c(
     "GENERAL",
     "TREATMENTS",
@@ -131,19 +149,18 @@ format_dssat_sections <- function(dataset, comments) {
     "HARVEST"
   )
   mngt_notes <- comments[names(comments) %in% mngt_sections]
-
+  
   # Generate markdown format with comments
   # if (length(mngt_notes) > 0) {
   #   ## ADD LOGIC
   # }
   
-  # Append file building attributes
   attr(mngt_out, "experiment") <- ifelse(
-    "EXP_NAME" %in% exp_metadata,
+    "EXP_NAME" %in% names(exp_metadata),
     unique(exp_metadata$EXP_NAME),
     unique(exp_metadata$EXP_ID)
   )
-  #attr(mngt_out, "comments") <- mngt_nodes_md
+  attr(mngt_out, "comments") <- unique(mngt_notes)
   attr(mngt_out, "file_name") <- unique(exp_metadata$file_name)
   
   return(mngt_out)
@@ -169,19 +186,19 @@ format_dssat_sections <- function(dataset, comments) {
 
 .format_dssat_sm <- function(sm, comments) {
   
-  # Extract comments
-  sm_notes <- comments[names(comments) %in% "SUMMARY"]
-  
-  # Return NULL if only treatment column is present
-  # (possible split artefact in multi-year data)
   if (is.null(sm) || (identical(names(sm), "TRNO") && ncol(sm) == 1)) {
-    sm_out <- NULL
-  } else {
-    sm_out <- sm
-    # Append attributes for file building
-    attr(sm_out, "comments") <- sm_notes
+    return(NULL)
   }
   
+  sm_notes <- comments[["SUMMARY"]]
+  if (!is.null(sm_notes)) {
+    sm_notes <- as.character(sm_notes$Content)
+  } else {
+    sm_notes <- character(0)
+  }
+  
+  sm_out <- sm
+  attr(sm_out, "comments") <- unique(sm_notes)
   return(sm_out)
 }
 
@@ -205,19 +222,19 @@ format_dssat_sections <- function(dataset, comments) {
 
 .format_dssat_ts <- function(ts, comments) {
   
-  # Extract comments
-  ts_notes <- comments[names(comments) %in% "TIME_SERIES"]
-  
-  # Return NULL if only treatment and date column is present
-  # (possible split artefact in multi-year data)
   if (is.null(ts) || (all(names(ts) %in% c("TRNO", "DATE")) && ncol(ts) <= 2)) {
-    ts_out <- NULL
-  } else {
-    ts_out <- ts
-    # Append attributes for file building
-    attr(ts_out, "comments") <- ts_notes
+    return(NULL)
   }
   
+  ts_notes <- comments[["TIME_SERIES"]]
+  if (!is.null(ts_notes)) {
+    ts_notes <- as.character(ts_notes$Content)
+  } else {
+    ts_notes <- character(0)
+  }
+  
+  ts_out <- ts
+  attr(ts_out, "comments") <- unique(ts_notes)
   return(ts_out)
 }
 
@@ -248,12 +265,17 @@ format_dssat_sections <- function(dataset, comments) {
 
 .format_dssat_soil <- function(soil, comments) {
   
+  # Return NULL if no soil data exists for this experiment
+  if (length(soil) == 0) return(NULL)
+  
   soil_metadata <- soil[["SOIL_META"]]
   
   # Extract comments
   soil_notes <- comments[names(comments) %in% c("SOIL_META", "SOIL_GENERAL", "SOIL_LAYERS")]
   if (length(soil_notes) > 0) {
     soil_notes <- unlist(lapply(soil_notes, function(df) df$Content), use.names = FALSE)
+  } else {
+    soil_notes <- character(0)
   }
   
   # Merge data in output
@@ -262,11 +284,16 @@ format_dssat_sections <- function(dataset, comments) {
   )
   
   # Append attributes for file building
-  attr(soil_out, "comments") <- soil_notes
+  attr(soil_out, "comments") <- unique(soil_notes)
+  
+  # Guard against missing metadata for the title
+  pedon <- if(!is.null(soil_metadata$PEDON)) na.omit(soil_metadata$PEDON) else "Unknown"
+  site <- if(!is.null(soil_metadata$SITE)) na.omit(soil_metadata$SITE) else "Unknown"
+  
   attr(soil_out, "title") <- ifelse(
     any(grepl("ISRIC", soil_notes)),
     "ISRIC Soil Grids-derived synthetic profile",
-    paste(na.omit(soil_metadata$PEDON), na.omit(soil_metadata$SITE), collapse = "; ")
+    paste(pedon, site, collapse = "; ")
   )
   attr(soil_out, "file_name") <- unique(soil_metadata$file_name)
   
@@ -300,6 +327,12 @@ format_dssat_sections <- function(dataset, comments) {
 
 .format_dssat_wth <- function(wth, comments) {
   
+  # Check if required components exist
+  has_daily <- any(grepl("DAILY", names(wth)))
+  has_meta <- any(grepl("METADATA", names(wth)))
+  
+  if (!has_daily || !has_meta) return(NULL)
+  
   wth_data <- wth[grepl("DAILY", names(wth))][[1]]
   wth_metadata <- wth[grepl("METADATA", names(wth))][[1]]
   
@@ -307,15 +340,14 @@ format_dssat_sections <- function(dataset, comments) {
   wth_notes <- comments[grepl("WEATHER", names(comments))]
   if (length(wth_notes) > 0) {
     wth_notes <- unlist(lapply(wth_notes, function(df) df$Content), use.names = FALSE)
+  } else {
+    wth_notes <- character(0)
   }
-  
-  # Merge data in output
-  # wth_out <- suppressMessages(reduce(wth, left_join))
   
   # Append file building attributes
   attr(wth_data, "GENERAL") <- wth_metadata
   attr(wth_data, "location") <- unique(toupper(wth_metadata$WST_NAME))
-  attr(wth_data, "comments") <- wth_notes
+  attr(wth_data, "comments") <- unique(wth_notes)
   attr(wth_data, "file_name") <- unique(wth_metadata$file_name)
   
   return(wth_data)
