@@ -333,7 +333,7 @@ reconstruct_dssat_dataset <- function(dataset, data_nms) {
   # --- Reconstruct Management tables ---
   mngt_data_out <- list()
   mngt_data_out[["GENERAL"]] <- data_nms$METADATA %>%
-    dplyr::select(file_name,
+    dplyr::select(file_name, EXP_ID, INSTITUTION,
                   tidyr::any_of(union(colnames(dataset[["GENERAL"]]),
                                       colnames(GENERAL_template))),
                   any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE)))

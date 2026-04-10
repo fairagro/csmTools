@@ -68,6 +68,7 @@ convert_dataset <- function(dataset, input_model, output_model, output_path = NU
     rules = rules,
     unmatched_code = unmatched_code
   )
+  # return(mapped_data)
 
   # =================================================================
   # 3- Output standardization
