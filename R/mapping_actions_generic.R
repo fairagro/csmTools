@@ -102,7 +102,6 @@
       "Join collisions detected: the following columns exist in both data tables: ",
       paste(collisions, collapse = ", ")
     ), call. = FALSE)
-    print(df)  #tmp
   }
   
   # ---  Execute join ---
@@ -473,9 +472,13 @@
 .action_concatenate_columns <- function(action, df) {
   
   output_name <- action$output_header
-  input_map   <- action$input_map
-  separator   <- action$separator %||% " "
-  on_missing  <- action$on_missing %||% "skip" # Default to 'skip'
+  input_map <- action$input_map
+  separator <- action$separator %||% " "
+  on_missing <- action$on_missing %||% "skip"
+  
+  # New: Support for prefix and suffix
+  prefix <- action$prefix %||% ""
+  suffix <- action$suffix %||% ""
   
   # Resolve input columns
   inputs <- list()
@@ -497,21 +500,36 @@
             call. = FALSE)
     return(df)
   }
+  
   if (length(inputs) < 1) {
     return(df)
   }
   
-  # Perform concatenation
+  # Concatenate
   cols_to_paste <- as.data.frame(inputs)
   pasted_vector <- apply(cols_to_paste, 1, function(row_values) {
-    paste(row_values[!is.na(row_values)], collapse = separator)
+    valid_vals <- row_values[!is.na(row_values)]
+    
+    if (length(valid_vals) == 0) {
+      return(NA_character_)
+    }
+    
+    # Join the values with the separator
+    return(paste(valid_vals, collapse = separator))
   })
-  pasted_vector[pasted_vector == ""] <- NA_character_
+  
+  # --- Apply prefix and suffix ---
+  pasted_vector <- ifelse(
+    !is.na(pasted_vector),
+    paste0(prefix, pasted_vector, suffix),
+    NA_character_
+  )
   
   df[[output_name]] <- pasted_vector
   
   return(df)
 }
+
 
 
 #' Coalesce multiple columns into one
