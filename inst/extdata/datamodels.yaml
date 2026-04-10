@@ -56,14 +56,6 @@ icasa:
     year: "experiment_year"
     treatment: "treatment_number"
     plot: "plot_id"
-  shared_tables:
-    - PROFILE_METADATA
-    - SOIL_GENERAL
-    - SOIL_PROFILE
-    - WEATHER_GENERAL
-    - STATION_METADATA
-    - WEATHER_DAILY
-    - WEATHER_GENER_PARMS
   data_tables:
     - GENERAL
     - PERSONS
@@ -81,6 +73,13 @@ icasa:
     - HARVESTS
     - SUMMARY
     - TIME_SERIES
+    - PROFILE_METADATA
+    - SOIL_GENERAL
+    - SOIL_PROFILE
+    - WEATHER_GENERAL
+    - STATION_METADATA
+    - WEATHER_DAILY
+    - WEATHER_GENER_PARMS
   dict_source:
     path: "https://api.github.com/repos/DSSAT/ICASA-Dictionary/contents/CSV?ref=main"
     

@@ -1159,6 +1159,73 @@ rules:
       section: PROFILE_METADATA
     target:
       section: SOIL_META
+    actions:
+      - type: join
+        source: { section: FIELDS }
+        on_key: { source_key: soil_profile_id, lookup_key: soil_profile_id }
+        select_columns:
+          experiment_id: experiment_id
+      - type: join
+        source: { section: SOIL_INSTITUTIONS }
+        on_key: { source_key: soil_profile_id, lookup_key: soil_profile_id }
+        select_columns:
+          institute_id: institute_id
+          institute_code: institute_code
+          institute_name: institute_name
+      - type: join
+        source: { section: SOIL_PERSONS }
+        on_key:
+          source_key: [soil_profile_id, institute_id] 
+          lookup_key: [soil_profile_id, institute_id_person]
+        select_columns:
+          # TODO: add as comment (no mapping in DSSAT)
+          researcher_last_name: researcher_last_name
+          researcher_first_name: researcher_first_name
+          researcher_name_mi: researcher_name_mi
+          researcher_role: researcher_role
+          # researcher_address: researcher_address
+          e_mail_address: e_mail_address
+      - type: join
+        source: { section: SOIL_DOCUMENTS }
+        on_key: { source_key: soil_profile_id, lookup_key: soil_profile_id }
+        select_columns:
+          # TODO: add as comment (no mapping in DSSAT)
+          document_name_sl: document_name_sl
+          digital_object_id_sl: digital_object_id_sl
+      # Merge provenance to add as file comment
+      - type: concatenate_columns
+        output_header: soil_authors
+        prefix: "Author: "
+        input_map:
+          v1: researcher_first_name
+          v2: researcher_name_mi
+          v3: researcher_last_name
+        separator: " "
+        on_missing: proceed
+      - type: concatenate_columns
+        output_header: soil_contact
+        input_map:
+          v1: soil_authors
+          v2: e_mail_address
+        separator: "; "
+        on_missing: proceed
+      # Merge with documents
+      - type: concatenate_columns
+        output_header: soil_provenance
+        input_map:
+          v1: document_name_sl
+          v2: digital_object_id_sl
+          v3: soil_contact
+        separator: "; "
+        on_missing: proceed
+      # Merge as comments
+      - type: concatenate_columns
+        output_header: soil_notes_merged
+        input_map:
+          v1: soil_provenance
+          v2: soil_notes
+        separator: "/ "
+        on_missing: proceed
 
 
   ## --- SECTION SOIL_PROFILE
@@ -1171,10 +1238,10 @@ rules:
       section: SOIL_GENERAL
     actions:
       - type: join
-        source: { section: SOIL_META }
-        on_key: { source_key: experiment_id, lookup_key: experiment_id }
+        source: { section: FIELDS }
+        on_key: { source_key: soil_profile_id, lookup_key: soil_profile_id }
         select_columns:
-          soil_classification: soil_classification
+          experiment_id: experiment_id
       - type: map_values
         input_map: { x: soil_texture }
         output_header: soil_texture
@@ -1202,9 +1269,15 @@ rules:
   - mapping_uid: '18'
     notes: "xxx."
     source:
-      section: SOIL_PROFILE_LAYERS
+      section: SOIL_PROFILE
     target:
       section: SOIL_LAYERS
+    actions:
+      - type: join
+        source: { section: FIELDS }
+        on_key: { source_key: soil_profile_id, lookup_key: soil_profile_id }
+        select_columns:
+          experiment_id: experiment_id
 
 
   ## --- SECTION WEATHER_METADATA
@@ -1212,9 +1285,90 @@ rules:
   - mapping_uid: '19'
     notes: "xxx."
     source:
-      section: WEATHER_METADATA
+      section: WEATHER_GENERAL
     target:
       section: WEATHER_METADATA
+    actions:
+      - type: join
+        source: { section: STATION_METADATA }
+        on_key: { source_key: weather_station_id, lookup_key: weather_station_id }
+        select_columns:
+          weather_station_name: weather_station_name
+          weather_sta_latitude: weather_sta_latitude
+          weather_sta_longitude: weather_sta_longitude
+          weather_sta_elevation: weather_sta_elevation
+          temperature_avg_year: temperature_avg_year
+          temp_amplit_month_avg: temp_amplit_month_avg
+          temperature_sensor_ht: temperature_sensor_ht
+          ref_height_windsp_meas: ref_height_windsp_meas
+          ref_height_weather_meas: ref_height_weather_meas
+          # anonymize_sta_location: anonymize_sta_location  # Placeholder
+      - type: join
+        source: { section: FIELDS }
+        on_key: { source_key: weather_station_id, lookup_key: weather_station_id }
+        select_columns:
+          experiment_id: experiment_id
+      - type: join
+        source: { section: WEATHER_INSTITUTIONS }
+        on_key: { source_key: weather_station_id, lookup_key: weather_station_id }
+        select_columns:
+          institute_id: institute_id
+          institute_code: institute_code
+          institute_name: institute_name
+      - type: join
+        source: { section: WEATHER_PERSONS }
+        on_key:
+          source_key: [weather_station_id, institute_id] 
+          lookup_key: [weather_station_id, institute_id_person]
+        select_columns:
+          # TODO: add as comment (no mapping in DSSAT)
+          researcher_last_name: researcher_last_name
+          researcher_first_name: researcher_first_name
+          researcher_name_mi: researcher_name_mi
+          researcher_role: researcher_role
+          # researcher_address: researcher_address
+          e_mail_address: e_mail_address
+      - type: join
+        source: { section: WEATHER_DOCUMENTS }
+        on_key: { source_key: weather_station_id, lookup_key: weather_station_id }
+        select_columns:
+          # TODO: add as comment (no mapping in DSSAT)
+          document_name_wst: document_name_wst
+          digital_object_id_wst: digital_object_id_wst
+      # Merge provenance to add as file comment
+      - type: concatenate_columns
+        output_header: weather_authors
+        prefix: "Author: "
+        input_map:
+          v1: researcher_first_name
+          v2: researcher_name_mi
+          v3: researcher_last_name
+        separator: " "
+        on_missing: proceed
+      - type: concatenate_columns
+        output_header: weather_contact
+        input_map:
+          v1: weather_authors
+          v2: e_mail_address
+        separator: "; "
+        on_missing: proceed
+      # Merge with documents
+      - type: concatenate_columns
+        output_header: weather_provenance
+        input_map:
+          v1: document_name_wst
+          v2: digital_object_id_wst
+          v3: weather_contact
+        separator: "; "
+        on_missing: proceed
+      # Merge as comments
+      - type: concatenate_columns
+        output_header: weather_notes_merged
+        input_map:
+          v1: weather_provenance
+          v2: weather_notes
+        separator: "/ "
+        on_missing: proceed
 
 
   ## --- SECTION WEATHER_DAILY
@@ -1226,6 +1380,11 @@ rules:
     target:
       section: WEATHER_DAILY
     actions:
+      - type: join
+        source: { section: FIELDS }
+        on_key: { source_key: weather_station_id, lookup_key: weather_station_id }
+        select_columns:
+          experiment_id: experiment_id
       - type: format_column
         formats:
           weather_date: "%y%j"
@@ -1498,7 +1657,7 @@ rules:
           RE_EVENT_NOTES: org_matter_comment
 
       - type: map_headers
-        target_section: RESIDUES
+        target_section: CHEMICALS
         rename_map:
           EXP_ID: experiment_id
           EXP_YEAR: experiment_year
@@ -1572,10 +1731,12 @@ rules:
       - type: map_headers
         target_section: SOIL_META
         rename_map:
-          EXP_ID: experiment_id  #!!
+          EXP_ID: experiment_id
           PEDON: soil_profile_id
           SITE: soil_site
           COUNTRY: soil_location_country
+          INST_NAME: institute_code
+          SOL_INSTITUTION: institute_name
           LAT: latitude_soil_profile
           LONG: longitude_soil_profile
           DESCRIPTION: soil_notes
@@ -1584,12 +1745,12 @@ rules:
           SCS FAMILY: soil_classification
           TEXTURE: soil_texture
           SL_METHODS_COMMENTS: soil_profile_methods  # TODO: Add soil profile notes!
-          SL_NOTES: soil_notes
+          SL_NOTES: soil_notes_merged
 
       - type: map_headers
         target_section: SOIL_GENERAL
         rename_map:
-          EXP_ID: experiment_id  #!!
+          EXP_ID: experiment_id
           PEDON: soil_profile_id
           SALB: soil_albedo
           SLU1: soil_evaporation_limit
@@ -1606,7 +1767,7 @@ rules:
       - type: map_headers
         target_section: SOIL_LAYERS
         rename_map:
-          EXP_ID: experiment_id  #!!
+          EXP_ID: experiment_id
           PEDON: soil_profile_id
           SLB: soil_layer_base_depth
           SLMH: master_horizon
@@ -1645,9 +1806,11 @@ rules:
       - type: map_headers
         target_section: WEATHER_METADATA
         rename_map:
-          EXP_ID: experiment_id  #!!
-          INSI: weather_station_id  # REVIEW: WST_ID?
-          # WST_NAME: weather_station_name
+          EXP_ID: experiment_id
+          WST_ID: weather_station_id  # REVIEW: WST_ID?
+          WST_NAME: weather_station_name
+          INSI: institute_code
+          WTH_INSTITUTION: institute_name
           LAT: weather_sta_latitude
           LONG: weather_sta_longitude
           ELEV: weather_sta_elevation
@@ -1655,12 +1818,12 @@ rules:
           AMP: temp_amplit_month_avg
           REFHT: temperature_sensor_ht
           WNDHT: ref_height_windsp_meas
-          WHT_NOTES: weather_notes
+          WHT_NOTES: weather_notes_merged
 
       - type: map_headers
         target_section: WEATHER_DAILY
         rename_map:
-          EXP_ID: experiment_id  #!!
+          EXP_ID: experiment_id
           DATE: weather_date
           SRAD: solar_radiation
           # DAYL: daylength_sunrise_sunset  # In key but not in demo files?

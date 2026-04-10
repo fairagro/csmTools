@@ -792,7 +792,7 @@ rules:
   - mapping_uid: '2'
     notes: "xxx."
     source:
-      section: EXPERIMENT
+      section: EXPERIMENTS
     target:
       section: GENERAL
     actions:
@@ -819,7 +819,7 @@ rules:
   - mapping_uid: '3'
     notes: "xxx."
     source:
-      section: EXPERIMENT
+      section: EXPERIMENTS
     target:
       section: NOTES
 
