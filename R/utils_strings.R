@@ -19,48 +19,44 @@ find_common_prefix <- function(strings) {
 }
 
 
-#' Strictly abbreviate a string
+#' Abbreviate strings with strict length enforcement
 #'
-#' Create a standard abbreviation; handles non-ASCII characters by transliterating them, then removes all punctuation
-#' (anything not alphanumeric or a space) before calling the base `abbreviate()` function.
+#' Creates a standard abbreviation that transliterate non-ASCII to ASCII equivalent and
+#' strictly enforce minimum length by force truncating the output
 #'
 #' @param string Character vector to abbreviate.
-#' @param minlength Integer. The minimum length of the abbreviation, passed to `abbreviate()`.
+#' @param minlength Integer. The desired length of the abbreviation.
+#' @param na_replace Character. The value used to replace `NA` entries in the original vector.
+#'   Defaults to "XX".
 #'
-#' @return A character vector of abbreviated strings.
+#' @return A character vector of the same length as `string`.
+#' 
+#' @note Because this function force-truncates the output to `minlength`, the resulting abbreviations
+#'   are not guaranteed to be unique if multiple input strings share the same starting characters.
 #'
+#' 
 #' @noRd
-#'
+#' 
 
-strict_abbreviate <- function(string, minlength = 2) {
+strict_abbreviate <- function(string, minlength = 2, na_replace = "XX") {
   
-  safe_abbreviate <- function(s) {
-    warning_triggered <- FALSE
-    
-    # --- Check and correct for non-ASCII chars ---
-    withCallingHandlers({
-      if (any(grepl("non-ASCII", iconv(s, "latin1", "ASCII")))) {
-        warning_triggered <<- TRUE
-      }
-    }, warning = function(w) {
-      invokeRestart("muffleWarning")
-    })
-    if (warning_triggered) {
-      s <- stringi::stri_trans_general(s, "Latin-ASCII")
-    }
-    
-    # Remove punctuation to correct 'abbreviate' behaviour
-    s_no_punct <- gsub("[^[:alnum:] ]", "", s)
-    
-    # Abbbreviate
-    result <- abbreviate(s_no_punct, minlength)
-    
-    return(result)
-  }
+  out <- string
+  is_missing <- is.na(out)
   
-  # Apply to each element
-  out <- ifelse(!is.na(string),
-                vapply(string, safe_abbreviate, character(1)),
-                "XX") # Default for NA inputs
-  return(out)
+  # Transliterate and remove punctuation
+  out <- stringi::stri_trans_general(out, "Latin-ASCII")
+  out <- gsub("[[:punct:]]", "", out)
+  
+  # Abbreviate
+  out <- abbreviate(out, minlength = minlength, strict = TRUE)
+  
+  # Truncate in case abbrev > minlength despite 'strict'
+  # Handles multiple institution cases (only first one is kept)
+  out <- substr(out, 1, minlength)
+  
+  # NA handling
+  out[is_missing] <- na_replace
+  
+  return(unname(out))
 }
+
