@@ -1,9 +1,20 @@
-#' Extract metadata into a flat list using only local level names
+#' Extract custom attributes into a flat list using local-level names
 #'
-#' @param obj The list object to inspect
-#' @param node_name The name to assign to the current level (default "root")
-#' @return A flat list of attribute lists, keyed by the local node name.
-#' 
+#' Recursively traverses a nested list object and collects non-structural attributes at each level
+#' into a single flat list, keyed by local node name.
+#'
+#' @param obj A list object (or any R object) to inspect for custom attributes.
+#' @param node_name A string giving the key to assign to the current level's attributes in the output list.
+#'   Defaults to \code{"root"}.
+#'
+#' @details Structural attributes (\code{names}, \code{row.names}, \code{dim}, \code{dimnames}, \code{class},
+#'   \code{levels}) are ignored at every level. Recursion proceeds into list elements but stops at data frames.
+#'   Unnamed list elements are keyed by their integer index (as a character string). If multiple nodes share the
+#'   same local name, later entries will overwrite earlier ones in the flat output.
+#'
+#' @return A named flat list where each element is itself a named list of custom attributes belonging to that node.
+#'   Nodes without custom attributes are omitted.
+#'
 #' @noRd
 #' 
 

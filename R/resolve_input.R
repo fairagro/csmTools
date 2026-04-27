@@ -1,4 +1,26 @@
+#' Resolve and normalise a dataset input
 #'
+#' Accepts a dataset in one of several forms — a file path or an in-memory R object — and returns a consistently
+#' structured R object ready for further processing.
+#'
+#' @param x One of the following:
+#' \describe{
+#'   \item{Character string}{Path to a \code{.json}, \code{.csv}, or \code{.yaml} file to be read from disk.}
+#'   \item{Named list}{An in-memory dataset, optionally in a nested DSSAT write-ready format. Nested columns are unnested
+#'           (recursively) and any custom attributes are preserved.}
+#' }
+#'
+#' @return A data frame (for single-table file inputs) or a named list of data frames (for JSON or list inputs),
+#'   with custom attributes restored.
+#'
+#' @details
+#' For list inputs the function:
+#' \enumerate{
+#'   \item Captures any custom attributes attached to each element.
+#'   \item Identifies nested columns via \code{apply_recursive()} and \code{identify_nested_cols()}.
+#'   \item Recursively unnests those columns with \code{tidyr::unnest()}, walking the list tree depth-first.
+#'   \item Restores the saved custom attributes on the resulting data frames.
+#' }
 #'
 #' @noRd
 #'
@@ -92,13 +114,22 @@ resolve_input <- function(x) {
   return(resolved_data)
 }
 
+
+#' Remove named attributes from an R object
 #'
+#' Strips one or more named attributes from any R object that supports \code{attributes()},
+#' leaving all other attributes intact.
+#'
+#' @param obj Any R object.
+#' @param names_to_remove A character vector of attribute names to remove.
+#'
+#' @return \code{obj} with the specified attributes removed. If \code{obj} has no attributes, it is returned unchanged.
 #'
 #' @noRd
 #' 
 
-# Helper function to remove specific attributes
 remove_named_attributes <- function(obj, names_to_remove) {
+
   if (!is.null(attributes(obj))) {
     attrs <- attributes(obj)
     attrs <- attrs[!names(attrs) %in% names_to_remove]
@@ -108,10 +139,19 @@ remove_named_attributes <- function(obj, names_to_remove) {
 }
 
 
+#' Identify columns containing nested vectors in a JSON-derived object
 #'
+#' Recursively traverses a nested list or environment (typically parsed from JSON) and returns the names of any elements
+#' that are matrices or higher-dimensional arrays with a single leading dimension, indicating a nested vector that may
+#' require special handling during unnesting.
+#'
+#' @param json_obj A list, environment, or other R object to inspect, typically the output of a JSON parser.
+#'
+#' @return A character vector of unique column names (leaf-level keys) whose values are nested vectors.
+#'   Returns \code{character(0)} if none are found.
 #'
 #' @noRd
-#'
+#' 
 
 .identify_nested_vector_cols <- function(json_obj) {
   # Recursive helper to traverse the object
@@ -151,16 +191,39 @@ remove_named_attributes <- function(obj, names_to_remove) {
 }
 
 
-#' Reads a dataset from a JSON file created by `write_json_dataset`,
-#' reconstructing dataframes, tibbles, and preserving attributes recursively.
+#' Read a DSSAT-compatible dataset from a JSON file
 #'
-#' @param file A character string specifying the path to the input JSON file.
+#' Parses a JSON file and reconstructs the original R object hierarchy, restoring data frames
+#' (including tibbles), list-columns, custom class attributes, and any other metadata that was serialised alongside the data.
 #'
+#' @param file_path A length-one character string giving the path to the \code{.json} file to read.
+#'
+#' @return A named list mirroring the top-level structure of the JSON file. Each element is reconstructed as its original R class
+#'   (\code{data.frame}, \code{tbl_df}, etc.) with custom attributes reattached. List-columns that were stored as nested JSON arrays are
+#'   rewrapped as R list-columns.
+#'
+#' @details
+#' The function assumes the JSON was produced by a paired writer that stores each R object as \code{\{data: ..., attributes: ...\}}.
+#' The reconstruction logic follows these steps:
+#' \enumerate{
+#'   \item \code{jsonlite::fromJSON()} reads the file with
+#'     \code{simplifyVector = TRUE} and \code{simplifyDataFrame = FALSE} to retain control over the structure.
+#'   \item \code{.identify_nested_vector_cols()} scans the raw parse tree for columns that must be rewrapped as list-columns.
+#'   \item An internal recursive function \code{object_from_json()} walks the tree, dispatching on the presence of \code{data}/\code{attributes} keys
+#'     to rebuild data frames, or falling through to process generic lists and
+#'     atomic values.
+#'   \item The original R class vector (stored under
+#'     \code{_class_attribute}) is restored, followed by any remaining custom
+#'     attributes.
+#' }
+#'
+#' @seealso \code{\link{.identify_nested_vector_cols}}
+#' 
 #' @importFrom tibble tibble as_tibble
 #' @importFrom jsonlite fromJSON
 #'
 #' @export
-#'
+#' 
 
 read_json_dataset <- function(file_path) {
   # Read the entire JSON file as a nested list.

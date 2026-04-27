@@ -45,5 +45,4 @@ sample_cul_file <- system.file('extdata','SAMPLE.CUL',package='DSSAT')
 # Read sample cultivar file
 cul <- read_cul(sample_cul_file)
 
-
 }

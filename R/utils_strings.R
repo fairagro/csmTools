@@ -1,9 +1,11 @@
-#' Find the longest common prefix in a character vector
+#' Find the longest common prefix shared by all strings in a character vector
+#'
+#' Iterates through each string, trimming the candidate prefix one character
+#' at a time until all strings start with it.
 #'
 #' @param strings A character vector.
+#' @return A length-1 character string; `""` if no common prefix exists.
 #'
-#' @return A character string of the longest common prefix.
-#' 
 #' @noRd
 #' 
 

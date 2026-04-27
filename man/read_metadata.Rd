@@ -7,7 +7,8 @@
 read_metadata(mother_path, schema = "bonares")
 }
 \arguments{
-\item{schema}{Character. Name of the metadata schema (default: "bonares"). Currently not used in the function logic, but reserved for future extensions.}
+\item{schema}{Character. Name of the metadata schema (default: "bonares"). Currently not used in the function logic,
+but reserved for future extensions.}
 
 \item{path}{Character. Path to the metadata XML file.}
 }
@@ -30,11 +31,14 @@ A tibble (one row) with the following columns:
 }
 }
 \description{
-This function reads a metadata XML file based on the BonaRes metadata schema and extracts key fields for use as input arguments in crop experiment data wrangling functions.
-It parses spatial, temporal, provenance, contact, legal, and funding information, and returns a tidy one-row tibble suitable for downstream processing.
+This function reads a metadata XML file based on the BonaRes metadata schema and extracts key fields for use as input
+arguments in crop experiment data wrangling functions. It parses spatial, temporal, provenance, contact, legal, and funding
+information, and returns a tidy one-row tibble suitable for downstream processing.
 }
 \details{
-The function is designed for BonaRes and similar metadata standards, but can be adapted for other ISO 19139-based schemas. It uses XPath queries to extract relevant fields and collapses multiple values with "; " where appropriate. Dates are parsed as \code{Date} objects and the earliest/latest are used for publication and revision, respectively.
+The function is designed for BonaRes and similar metadata standards, but can be adapted for other ISO 19139-based schemas. It uses XPath
+queries to extract relevant fields and collapses multiple values with "; " where appropriate.
+Dates are parsed as \code{Date} objects and the earliest/latest are used for publication and revision, respectively.
 }
 \examples{
 \dontrun{

@@ -21,7 +21,6 @@
 #' # Read sample cultivar file
 #' cul <- read_cul(sample_cul_file)
 #'
-#'
 
 read_cul2 <- function(file_name, col_types=NULL, col_names=NULL,
                      left_justified=c('VAR#', 'VARNAME\\.*', 'VAR-NAME\\.*','VRNAME\\.*'),
@@ -148,19 +147,19 @@ read_sol2 <- function(file_name, id_soil = NULL, nested = TRUE){
   
   # Specify column types
   col_types <- readr::cols(
-    `      LAT`=col_double(),
-    `     LONG`=col_double(),
-    SSAT=col_double(),
-    ` SCS FAMILY`=col_character(),
-    ` SCS Family`=col_character(),
-    SCOM=col_character(),
-    COUNTRY=col_character(),
-    SITE=col_character(),
-    SMHB=col_character(),
-    SMPX=col_character(),
-    SMKE=col_character(),
-    SLMH=col_character(),
-    SLB=col_double()
+    `      LAT` = col_double(),
+    `     LONG` = col_double(),
+    SSAT = col_double(),
+    ` SCS FAMILY` = col_character(),
+    ` SCS Family` = col_character(),
+    SCOM = col_character(),
+    COUNTRY = col_character(),
+    SITE = col_character(),
+    SMHB = col_character(),
+    SMPX = col_character(),
+    SMKE = col_character(),
+    SLMH = col_character(),
+    SLB = col_double()
   )
   # {.$cols <- c(.$cols,col_types$cols);.}
   
@@ -258,18 +257,21 @@ read_sol2 <- function(file_name, id_soil = NULL, nested = TRUE){
 }
 
 
-#' Find comment lines
+#' Find comment lines in raw DSSAT file content
 #'
-#' Scans raw lines for comments (lines beginning with "!") and returns them
-#' along with their line numbers.
+#' Identifies lines beginning with \code{!} (the DSSAT comment character) in a character vector of raw file content.
 #'
-#' @param raw A character vector where each element is a line of text.
+#' @param raw A character vector where each element represents one line of a DSSAT input file.
 #'
-#' @return A data.frame with two columns: `line_number` (the original index)
-#'   and `comment_text` (the full text of the comment line).
+#' @return A data frame with two columns:
+#' \describe{
+#'   \item{line_number}{Integer index of each comment line within \code{raw}.}
+#'   \item{comment_text}{The full text of each comment line.}
+#' }
+#' Returns an empty data frame (zero rows) if no comment lines are found.
 #'
 #' @export
-#'
+#' 
 
 find_comments <- function(raw) {
   
@@ -284,11 +286,26 @@ find_comments <- function(raw) {
 }
 
 
-#' Helper function to link comments to pedon
+#' Link soil file comment lines to their respective pedons
 #'
+#' Associates comment lines found in a DSSAT soil file with the most relevant pedon, combining general
+#' (file-header) comments with pedon-specific ones.
+#'
+#' @param comments_lines A data frame as returned by \code{find_comments()}, with columns \code{line_number}
+#'   and \code{comment_text}.
+#' @param pedon_start_end A data frame describing pedon extents, with at least columns \code{PEDON} (pedon identifier)
+#'   and \code{start} (integer line number where each pedon begins).
+#'
+#' @details Comment lines appearing before the first pedon are treated as general (file-level) comments and are
+#'   prepended to every pedon's comment list. Comment lines appearing after the first pedon start are assigned to
+#'   the pedon whose start line is closest (by absolute distance). The combined comments for each pedon are returned
+#'   in ascending line-number order.
+#'
+#' @return A named list with one element per pedon (named by \code{PEDON}). Each element is a character vector of
+#'   comment strings associated with that pedon. Returns an empty list if either input has zero rows.
 #'
 #' @noRd
-#'
+#' 
 
 link_soil_comments <- function(comments_lines, pedon_start_end) {
   

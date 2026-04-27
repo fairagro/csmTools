@@ -160,10 +160,19 @@ write_wth2 <- function(wth, file_name, force_std_fmt = FALSE,
   return(invisible())
 }
 
+
+#' Printf format strings for DSSAT weather file sections (v4.8)
 #'
+#' Corrected version of `DSSAT::wth_v_fmt()` updated to use the v4.8 date format
+#' (`%y%j`) in the `DAILY` section.
+#'
+#' @param section `"DAILY"` or `"GENERAL"`.
+#' @param old_format Logical; if `TRUE` and `section == "GENERAL"`, returns the legacy column layout.
+#'
+#' @return A named character vector of printf format strings, or `NULL` for unrecognised sections.
 #'
 #' @noRd
-#'
+#' 
 
 wth_v_fmt2 <- function(section, old_format = FALSE) {
   
@@ -195,8 +204,6 @@ wth_v_fmt2 <- function(section, old_format = FALSE) {
     v_fmt <- NULL
   }
 }
-
-
 
 
 #' Writes soil parameters to a single DSSAT soil parameter file (*.SOL)

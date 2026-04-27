@@ -2,15 +2,37 @@
 % Please edit documentation in R/resolve_input.R
 \name{read_json_dataset}
 \alias{read_json_dataset}
-\title{Reads a dataset from a JSON file created by \code{write_json_dataset},
-reconstructing dataframes, tibbles, and preserving attributes recursively.}
+\title{Read a DSSAT-compatible dataset from a JSON file}
 \usage{
 read_json_dataset(file_path)
 }
 \arguments{
-\item{file}{A character string specifying the path to the input JSON file.}
+\item{file_path}{A length-one character string giving the path to the \code{.json} file to read.}
+}
+\value{
+A named list mirroring the top-level structure of the JSON file. Each element is reconstructed as its original R class
+(\code{data.frame}, \code{tbl_df}, etc.) with custom attributes reattached. List-columns that were stored as nested JSON arrays are
+rewrapped as R list-columns.
 }
 \description{
-Reads a dataset from a JSON file created by \code{write_json_dataset},
-reconstructing dataframes, tibbles, and preserving attributes recursively.
+Parses a JSON file and reconstructs the original R object hierarchy, restoring data frames
+(including tibbles), list-columns, custom class attributes, and any other metadata that was serialised alongside the data.
+}
+\details{
+The function assumes the JSON was produced by a paired writer that stores each R object as \code{\{data: ..., attributes: ...\}}.
+The reconstruction logic follows these steps:
+\enumerate{
+\item \code{jsonlite::fromJSON()} reads the file with
+\code{simplifyVector = TRUE} and \code{simplifyDataFrame = FALSE} to retain control over the structure.
+\item \code{.identify_nested_vector_cols()} scans the raw parse tree for columns that must be rewrapped as list-columns.
+\item An internal recursive function \code{object_from_json()} walks the tree, dispatching on the presence of \code{data}/\code{attributes} keys
+to rebuild data frames, or falling through to process generic lists and
+atomic values.
+\item The original R class vector (stored under
+\code{_class_attribute}) is restored, followed by any remaining custom
+attributes.
+}
+}
+\seealso{
+\code{\link{.identify_nested_vector_cols}}
 }

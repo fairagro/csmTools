@@ -1,14 +1,30 @@
-#' Check if a vector is date-like
+#' Test whether a vector contains date or datetime values
 #'
-#' Heuristically checks if a vector contains date or datetime values using common formats.
+#' Applies a series of heuristic checks to determine whether \code{x} can be interpreted as a date or
+#' datetime vector. Returns \code{TRUE} as soon as a format matches at least \code{threshold} of the sampled values.
 #'
-#' @param x A vector to check.
-#' @param dssat_fmt Logical. If TRUE, also checks for 5-digit YYDDD integers.
-#' @param n_check Integer. Number of non-NA values to check.
-#' @param threshold Numeric (0-1). Proportion of checked values that must parse as a date to return TRUE.
+#' @param x A vector to test. Only character, factor, \code{Date}, \code{POSIXct},
+#'   and \code{POSIXlt} vectors can return \code{TRUE}; all other types return \code{FALSE}
+#' @param dssat_fmt Logical. If \code{TRUE}, also recognises the DSSAT five-digit
+#'   \code{YYDDD} Julian date format (\code{"\%y\%j"}). Defaults to \code{FALSE}.
+#' @param n_check Integer. Maximum number of non-missing values sampled for format testing.
+#'   Defaults to \code{5}.
+#' @param threshold Numeric in \code{[0, 1]}. Minimum proportion of sampled values that must parse successfully
+#'   for a format to be accepted.  Defaults to \code{0.8}.
 #'
-#' @return Logical. TRUE if the vector is likely date-like.
-#' 
+#' @return A single logical value: \code{TRUE} if \code{x} is date-like, \code{FALSE} otherwise.
+#'
+#' @details
+#' The function short-circuits at several points before attempting format parsing:
+#' \enumerate{
+#'   \item Non-character/factor/date types return \code{FALSE} immediately.
+#'   \item After coercion to character and removal of \code{NA}/empty strings, an empty vector returns \code{FALSE}.
+#'   \item Without \code{dssat_fmt}, strings lacking \code{-}, \code{/}, or \code{T} separators return \code{FALSE}.
+#'   \item With \code{dssat_fmt}, an all-numeric five-character string is treated as a candidate DSSAT Julian date
+#'     and proceeds to format testing.
+#' }
+#' Only the first \code{n_check} non-missing values are passed to \code{as.POSIXct()} to limit computation on large vectors.
+#'
 #' @noRd
 #' 
 
@@ -72,15 +88,31 @@ is_date <- function(x, dssat_fmt = FALSE, n_check = 5, threshold = 0.8) {
 }
 
 
-#' Standardize date or datetime strings
+#' Standardise a date or datetime string to a common format
 #'
-#' Parses a vector using common date formats and returns a standardized character or Date object.
+#' Attempts to parse a date or datetime character string by trying a predefined set of formats 
+#' and returns the value reformatted according to \code{output_format}.
+#' If no format matches, the original input is returned unchanged.
 #'
-#' @param x A character vector of date strings.
-#' @param output_format Character. The desired `format()` string or "Date" to return a Date object.
+#' @param x A character string (or vector) representing a date or datetime.
+#' @param output_format A character string passed to \code{format()} that controls the output representation,
+#'   or the special value \code{"Date"} to return an R \code{Date} object. Defaults to \code{"\%Y-\%m-\%d"}.
 #'
-#' @return A vector of standardized dates, or the original vector if parsing fails.
-#' 
+#' @return A character vector in \code{output_format}, a \code{Date} vector when \code{output_format = "Date"},
+#'   or the original \code{x} if no format could be matched.
+#'
+#' @details
+#' Parsing is attempted with \code{as.POSIXct()} under \code{tz = "UTC"} for each of the following formats, in order:
+#' \itemize{
+#'   \item ISO 8601 with and without seconds (\code{\%Y-\%m-\%dT\%H:\%M:\%S}, \code{\%Y-\%m-\%dT\%H:\%M})
+#'   \item Space-separated datetime variants
+#'   \item Date-only (\code{\%Y-\%m-\%d})
+#'   \item US (\code{\%m/\%d/\%Y}), European (\code{\%d/\%m/\%Y}), and year-first (\code{\%Y/\%m/\%d}) slash formats
+#'   \item Compact numeric forms (\code{\%Y\%m\%d}, \code{\%m\%d\%Y}, \code{\%d\%m\%Y})
+#'   \item ISO 8601 with fractional seconds and Zulu suffix
+#' }
+#' The first format that produces at least one non-\code{NA} result is used.
+#'
 #' @noRd
 #' 
 

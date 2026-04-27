@@ -40,15 +40,18 @@ revert_list_str <- function(ls) {
 }
 
 
-#' Get the name of a data frame from a list
+#' Get the name of a data frame within a list
 #'
-#' Finds the name of an element in `ls` that is `identical()` to `df`.
+#' Returns the name(s) of elements in \code{ls} that are identical to
+#' \code{df}.
 #'
 #' @param ls A named list of data frames.
 #' @param df A data frame to search for.
 #'
-#' @return A character vector of the matching name(s).
-#' 
+#' @return A character vector of names of elements in \code{ls} that are
+#'   identical to \code{df}. Returns \code{character(0)} if no match is
+#'   found. Returns multiple names if duplicates exist in \code{ls}.
+#'
 #' @noRd
 #' 
 
@@ -59,11 +62,13 @@ get_df_name <- function(ls, df) {
 
 #' Remove duplicate data frames from a list
 #'
-#' Keeps only the first occurrence of each unique data frame, based on a string representation (`dput`).
+#' Returns a copy of \code{ls} with duplicate data frames removed, where equality is determined
+#' by value via \code{dput()} serialisation.
 #'
 #' @param ls A list of data frames.
 #'
-#' @return A list with duplicate data frames removed.
+#' @return A subset of \code{ls} containing only the first occurrence of each
+#'   unique data frame. Names are preserved.
 #' 
 #' @noRd
 #' 
@@ -71,27 +76,32 @@ get_df_name <- function(ls, df) {
 drop_duplicate_dfs <- function(ls) {
   
   # Convert each data frame to a string representation
-  df_strings <- sapply(lst, function(df) paste(capture.output(dput(df)), collapse = ""))
+  df_strings <- sapply(ls, function(df) paste(capture.output(dput(df)), collapse = ""))
   # Find unique indices
   unique_indices <- !duplicated(df_strings)
   
   # Return only unique data frames
-  lst[unique_indices]
+  ls[unique_indices]
 }
 
 
-#' Find common data frames between two lists
+#' Find data frames common to two lists by value
 #'
-#' Returns data frames from `list1` that are also present (identical in content) in `list2`,
-#' based on a string representation (`dput`).
+#' Returns every data frame in \code{list1} that also appears in \code{list2}.
+#' Each data frame is serialised to a canonical string with \code{dput()} and the intersection is
+#' found on those strings.
 #'
-#' @param list1 A list of data frames.
-#' @param list2 A list of data frames.
+#' @param list1,list2 Lists of data frames to compare.
 #'
-#' @return A list of data frames from `list1` also found in `list2`.
-#' 
+#' @return A subset of \code{list1} containing only those data frames whose content matches at least
+#'   one data frame in \code{list2}. Names are preserved. If no common data frames exist an empty list is returned.
+#'
+#' @details
+#' Serialisation via \code{dput()} / \code{capture.output()} is exact but can be slow for large data frames.
+#' Column order, row order, attributes, and class are all reflected in the string, so two data frames that differ only
+#' in row order or an attribute will not be considered equal.
+#'
 #' @noRd
-#' 
 
 intersect_dfs <- function(list1, list2) {
   
@@ -107,16 +117,22 @@ intersect_dfs <- function(list1, list2) {
 }
 
 
-#' Reduce a list of related-data frames by joining them by their share columns
+#' Reduce a list of data frames to one by successive natural joins
 #'
-#' Iteratively joins a list of data frames using any shared column names as keys.
+#' Iteratively left-joins each data frame in \code{df_list} to the accumulated result,
+#' using the intersection of column names as the join key at each step.
+#' 
+#' @param df_list A list of data frames.
 #'
-#' @param df_list A list of data frames to join.
-#' 
-#' @return A single, joined data frame.
-#' 
+#' @return A single data frame produced by left-joining all non-\code{NULL}
+#'   elements of \code{df_list} in order.
+#'
+#' @details
+#' At each reduction step the join keys are recomputed as the intersection of column names between the
+#' current accumulator and the next data frame. If that intersection is empty the function stops
+#' with an informative error.
+#'
 #' @noRd
-#'
 
 reduce_by_join <- function(df_list) {
   
@@ -136,8 +152,24 @@ reduce_by_join <- function(df_list) {
 }
 
 
+#' Flatten a nested list down to its data-frame leaves
 #'
+#' Recursively traverses a nested list and collects every data frame found at any depth,
+#' returning them as a flat list. Non-list, non-data-frame elements are silently discarded.
 #'
+#' @param x A data frame, a (possibly nested) list, or any other R object.
+#'
+#' @return A flat (depth-one) list of data frames. Returns \code{NULL} if
+#'   \code{x} contains no data frames.
+#'
+#' @details
+#' Traversal follows these rules at each node:
+#' \itemize{
+#'   \item A data frame is returned as a one-element list and recursion stops.
+#'   \item A non-data-frame list is expanded and each child is processed recursively;
+#'     \code{NULL} results are dropped before the children are concatenated with \code{do.call(c, ...)}.
+#'   \item Any other object (atomic vector, \code{NULL}, etc.) is discarded.
+#' }
 #'
 #' @noRd
 #' 

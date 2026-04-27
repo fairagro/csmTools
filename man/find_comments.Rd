@@ -2,18 +2,21 @@
 % Please edit documentation in R/read_dssat2.R
 \name{find_comments}
 \alias{find_comments}
-\title{Find comment lines}
+\title{Find comment lines in raw DSSAT file content}
 \usage{
 find_comments(raw)
 }
 \arguments{
-\item{raw}{A character vector where each element is a line of text.}
+\item{raw}{A character vector where each element represents one line of a DSSAT input file.}
 }
 \value{
-A data.frame with two columns: \code{line_number} (the original index)
-and \code{comment_text} (the full text of the comment line).
+A data frame with two columns:
+\describe{
+\item{line_number}{Integer index of each comment line within \code{raw}.}
+\item{comment_text}{The full text of each comment line.}
+}
+Returns an empty data frame (zero rows) if no comment lines are found.
 }
 \description{
-Scans raw lines for comments (lines beginning with "!") and returns them
-along with their line numbers.
+Identifies lines beginning with \code{!} (the DSSAT comment character) in a character vector of raw file content.
 }
