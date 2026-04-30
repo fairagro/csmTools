@@ -51,7 +51,7 @@
 #' )
 #' }
 #'
-#' @importFrom rlang !! :=
+#' @importFrom rlang !! := %||%
 #' @importFrom dplyr mutate select
 #' @importFrom lubridate ymd_hms
 #' 
@@ -62,6 +62,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
 
   agg_method <- match.arg(agg_method, c("mean", "median", "none"))
 
+  # --- Validate date range ---
   from <- tryCatch(
     as.Date(from),
     error = function(e) stop("'from' must be a valid date (YYYY-MM-DD). Got: ", from)
@@ -71,8 +72,9 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
     error = function(e) stop("'to' must be a valid date (YYYY-MM-DD). Got: ", to)
   )
   if (to < from) stop("'to' (", to, ") must be on or after 'from' (", from, ").")
+  url <- .validate_sta_url(url)
 
-  # --- Credential validation and authentication ---
+  # --- Validate credentials and authenticate ---
   creds <- .read_creds(creds)
   token <- tryCatch({
     get_kc_token(
@@ -90,7 +92,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
     stop("Authentication failed: the Keycloak server returned no token (check credentials).")
   }
 
-  # --- Identify datastreams macthing the input ---
+  # --- Retrieve datastreams matching the input ---
   message("Retrieving data streams...")
   
   ds_metadata <- .locate_sta_datastreams(
@@ -108,7 +110,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
     return(NULL)
   }
   
-  # --- Download all observations for the focal datastreams ---
+  # --- Download all observations for the retrieved datastreams ---
   message("Downloading observations ...")
   
   urls_obs <- paste0(
@@ -117,7 +119,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
   )
   obs <- lapply(urls_obs, function(url) .get_all_obs(url, token))
   
-  # Attach device metadata to each datastream
+  # --- Attach device metadata to each datastream ---
   dataset <- list()
   for (i in seq_along(obs)) {
     if (is.null(obs[[i]]) || nrow(obs[[i]]) == 0) next
@@ -134,44 +136,19 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
     return(NULL)
   }
   
-  # --- Group by device ---
+  # --- Format output ---
+  
+  # Group by device
   device_nms <- sub("_[^_]+$", "", names(dataset))
   ds_device_list <- split(dataset, device_nms)
   
-  # Consolidate
+  # Consolidate (aggregate per property if method != "none")
   ds_consolidated <- .consolidate_datastreams(ds_device_list, aggregation = agg_method)
   
   # Resolve output
   out <- export_output(ds_consolidated, output_path)
   
   return(out)
-}
-
-
-#' Retrieve all devices (Things) with their locations from an STA endpoint
-#'
-#' @param url Character. Base URL of the STA endpoint.
-#' @param token Character or NULL. Bearer token for authentication.
-#'
-#' @return A data frame of Things with longitude and latitude columns.
-#'
-#' @noRd
-
-.locate_sta_devices <- function(url, token = NULL) {
-  url_locs <- paste0(url, "/Things?$expand=Locations")
-  response <- httr::GET(url_locs, .sta_auth(token))
-  httr::stop_for_status(response)
-  parsed <- .parse_sta_response(response)
-
-  parsed$value |>
-    tidyr::unnest(Locations, names_sep = "_") |>
-    tidyr::unnest_wider(Locations_location, names_sep = "_") |>
-    tidyr::unnest(Locations_location_coordinates) |>
-    dplyr::mutate(
-      longitude = purrr::map_dbl(Locations_location_coordinates, ~ .x[1]),
-      latitude  = purrr::map_dbl(Locations_location_coordinates, ~ .x[2])
-    ) |>
-    dplyr::select(-Locations_location_coordinates)
 }
 
 
@@ -232,14 +209,26 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
   }
 
   # --- Compile metadata ---
-  # Build a flat dataframe of all datastreams tagged with their parent Thing name
+  # Build a flat dataframe of all datastreams tagged with their parent Thing name.
   datastreams <- dplyr::bind_rows(purrr::map(all_things, function(thing) {
     ds_list <- thing$Datastreams
     if (length(ds_list) == 0) return(NULL)
 
     dplyr::bind_rows(purrr::map(ds_list, function(ds) {
-      coords <- na.omit(as.numeric(ds$observedArea$coordinates))
-      if (length(coords) < 2) return(NULL)
+      # Prefer Datastream observedArea (reflects actual observation locations);
+      # fall back to Thing Location for sensors that do not populate observedArea
+      # TODO: check with JG if logic makes sense...
+      coords <- tryCatch(
+        as.numeric(unlist(ds$observedArea$coordinates))[1:2],
+        error = function(e) c(NA_real_, NA_real_)
+      )
+      if (anyNA(coords) || length(coords[!is.na(coords)]) < 2) {
+        coords <- tryCatch(
+          as.numeric(unlist(thing$Locations[[1]]$location$coordinates))[1:2],
+          error = function(e) c(NA_real_, NA_real_)
+        )
+      }
+      if (anyNA(coords)) return(NULL)
 
       phtime <- ds$phenomenonTime
       if (is.null(phtime) || is.na(phtime)) return(NULL)
@@ -247,16 +236,16 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
       if (length(dates) < 2) return(NULL)
 
       tibble::tibble(
-        Thing.name = thing$name,
+        Thing.name = thing$name %||% NA_character_,
         Datastream.id = ds$`@iot.id`,
-        Datastream.link = ds$`@iot.selfLink`,
-        Datastream.name = ds$name,
-        Datastream.description = ds$description,
-        observationType = ds$observationType,
+        Datastream.link = ds$`@iot.selfLink` %||% NA_character_,
+        Datastream.name = ds$name %||% NA_character_,
+        Datastream.description = ds$description %||% NA_character_,
+        observationType = ds$observationType %||% NA_character_,
         ObservedProperty.id = ds$ObservedProperty$`@iot.id`,
-        ObservedProperty.name = ds$ObservedProperty$name,
-        unitOfMeasurement.name = ds$unitOfMeasurement$name,
-        unitOfMeasurement.symbol = ds$unitOfMeasurement$symbol,
+        ObservedProperty.name = ds$ObservedProperty$name %||% NA_character_,
+        unitOfMeasurement.name = ds$unitOfMeasurement$name %||% NA_character_,
+        unitOfMeasurement.symbol = ds$unitOfMeasurement$symbol %||% NA_character_,
         longitude = coords[1],
         latitude = coords[2],
         start_date = as.Date(dates[1]),
@@ -367,8 +356,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
 #' Cleans, aggregates, and joins datastreams for each device in a nested list.
 #'
 #' @param device_list The nested list.
-#' @param aggregation How to handle duplicate variable columns (e.g., two
-#'   'air_temperature' streams for one device).
+#' @param aggregation How to handle duplicate variable columns (e.g., two 'air_temperature' streams for one device).
 #'   - "mean" (default): Average the values.
 #'   - "median": Take the median of the values.
 #'   - "none": Keep all variables, appending .x, .y suffixes.
