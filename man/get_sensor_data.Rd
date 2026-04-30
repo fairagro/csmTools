@@ -13,7 +13,7 @@ get_sensor_data(
   radius,
   from,
   to,
-  aggregate = "median",
+  agg_method = "median",
   output_path = NULL
 )
 }
@@ -24,22 +24,24 @@ get_sensor_data(
 
 \item{var}{(character vector) The names of observed properties (variables) to extract, as defined ObservedProperties on the focal STA endpoint.}
 
-\item{lon}{(numeric) Longitude (x coordinate) of the target location (decimal degrees E/W, range 6:15)}
+\item{lon}{(numeric) Longitude of the target location in decimal degrees.}
 
-\item{lat}{(numeric) Latitude (y coordinate) of the target location (decimal degrees N/S, range 47:55)}
+\item{lat}{(numeric) Latitude of the target location in decimal degrees.}
 
 \item{radius}{(numeric) Search radius around the focal coordinates, in meters.}
 
-\item{from}{(character or date) Start date of the desired time range as YYYY-MM-DD (inclusive).}
+\item{from}{(character or Date) Start of the desired time range as \code{"YYYY-MM-DD"} or a \code{Date} object (inclusive).}
 
-\item{to}{(character or date) End date of the desired time range as YYYY-MM-DD (inclusive).}
+\item{to}{(character or Date) End of the desired time range as \code{"YYYY-MM-DD"} or a \code{Date} object (inclusive). Must be on or after \code{from}.}
 
-\item{aggregate}{(character) Method for consolidating data (e.g., \code{"median"}).}
+\item{agg_method}{(character) Method for consolidating data (e.g., \code{"median"}).}
 
 \item{output_path}{(character) Optional file path to save the output.}
 }
 \value{
-A consolidated data frame or output file depending on configuration.
+A named list with one entry per device, each containing \code{DATASTREAM} (a wide data
+frame of observations) and \code{METADATA} (device metadata). Returns \code{NULL} if no data
+is found. If \code{output_path} is provided the list is also written to a JSON file.
 }
 \description{
 Retrieves, merges, and formats observational data for specified variables, location, and time range from an OGC SensorThings API (STA) endpoint.
