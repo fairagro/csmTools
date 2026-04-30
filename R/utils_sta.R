@@ -90,12 +90,10 @@ post_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastr
   .validate_sta_url(url)
   body_json <- toJSON(body, auto_unbox = TRUE)
 
-  url <- paste0(url, object)
-  response <- POST(url, body = body_json, encode = "json",
-                   add_headers(
-                     `Content-Type` = "application/json",
-                     `Authorization` = paste("Bearer", token)
-                   ))
+  endpoint <- paste0(url, object)
+  response <- POST(endpoint, body = body_json, encode = "json",
+                   httr::add_headers(`Content-Type` = "application/json"),
+                   .sta_auth(token))
   httr::stop_for_status(response)
 
   return(invisible(response))
@@ -136,12 +134,10 @@ delete_sta <- function(object = c("Things","Sensors","ObservedProperties","Datas
 
   .validate_sta_url(url)
 
-  url <- paste0(url, object, "(", object_id, ")")
-  response <- DELETE(url,
-                     add_headers(
-                       `Content-Type` = "application/json",
-                       `Authorization` = paste("Bearer", token)
-                     ))
+  endpoint <- paste0(url, object, "(", object_id, ")")
+  response <- DELETE(endpoint,
+                     httr::add_headers(`Content-Type` = "application/json"),
+                     .sta_auth(token))
   httr::stop_for_status(response)
 
   return(invisible(response))
@@ -187,29 +183,103 @@ patch_sta <- function(object = c("Things","Sensors","ObservedProperties","Datast
   .validate_sta_url(url)
   body_json <- toJSON(body, auto_unbox = TRUE)
 
-  url <- paste0(url, object, "(", object_id, ")")
-  response <- PATCH(url, body = body_json, encode = "json",
-                    add_headers(
-                      `Content-Type` = "application/json",
-                      `Authorization` = paste("Bearer", token)
-                    ))
+  endpoint <- paste0(url, object, "(", object_id, ")")
+  response <- PATCH(endpoint, body = body_json, encode = "json",
+                    httr::add_headers(`Content-Type` = "application/json"),
+                    .sta_auth(token))
   httr::stop_for_status(response)
 
   return(invisible(response))
 }
 
 
+#' Construct a Bearer token authorization header
+#'
+#' @param token Character. The Bearer token.
+#' @return An \code{httr} config object with the Authorization header set.
+#' 
+#' @noRd
+#' 
+
+.sta_auth <- function(token) {
+  httr::add_headers(`Authorization` = paste("Bearer", token))
+}
+
+
+#' Parse an httr response body as JSON
+#'
+#' @param response An \code{httr::response} object.
+#' @param simplify Logical. Passed to \code{simplifyVector} in \code{jsonlite::fromJSON}.
+#'   Default \code{TRUE}.
+#' 
+#' @return A parsed R object.
+#' 
+#' @noRd
+#' 
+
+.parse_sta_response <- function(response, simplify = TRUE) {
+  jsonlite::fromJSON(
+    httr::content(response, as = "text", encoding = "UTF-8"),
+    simplifyVector = simplify
+  )
+}
+
+
+#' Load and validate Keycloak credentials
+#'
+#' Accepts a named list, or a path to a YAML/JSON file, and validates that all required Keycloak
+#' fields are present.
+#'
+#' @param creds Named list or character path to a YAML/JSON credentials file.
+#' @return A validated named list with keys \code{url}, \code{client_id}, \code{client_secret},
+#'   \code{username}, \code{password}.
+#'
+#' @noRd
+#' 
+
+.read_creds <- function(creds) {
+
+  if (is.null(creds)) {
+    stop("Access denied. Please provide the 'creds' list containing your authentication details.")
+  }
+  if (is.character(creds)) {
+    if (!file.exists(creds)) {
+      stop("Credential file not found at: ", creds)
+    }
+    creds_ext <- tolower(tools::file_ext(creds))
+    if (creds_ext %in% c("yaml", "yml")) {
+      creds <- yaml::read_yaml(creds)
+    } else if (creds_ext == "json") {
+      creds <- jsonlite::fromJSON(txt = readLines(creds))
+    } else {
+      stop("Unsupported configuration file format. Use YAML (.yaml/.yml) or JSON (.json)")
+    }
+  }
+  required_keys <- c("url", "client_id", "client_secret", "username", "password")
+  missing_keys <- setdiff(required_keys, names(creds))
+  if (length(missing_keys) > 0) {
+    stop(
+      "Invalid 'creds' structure.\n",
+      "The following keys are missing from your credentials list: ",
+      paste(missing_keys, collapse = ", "), "\n",
+      "Please ensure 'creds' is a list with keys: url, client_id, client_secret, username, password."
+    )
+  }
+  creds
+}
+
+
 #' Validate an OGC SensorThings API service root URL
 #'
-#' Checks that \code{url} conforms to the OGC STA service root convention: a
-#' versioned path segment (\code{/v1.0/} or \code{/v1.1/}) ending with a
-#' trailing slash. The trailing slash is required because all resource paths are
-#' appended directly (e.g. \code{paste0(url, "Things")}).
+#' Checks that \code{url} conforms to the OGC STA service root convention: a versioned path segment
+#' (\code{/v1.0/} or \code{/v1.1/}) ending with a trailing slash. The trailing slash is required because
+#' all resource paths are appended directly (e.g. \code{paste0(url, "Things")}).
 #'
 #' @param url Character. The candidate service root URL.
-#' @return Called for its side effect; stops with an informative message if the
-#'   URL is invalid.
+#' @return Called for its side effect; stops with an informative message if the URL is invalid.
+#' 
 #' @noRd
+#' 
 
 .validate_sta_url <- function(url) {
   if (!grepl("/v1\\.\\d+/$", url)) {

@@ -5,12 +5,12 @@
 #' @param url (character) The base URL of the OGC SensorThings API endpoint (should end with a slash).
 #' @param creds (list) A named list containing Keycloak authentication details (see Details).
 #' @param var (character vector) The names of observed properties (variables) to extract, as defined ObservedProperties on the focal STA endpoint.
-#' @param lon (numeric) Longitude (x coordinate) of the target location (decimal degrees E/W, range 6:15)
-#' @param lat (numeric) Latitude (y coordinate) of the target location (decimal degrees N/S, range 47:55)
+#' @param lon (numeric) Longitude of the target location in decimal degrees.
+#' @param lat (numeric) Latitude of the target location in decimal degrees.
 #' @param radius (numeric) Search radius around the focal coordinates, in meters.
-#' @param from (character or date) Start date of the desired time range as YYYY-MM-DD (inclusive).
-#' @param to (character or date) End date of the desired time range as YYYY-MM-DD (inclusive).
-#' @param aggregate (character) Method for consolidating data (e.g., \code{"median"}).
+#' @param from (character or Date) Start of the desired time range as \code{"YYYY-MM-DD"} or a \code{Date} object (inclusive).
+#' @param to (character or Date) End of the desired time range as \code{"YYYY-MM-DD"} or a \code{Date} object (inclusive). Must be on or after \code{from}.
+#' @param agg_method (character) Method for consolidating data (e.g., \code{"median"}).
 #' @param output_path (character) Optional file path to save the output.
 #'
 #' @details
@@ -58,10 +58,20 @@
 #' @export
 #' 
 
-get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, aggregate = "median", output_path = NULL) {
-   
-  aggregate <- match.arg(aggregate, c("mean", "median", "none"))
-  
+get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, agg_method = "median", output_path = NULL) {
+
+  agg_method <- match.arg(agg_method, c("mean", "median", "none"))
+
+  from <- tryCatch(
+    as.Date(from),
+    error = function(e) stop("'from' must be a valid date (YYYY-MM-DD). Got: ", from)
+  )
+  to <- tryCatch(
+    as.Date(to),
+    error = function(e) stop("'to' must be a valid date (YYYY-MM-DD). Got: ", to)
+  )
+  if (to < from) stop("'to' (", to, ") must be on or after 'from' (", from, ").")
+
   # --- Credential validation and authentication ---
   creds <- .read_creds(creds)
   token <- tryCatch({
@@ -129,7 +139,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
   ds_device_list <- split(dataset, device_nms)
   
   # Consolidate
-  ds_consolidated <- .consolidate_datastreams(ds_device_list, aggregation = aggregate)
+  ds_consolidated <- .consolidate_datastreams(ds_device_list, aggregation = agg_method)
   
   # Resolve output
   out <- export_output(ds_consolidated, output_path)
@@ -292,7 +302,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
   }
 
   # Overlap check: keep datastreams whose measurement period overlaps the requested range
-  out <- dplyr::filter(out, start_date <= as.Date(to) & end_date >= as.Date(from))
+  out <- dplyr::filter(out, start_date <= to & end_date >= from)
   if (nrow(out) == 0) {
     warning("No datastream covers the requested timeframe.")
     return(data.frame())
