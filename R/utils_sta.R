@@ -1,4 +1,4 @@
-#' Obtain an Access Token from a Keycloak Server Using Resource Owner Password Credentials
+#' Obtain an access token from a Keycloak server using Resource Owner Password Credentials
 #'
 #' Requests an OAuth2 access token from a Keycloak authentication server using the Resource Owner Password Credentials Grant (password grant).
 #'
@@ -9,7 +9,8 @@
 #' @param password Character. The password of the Keycloak user.
 #'
 #' @details
-#' This function sends a POST request to the Keycloak token endpoint with the provided credentials and client information, using the OAuth2 Resource Owner Password Credentials Grant. The function expects a successful response to contain an \code{access_token} field.
+#' This function sends a POST request to the Keycloak token endpoint with the provided credentials and client information,
+#' using the OAuth2 Resource Owner Password Credentials Grant. The function expects a successful response to contain an \code{access_token} field.
 #'
 #' The function uses the \strong{httr} package for HTTP requests. The token is extracted from the response and returned as a character string.
 #'
@@ -53,7 +54,7 @@ get_kc_token <- function(url, client_id, client_secret, username, password) {
 }
 
 
-#' POST Data to an OGC SensorThings API Endpoint
+#' POST data to an OGC SensorThings API endpoint
 #'
 #' Sends a POST request to an OGC SensorThings API endpoint to create a new resource (e.g., Thing, Sensor, ObservedProperty, Datastream, or Observation).
 #'
@@ -85,21 +86,23 @@ get_kc_token <- function(url, client_id, client_secret, username, password) {
 #' @export
 
 post_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), body, url, token){
-  
+
+  .validate_sta_url(url)
   body_json <- toJSON(body, auto_unbox = TRUE)
-  
+
   url <- paste0(url, object)
   response <- POST(url, body = body_json, encode = "json",
                    add_headers(
                      `Content-Type` = "application/json",
                      `Authorization` = paste("Bearer", token)
                    ))
-  
+  httr::stop_for_status(response)
+
   return(invisible(response))
 }
 
 
-#' Delete a Resource from an OGC SensorThings API Endpoint
+#' Delete a resource from an OGC SensorThings API endpoint
 #'
 #' Sends a DELETE request to an OGC SensorThings API endpoint to remove a specified resource (e.g., Thing, Sensor, ObservedProperty, Datastream, or Observation) by its ID.
 #'
@@ -110,8 +113,6 @@ post_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastr
 #'
 #' @details
 #' This function constructs the full URL for the resource by appending the resource type (\code{object}) and the resource ID (\code{object_id}) in OData format to the base URL. It then sends a DELETE request to this URL, including the provided Bearer token for authentication.
-#'
-#' The function checks that the URL starts with \code{http://} or \code{https://} and stops with an error if not.
 #'
 #' The function uses the \strong{httr} package for HTTP requests.
 #'
@@ -132,19 +133,22 @@ post_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastr
 #' @export
 
 delete_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), object_id, url, token){
-  
+
+  .validate_sta_url(url)
+
   url <- paste0(url, object, "(", object_id, ")")
   response <- DELETE(url,
                      add_headers(
                        `Content-Type` = "application/json",
                        `Authorization` = paste("Bearer", token)
                      ))
-  
+  httr::stop_for_status(response)
+
   return(invisible(response))
 }
 
 
-#' Update a Resource on an OGC SensorThings API Endpoint (PATCH)
+#' Update a resource on an OGC SensorThings API endpoint (PATCH)
 #'
 #' Sends a PATCH request to an OGC SensorThings API endpoint to update a specified resource (e.g., Thing, Sensor, ObservedProperty, Datastream, or Observation) by its ID.
 #'
@@ -156,8 +160,6 @@ delete_sta <- function(object = c("Things","Sensors","ObservedProperties","Datas
 #'
 #' @details
 #' This function constructs the full URL for the resource by appending the resource type (\code{object}) and the resource ID (\code{object_id}) in OData format to the base URL. It converts the \code{body} to JSON and sends a PATCH request to this URL, including the provided Bearer token for authentication.
-#'
-#' The function checks that the URL starts with \code{http://} or \code{https://} and stops with an error if not.
 #'
 #' The function uses the \strong{httr} package for HTTP requests and the \strong{jsonlite} package for JSON conversion.
 #'
@@ -181,15 +183,41 @@ delete_sta <- function(object = c("Things","Sensors","ObservedProperties","Datas
 #' 
 
 patch_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), object_id, url, token, body){
-  
+
+  .validate_sta_url(url)
   body_json <- toJSON(body, auto_unbox = TRUE)
-  
+
   url <- paste0(url, object, "(", object_id, ")")
   response <- PATCH(url, body = body_json, encode = "json",
                     add_headers(
                       `Content-Type` = "application/json",
                       `Authorization` = paste("Bearer", token)
                     ))
-  
+  httr::stop_for_status(response)
+
   return(invisible(response))
 }
+
+
+#' Validate an OGC SensorThings API service root URL
+#'
+#' Checks that \code{url} conforms to the OGC STA service root convention: a
+#' versioned path segment (\code{/v1.0/} or \code{/v1.1/}) ending with a
+#' trailing slash. The trailing slash is required because all resource paths are
+#' appended directly (e.g. \code{paste0(url, "Things")}).
+#'
+#' @param url Character. The candidate service root URL.
+#' @return Called for its side effect; stops with an informative message if the
+#'   URL is invalid.
+#' @noRd
+
+.validate_sta_url <- function(url) {
+  if (!grepl("/v1\\.\\d+/$", url)) {
+    stop(
+      "'url' does not look like a valid OGC SensorThings API service root. ",
+      "Expected a versioned path ending with a slash, e.g. 'https://host/path/v1.0/' ",
+      "or '.../v1.1/'. Got: ", url
+    )
+  }
+}
+
