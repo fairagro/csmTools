@@ -87,7 +87,7 @@ get_kc_token <- function(url, client_id, client_secret, username, password) {
 
 post_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), body, url, token){
 
-  .validate_sta_url(url)
+  url <- .validate_sta_url(url)
   body_json <- toJSON(body, auto_unbox = TRUE)
 
   endpoint <- paste0(url, object)
@@ -132,7 +132,7 @@ post_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastr
 
 delete_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), object_id, url, token){
 
-  .validate_sta_url(url)
+  url <- .validate_sta_url(url)
 
   endpoint <- paste0(url, object, "(", object_id, ")")
   response <- DELETE(endpoint,
@@ -180,7 +180,7 @@ delete_sta <- function(object = c("Things","Sensors","ObservedProperties","Datas
 
 patch_sta <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), object_id, url, token, body){
 
-  .validate_sta_url(url)
+  url <- .validate_sta_url(url)
   body_json <- toJSON(body, auto_unbox = TRUE)
 
   endpoint <- paste0(url, object, "(", object_id, ")")
@@ -269,25 +269,27 @@ patch_sta <- function(object = c("Things","Sensors","ObservedProperties","Datast
 }
 
 
-#' Validate an OGC SensorThings API service root URL
+#' Validate and normalise an OGC SensorThings API service root URL
 #'
-#' Checks that \code{url} conforms to the OGC STA service root convention: a versioned path segment
-#' (\code{/v1.0/} or \code{/v1.1/}) ending with a trailing slash. The trailing slash is required because
-#' all resource paths are appended directly (e.g. \code{paste0(url, "Things")}).
+#' Checks that \code{url} contains an OGC STA version segment (\code{/v1.0} or
+#' \code{/v1.1}), appending a trailing slash if absent. The trailing slash is
+#' required because all resource paths are built with
+#' \code{paste0(url, "Things")}.
 #'
 #' @param url Character. The candidate service root URL.
-#' @return Called for its side effect; stops with an informative message if the URL is invalid.
-#' 
+#' @return The normalised URL (character), guaranteed to end with a slash.
+#'
 #' @noRd
-#' 
 
 .validate_sta_url <- function(url) {
-  if (!grepl("/v1\\.\\d+/$", url)) {
+  if (!grepl("/v1\\.\\d+/?$", url)) {
     stop(
       "'url' does not look like a valid OGC SensorThings API service root. ",
-      "Expected a versioned path ending with a slash, e.g. 'https://host/path/v1.0/' ",
-      "or '.../v1.1/'. Got: ", url
+      "Expected a versioned path, e.g. 'https://host/path/v1.0' or '.../v1.1/'. ",
+      "Got: ", url
     )
   }
+  if (!grepl("/$", url)) url <- paste0(url, "/")
+  url
 }
 
