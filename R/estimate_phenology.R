@@ -11,7 +11,6 @@
 #' 
 #' @return a list of DSSAT input data components with estimated phenology appended to the observed data (file A)
 #' 
-#' @importFrom magrittr %>%
 #' @importFrom cropCalendars getCropParam calcSeasonality calcHarvestRule calcHarvestDateVector calcHarvestDate calcMonthlyClimate calcCropCalendars
 #' @importFrom dplyr case_when mutate
 #' @importFrom lubridate year yday month parse_date_time
@@ -144,7 +143,7 @@ estimate_phenology <- function(dataset, data_model = "dssat", method = "crop par
         # TODO: Or by default, sowing + ### (check crop params)
         
         # tmp for testing only
-        wth_tmp <- wdata %>% mutate(DATE = paste0("22", substr(DATE, 3, 5)))
+        wth_tmp <- wdata |> mutate(DATE = paste0("22", substr(DATE, 3, 5)))
         wth_tmp <- rbind(wdata, wth_tmp)
         wdata <- wth_tmp  #tmp
         wthNas <- check_weather_coverage(mngt = xtables, wth = wdata, period = "year")

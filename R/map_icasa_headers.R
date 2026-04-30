@@ -26,8 +26,8 @@ map_icasa_headers <- function(dataset, header_type = "short") {
   # Keep only 'header' sections and filter
   header_sec <- c("Metadata", "Management_info", "Soils_data", "Weather_data", "Measured_data")
   header_dict <- dict[names(dict) %in% header_sec]
-  header_dict <- do.call(bind_rows, header_dict) %>%
-    mutate(long_name = Variable_Name, short_name = Code_Display) %>%
+  header_dict <- do.call(bind_rows, header_dict) |>
+    mutate(long_name = Variable_Name, short_name = Code_Display) |>
     select(long_name, short_name)
 
   # --- 3. Create Name Lookup and Rename ---

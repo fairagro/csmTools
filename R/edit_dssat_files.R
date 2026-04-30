@@ -58,7 +58,6 @@
 #' 
 #' @importFrom DSSAT read_eco
 #' @importFrom tibble tibble as_tibble
-#' @importFrom magrittr '%>%'
 #' @importFrom dplyr filter summarise across bind_cols rows_update
 #' @importFrom tidyselect where
 #' @importFrom utils modifyList
@@ -132,25 +131,25 @@ edit_cultivar <- function(cname, model, ccode = NULL, ecode = NULL, expno = NULL
       `ECO#` = as.character(ecode)
     )
     # Set default values as the median
-    cul_pars <- cul0 %>%
-      filter(VRNAME %in% c("MINIMA", "MAXIMA")) %>%
+    cul_pars <- cul0 |>
+      filter(VRNAME %in% c("MINIMA", "MAXIMA")) |>
       summarise(across(where(is.numeric), ~median(.x)))
     cul_data <- bind_cols(cul_metadata, cul_pars)
     
     # --- Set parameters ---
     input_pars <- c(ppars, gpars)
     if (length(input_pars) > 0) {
-      cul_data <- modifyList(as.list(cul_data), input_pars) %>% as_tibble()
+      cul_data <- modifyList(as.list(cul_data), input_pars) |> as_tibble()
     }
     cul <- bind_rows(cul0, cul_data)
 
   } else {
-    
+
     # --- Set parameters ---
     cul_data <- cul0[cul0$VRNAME == cname, ]
     input_pars <- c(ppars, gpars)
     if (length(input_pars) > 0) {
-      cul_data <- modifyList(as.list(cul_data), input_pars) %>% as_tibble()
+      cul_data <- modifyList(as.list(cul_data), input_pars) |> as_tibble()
       cul <- rows_update(cul0, cul_data, by = "VAR#")
     }
   }

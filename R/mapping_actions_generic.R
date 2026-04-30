@@ -677,7 +677,7 @@
   
   sort_col <- action$by_col
   if (sort_col %in% names(df)) {
-    df <- df %>%
+    df <- df |>
       dplyr::arrange(!!rlang::sym(sort_col))
   } else {
     warning(paste0("sort_rows: Column '", sort_col, "' not found."), call. = FALSE)
@@ -981,8 +981,8 @@
   }
   
   # Run the aggregation
-  df <- df %>%
-    dplyr::group_by(dplyr::across(dplyr::all_of(safe_group_cols))) %>%
+  df <- df |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(safe_group_cols))) |>
     dplyr::summarise(!!!summarise_list, .groups = "drop")
   
   return(df)
@@ -1017,7 +1017,7 @@
   existing_cols <- intersect(cols_to_process, names(df))
   
   if (length(existing_cols) > 0) {
-    df <- df %>%
+    df <- df |>
       dplyr::mutate(dplyr::across(
         dplyr::all_of(existing_cols),
         ~ tidyr::replace_na(., value)

@@ -27,6 +27,7 @@
 #' - If a depth in `depth_seq` already exists in the input, the original value is retained.
 #' - Diagnostic plots are saved as PNG files when `output_path` is provided.
 #'
+#' @importFrom magrittr "%>%"
 #' @importFrom tidyr everything replace_na gather
 #' @importFrom dplyr mutate relocate arrange right_join across filter select
 #' @importFrom ggplot2 ggplot aes geom_point geom_path facet_wrap theme_bw ggsave
@@ -96,19 +97,19 @@ normalize_soil_profile <- function(data,
   }
   
   # Format normalized soil profile
-  normalized_profile <- cbind(headers, profile_nas, profile_fct) %>%
-    right_join(std_profile, by = "SLB") %>%
+  normalized_profile <- cbind(headers, profile_nas, profile_fct) |>
+    right_join(std_profile, by = "SLB") |>
     mutate(across(everything(), ~ {
-      unique_vals <- unique(na.omit(.))
+      unique_vals <- unique(na.omit(.x))
       if (length(unique_vals) == 1) {
-        replace_na(., unique_vals)
+        replace_na(.x, unique_vals)
       } else {
-        .
+        .x
       }
-    })) %>%  # duplicate all header values in interpolated layers
-    mutate(DEPTH = max(SLB)) %>%  # update max depth in header if relevant
-    filter(SLB %in% depth_seq) %>%
-    arrange(SLB) %>%
+    })) |>  # duplicate all header values in interpolated layers
+    mutate(DEPTH = max(SLB)) |>  # update max depth in header if relevant
+    filter(SLB %in% depth_seq) |>
+    arrange(SLB) |>
     select(colnames(data))
   
   # Restore preserved attributes

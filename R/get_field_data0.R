@@ -31,7 +31,6 @@
 #' # Save processed data to directory
 #' get_field_data0(output_path = "processed_data/")
 #'
-#' @importFrom magrittr %>%
 #' @importFrom dplyr mutate filter select across
 #' @importFrom purrr map keep map_chr reduce compact
 #' @importFrom openxlsx2 wb_load wb_get_sheet_names wb_to_df
@@ -162,9 +161,9 @@ get_field_data0 <- function(path = NULL, exp_id = NULL, headers = c("short", "lo
   
   # Map column headers to short format if applicable
   # TODO: extensive testing (e.g., no provenance sheets or empty)
-  dict <- wb_to_df(wb, sheet = "Dictionary", startRow = 1) %>%
+  dict <- wb_to_df(wb, sheet = "Dictionary", startRow = 1) |>
     # Change provenance section to experiment (now that provenance info has been incorporated to SOIL and WEATHER metadata)
-    #mutate(Sheet = ifelse(Sheet %in% c("PERSONS","INSTITUTIONS","DOCUMENTS"), "EXP_METADATA", Sheet)) %>%
+    #mutate(Sheet = ifelse(Sheet %in% c("PERSONS","INSTITUTIONS","DOCUMENTS"), "EXP_METADATA", Sheet)) |>
     filter(!var_order == "-99" | is.na(var_order))  # tmp: preserve NAs until measured data all sorted in template
   if(headers == "short") {
     dfs <- mapply(FUN = icasa_long_to_short,
@@ -189,7 +188,7 @@ get_field_data0 <- function(path = NULL, exp_id = NULL, headers = c("short", "lo
   })
   sec_names <- map_chr(grouped_sec, ~ names(.x)[1])  # Assign name of the header table
   names(merged_sec) <- sec_names
-  merged_sec <- merged_sec %>% compact()    # Remove NULLs from merged list
+  merged_sec <- merged_sec |> compact()    # Remove NULLs from merged list
   
   # Merge all summary/time_series tables into one
   sm_dfs <- merged_sec[grepl("SM_", names(merged_sec))]
@@ -253,11 +252,10 @@ get_field_data0 <- function(path = NULL, exp_id = NULL, headers = c("short", "lo
 #' drop_artefacts(df)
 #' # Returns a data frame with only columns 'a' and 'c', and only rows with at least one non-NA value
 #'
-#' @importFrom magrittr %>%
 #' @importFrom dplyr filter
-#' 
+#'
 #' @noRd
-#' 
+#'
 
 drop_artefacts <- function(df) {
   
@@ -269,7 +267,7 @@ drop_artefacts <- function(df) {
   
   # Remove unnammed and full NA columns
   df <- df[ , !grepl("^unnamed", colnames(df))]
-  df <- df %>% filter(rowSums(is.na(.)) != ncol(.))
+  df <- df[rowSums(is.na(df)) != ncol(df), ]
   
   return(df)
 }
@@ -298,28 +296,27 @@ drop_artefacts <- function(df) {
 #' # [1] \"crop\" \"soil\" \"site\" ...
 #' }
 #'
-#' @importFrom magrittr %>%
 #' @importFrom openxlsx2 wb_to_df
 #' @importFrom dplyr select all_of filter ends_with
-#' 
+#'
 #' @noRd
-#' 
+#'
 
 get_template_codes <- function(wb){
   
   codes <- wb_to_df(wb, sheet = "DropDown", startRow = 2)
   
   # Drop template helper columns (only for data entry)
-  codes <- codes %>% select(-ends_with("_sort"))
-  
+  codes <- codes |> select(-ends_with("_sort"))
+
   codes_prefixes <- unique(sub("_.*", "", names(codes)))
-  
+
   # split into separate dataframe for each code list
   codes_ls <- lapply(codes_prefixes, function(prefix) {
-    
+
     cols <- grep(paste0("^", prefix, "(_|$)"), names(codes), value = TRUE)
-    df <- codes %>% select(all_of(cols))
-    
+    df <- codes |> select(all_of(cols))
+
     if (ncol(df) >= 2) {
       names(df)[1:2] <- c("desc", "code")
       df <- df %>% filter(!is.na(.[[1]]))
@@ -369,11 +366,10 @@ get_template_codes <- function(wb){
 #' icasa_long_to_short(df, section = "SECTION", dict = dict)
 #' # Returns a data frame with columns "LN1" and "LN2"
 #'
-#' @importFrom magrittr %>%
 #' @importFrom dplyr rename_with
-#' 
+#'
 #' @export
-#' 
+#'
 
 icasa_long_to_short <- function(df, section, dict, keep_unmapped = TRUE){
   
@@ -384,7 +380,7 @@ icasa_long_to_short <- function(df, section, dict, keep_unmapped = TRUE){
   rename_vector <- rename_vector[names(rename_vector) %in% names(df)]  # keep only columns present in the dataframe
   
   # Perform the mapping
-  df <- df %>% rename_with(~ rename_vector[.x], .cols = names(rename_vector))
+  df <- df |> rename_with(~ rename_vector[.x], .cols = names(rename_vector))
   
   if (keep_unmapped == FALSE) df <- df[colnames(df) %in% rename_vector]
   
@@ -481,12 +477,11 @@ desc_to_codes <- function(df, codes) {
 #' ls <- format_treatment_str(ls)
 #' }
 #'
-#' @importFrom magrittr %>%
 #' @importFrom tidyselect everything
 #' @importFrom dplyr mutate across where
-#' 
+#'
 #' @noRd
-#' 
+#'
 
 format_treatment_str <- function(ls){
   

@@ -132,17 +132,17 @@ split_dssat_dataset <-  function(dataset,
   # HACK! TODO: move to extract template??
   # Format provenance by nested attributes by experiment-year
   if ("GENERAL" %in% names(components)) {
-    components[["GENERAL"]] <- components[["GENERAL"]] %>%
-        dplyr::group_by(
-      dplyr::across(
-        tidyr::any_of(c("file_name", "EXP_ID", "EXP_YEAR")))) %>%
-    dplyr::summarise(
-      dplyr::across(
-        !tidyr::any_of(c("EXP_ID", "EXP_YEAR")),
-        ~paste(unique(na.omit(.x)), collapse = "; ")
-      ),
-      .groups = "drop"
-    )
+    components[["GENERAL"]] <- components[["GENERAL"]] |>
+      dplyr::group_by(
+        dplyr::across(
+          tidyr::any_of(c("file_name", "EXP_ID", "EXP_YEAR")))) |>
+      dplyr::summarise(
+        dplyr::across(
+          !tidyr::any_of(c("EXP_ID", "EXP_YEAR")),
+          ~paste(unique(na.omit(.x)), collapse = "; ")
+        ),
+        .groups = "drop"
+      )
   }
 
   # Merge into single data frame if required
@@ -304,73 +304,77 @@ reconstruct_dssat_dataset <- function(dataset, data_nms) {
   soil_code_map <- attr(data_nms$SOIL, "code_map")
 
   # --- Update soil and weather links in FIELDS table ---
-  dataset_out[["FIELDS"]] <- dataset[["FIELDS"]] %>%
+  fields_joined <- dataset[["FIELDS"]] |>
     dplyr::left_join(
       exp_code_map,
       by = intersect(colnames(dataset[["FIELDS"]]), colnames(exp_code_map))
-    ) %>%
+    ) |>
     dplyr::left_join(
       wsta_code_map,
       by = intersect(colnames(dataset[["FIELDS"]]), colnames(wsta_code_map))
-    ) %>%
+    ) |>
     dplyr::left_join(
       soil_code_map,
       by = intersect(colnames(dataset[["FIELDS"]]), colnames(soil_code_map))
-    ) %>%
+    ) |>
     dplyr::mutate(
       ID_FIELD = ID_FIELD_new,
       WSTA = INSI_new,
       ID_SOIL = PEDON_new,
       EXP_ID = EXP_ID_new
-    ) %>%
+    ) |>
     dplyr::left_join(
       data_nms$METADATA,
       by = c("EXP_ID", "L", "XCRD", "YCRD") # Your original keys
-    ) %>%
+    )
+  dataset_out[["FIELDS"]] <- fields_joined |>
     dplyr::select(EXP_ID, tidyr::any_of(colnames(FIELDS_template)),
-                  tidyr::any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE)))
+                  tidyr::any_of(grep("_NOTES|_COMMENTS", names(fields_joined), value = TRUE)))
 
   # --- Reconstruct Management tables ---
   mngt_data_out <- list()
-  mngt_data_out[["GENERAL"]] <- data_nms$METADATA %>%
+  mngt_metadata_nms <- names(data_nms$METADATA)
+  mngt_data_out[["GENERAL"]] <- data_nms$METADATA |>
     dplyr::select(file_name, EXP_ID, INSTITUTION,
                   tidyr::any_of(union(colnames(dataset[["GENERAL"]]),
                                       colnames(GENERAL_template))),
-                  any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE)))
-  mngt_data_out[["CULTIVARS"]] <- data_nms$METADATA %>%
+                  dplyr::any_of(grep("_NOTES|_COMMENTS", mngt_metadata_nms, value = TRUE)))
+  mngt_data_out[["CULTIVARS"]] <- data_nms$METADATA |>
     dplyr::select(tidyr::any_of(union(colnames(dataset[["CULTIVARS"]]),
                                       colnames(CULTIVARS_template))),
-                  any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE)))
+                  dplyr::any_of(grep("_NOTES|_COMMENTS", mngt_metadata_nms, value = TRUE)))
   dataset_out[names(mngt_data_out)] <- mngt_data_out
 
   # --- Reconstruct Soil profile table ---
   soil_data_out <- list()
-  soil_data_out[["SOIL_META"]] <- data_nms$SOIL %>%
+  sol_nms <- names(data_nms$SOIL)
+  soil_data_out[["SOIL_META"]] <- data_nms$SOIL |>
     dplyr::select(file_name, EXP_ID, INST_NAME, PEDON, YEAR,
-                  intersect(colnames(SOIL_META_template), colnames(data_nms$SOIL)),
-                  tidyr::any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE))) %>%
+                  intersect(colnames(SOIL_META_template), sol_nms),
+                  tidyr::any_of(grep("_NOTES|_COMMENTS", sol_nms, value = TRUE))) |>
     dplyr::distinct()
-  soil_data_out[["SOIL_GENERAL"]] <- data_nms$SOIL %>%
+  soil_data_out[["SOIL_GENERAL"]] <- data_nms$SOIL |>
     dplyr::select(EXP_ID, INST_NAME, PEDON, YEAR,
-                  intersect(colnames(SOIL_GENERAL_template), colnames(data_nms$SOIL)),
-                  tidyr::any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE))) %>%
+                  intersect(colnames(SOIL_GENERAL_template), sol_nms),
+                  tidyr::any_of(grep("_NOTES|_COMMENTS", sol_nms, value = TRUE))) |>
     dplyr::distinct()
-  soil_data_out[["SOIL_LAYERS"]] <- data_nms$SOIL %>%
+  soil_data_out[["SOIL_LAYERS"]] <- data_nms$SOIL |>
     dplyr::select(EXP_ID, INST_NAME, PEDON, YEAR,
-                  intersect(colnames(SOIL_template), colnames(data_nms$SOIL)),
-                  tidyr::any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE)))
+                  intersect(colnames(SOIL_template), sol_nms),
+                  tidyr::any_of(grep("_NOTES|_COMMENTS", sol_nms, value = TRUE)))
   dataset_out[names(soil_data_out)] <- soil_data_out
 
   # --- Reconstruct Weather station tables ---
   wth_data_out <- list()
-  wth_data_out[["WEATHER_DAILY"]] <- data_nms$WEATHER %>%
+  wth_nms <- names(data_nms$WEATHER)
+  wth_data_out[["WEATHER_DAILY"]] <- data_nms$WEATHER |>
     dplyr::select(file_name, WST_NAME, EXP_ID, INSI, YEAR,
-                  intersect(colnames(WEATHER_template), colnames(data_nms$WEATHER)),
-                  tidyr::any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE)))
-  wth_data_out[["WEATHER_METADATA"]] <- data_nms$WEATHER %>%
+                  intersect(colnames(WEATHER_template), wth_nms),
+                  tidyr::any_of(grep("_NOTES|_COMMENTS", wth_nms, value = TRUE)))
+  wth_data_out[["WEATHER_METADATA"]] <- data_nms$WEATHER |>
     dplyr::select(file_name, WST_NAME, EXP_ID, INSI, YEAR,
-                  intersect(colnames(WEATHER_header_template), colnames(data_nms$WEATHER)),
-                  tidyr::any_of(grep("_NOTES|_COMMENTS", names(.), value = TRUE))) %>%
+                  intersect(colnames(WEATHER_header_template), wth_nms),
+                  tidyr::any_of(grep("_NOTES|_COMMENTS", wth_nms, value = TRUE))) |>
     dplyr::distinct()
   dataset_out[names(wth_data_out)] <- wth_data_out
 

@@ -242,7 +242,7 @@ remove_artefacts <- function(df) {
   
   # Remove unnammed and full NA columns
   df <- df[ , !grepl("^unnamed", colnames(df))]
-  df <- df %>% dplyr::filter(rowSums(is.na(.)) != ncol(.))
+  df <- df[rowSums(is.na(df)) != ncol(df), ]
   
   return(df)
 }

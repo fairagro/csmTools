@@ -86,27 +86,27 @@ lookup_gs_dates <- function(data, gs_scale = "bbch", gs_codes = NULL,
   
   scales <- growth_stages
   
-  stage_info <- scales %>%
-    filter(scale == gs_scale) %>%
-    group_by(scale, growth_stage) %>%
+  stage_info <- scales |>
+    filter(scale == gs_scale) |>
+    group_by(scale, growth_stage) |>
     summarise(
       min_code = min(code),
       max_code = max(code),
       code_count = n(),
       .groups = "drop"
     )
-  
+
   # Then scale the dates
-  scaled_df <- data %>%
-    mutate(Date = as.Date(Date, format = "%d/%m/%Y")) %>%
-    group_by(Growth_Stage) %>%
+  scaled_df <- data |>
+    mutate(Date = as.Date(Date, format = "%d/%m/%Y")) |>
+    group_by(Growth_Stage) |>
     mutate(
       min_date = min(Date),
       max_date = max(Date),
       position = as.numeric(Date - min_date) / as.numeric(max_date - min_date)
-    ) %>%
-    left_join(stage_info, by = c("Growth_Stage" = "growth_stage")) %>%
-    rename(growth_stage = Growth_Stage) %>%
+    ) |>
+    left_join(stage_info, by = c("Growth_Stage" = "growth_stage")) |>
+    rename(growth_stage = Growth_Stage) |>
     mutate(
       # Calculate scaled code
       scaled_code = min_code + position * (max_code - min_code),
@@ -114,36 +114,36 @@ lookup_gs_dates <- function(data, gs_scale = "bbch", gs_codes = NULL,
       scaled_code = ifelse(code_count > 10, round(scaled_code, 1),
                            ifelse(code_count > 5, round(scaled_code, 0),
                                   round(scaled_code)))
-    ) %>%
-    ungroup() %>%
-    select(scale, growth_stage, Date, scaled_code) %>%
+    ) |>
+    ungroup() |>
+    select(scale, growth_stage, Date, scaled_code) |>
     distinct()
-  
+
   if (is.null(gs_codes)) {
     gs_codes <- unique(scaled_df$scaled_code)
   }
-  
-  date_lookup <- scaled_df %>%
+
+  date_lookup <- scaled_df |>
     mutate(
       date = ymd(Date),
       year = year(Date),
       doy = yday(Date)
-    ) %>%
-    select(date, year, doy) %>%
+    ) |>
+    select(date, year, doy) |>
     unique()
-  
+
   # Handle different selection rules
-  gs_single_dates <- scaled_df %>%
-    filter(scaled_code %in% gs_codes) %>%
+  gs_single_dates <- scaled_df |>
+    filter(scaled_code %in% gs_codes) |>
     mutate(doy = yday(Date), date = ymd(Date))
-  
+
   if (date_select_rule == "all") {
-    gs_single_dates <- gs_single_dates %>%
+    gs_single_dates <- gs_single_dates |>
       select(scale, growth_stage, scaled_code, doy, Date)
   } else {
     # For first/last/median, we need to group and summarize
-    gs_single_dates <- gs_single_dates %>%
-      group_by(scale, growth_stage, scaled_code) %>%
+    gs_single_dates <- gs_single_dates |>
+      group_by(scale, growth_stage, scaled_code) |>
       summarise(
         doy = case_when(
           date_select_rule == "median" ~ round(median(doy, na.rm = TRUE)),
@@ -156,15 +156,15 @@ lookup_gs_dates <- function(data, gs_scale = "bbch", gs_codes = NULL,
           date_select_rule == "last" ~ max(Date, na.rm = TRUE)
         ),
         .groups = "drop"
-      ) %>%
+      ) |>
       # Ensure we have the Date column in the output
-      mutate(Date = date) %>%
+      mutate(Date = date) |>
       select(scale, growth_stage, scaled_code, doy, Date)
   }
-  
+
   # Join with date lookup if needed
   if ("doy" %in% names(gs_single_dates)) {
-    gs_single_dates <- gs_single_dates %>%
+    gs_single_dates <- gs_single_dates |>
       left_join(date_lookup, by = "doy")
   }
   

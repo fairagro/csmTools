@@ -133,10 +133,10 @@ resolve_dssat_codes <- function(dataset) {
 .resolve_dssat_exp_codes <- function(exp_metadata) {
 
   # --- Create standard DSSAT soil profile identifiers ---
-  exp_dssat_fmt_nms <- exp_metadata %>%
+  exp_dssat_fmt_nms <- exp_metadata |>
     # 1- FIELD code
-    dplyr::mutate(ID_FIELD = if ("ID_FIELD" %in% names(.)) ID_FIELD else "NA") %>%
-    dplyr::group_by(ID_FIELD) %>%
+    dplyr::mutate(ID_FIELD = if ("ID_FIELD" %in% names(exp_metadata)) ID_FIELD else "NA") |>
+    dplyr::group_by(ID_FIELD) |>
     dplyr::mutate(
       ID_FIELD_new = if (!is_valid_dssat_id(dplyr::first(ID_FIELD), "field", "dssat")) {
         # Generate one new ID per group and apply it to all rows in that group
@@ -149,11 +149,11 @@ resolve_dssat_codes <- function(dataset) {
       } else {
         dplyr::first(ID_FIELD)
       }
-    ) %>%
-    dplyr::ungroup() %>%
+    ) |>
+    dplyr::ungroup() |>
     # 2- CULTIVAR code
-    dplyr::mutate(INGENO = if ("INGENO" %in% names(.)) INGENO else "NA") %>%
-    dplyr::group_by(INGENO) %>%
+    dplyr::mutate(INGENO = if ("INGENO" %in% names(exp_metadata)) INGENO else "NA") |>
+    dplyr::group_by(INGENO) |>
     dplyr::mutate(
       INGENO_new = if (!is_valid_dssat_id(dplyr::first(INGENO), "cultivar", "dssat")) {
         # Generate one new ID per group and apply it to all rows in that group
@@ -165,12 +165,12 @@ resolve_dssat_codes <- function(dataset) {
       } else {
         dplyr::first(INGENO)
       }
-    ) %>%
-    dplyr::ungroup() %>%
+    ) |>
+    dplyr::ungroup() |>
     # 3- EXPERIMENT code
-    dplyr::mutate(EXP_ID = if ("EXP_ID" %in% names(.)) EXP_ID else "NA") %>%
-    dplyr::mutate(EXP_YEAR = if ("EXP_YEAR" %in% names(.)) EXP_YEAR else "NNNN") %>%
-    group_by(INSTITUTION, SITE, EXP_YEAR) %>%
+    dplyr::mutate(EXP_ID = if ("EXP_ID" %in% names(exp_metadata)) EXP_ID else "NA") |>
+    dplyr::mutate(EXP_YEAR = if ("EXP_YEAR" %in% names(exp_metadata)) EXP_YEAR else "NNNN") |>
+    dplyr::group_by(INSTITUTION, SITE, EXP_YEAR) |>
     dplyr::mutate(
       EXP_ID_new = if (!is_valid_dssat_id(dplyr::first(EXP_ID), "experiment", "dssat")) {
         # Generate one new ID per group and apply it to all rows in that group
@@ -184,10 +184,10 @@ resolve_dssat_codes <- function(dataset) {
       } else {
         dplyr::first(EXP_ID)
       }
-    ) %>%
+    ) |>
     dplyr::mutate(
       file_name = paste0(EXP_ID_new, ".", CR, "X")
-    ) %>%
+    ) |>
     dplyr::ungroup()
   
   # --- Format output ---
@@ -262,9 +262,9 @@ resolve_dssat_codes <- function(dataset) {
 .resolve_dssat_sol_codes <- function(sol_data) {
   
   # --- Create standard DSSAT soil profile identifiers ---
-  sol_dssat_fmt_nms <- sol_data %>%
-    dplyr::mutate(PEDON = if ("PEDON" %in% names(.)) PEDON else "NA") %>%
-    dplyr::group_by(PEDON) %>%
+  sol_dssat_fmt_nms <- sol_data |>
+    dplyr::mutate(PEDON = if ("PEDON" %in% names(sol_data)) PEDON else "NA") |>
+    dplyr::group_by(PEDON) |>
     dplyr::mutate(
       PEDON_new = if (!is_valid_dssat_id(dplyr::first(PEDON), "soil", "dssat")) {
         # Generate one new ID per group and apply it to all rows in that group
@@ -278,10 +278,10 @@ resolve_dssat_codes <- function(dataset) {
       } else {
         dplyr::first(PEDON)
       }
-    ) %>%
+    ) |>
     dplyr::mutate(
       file_name = paste0(substr(PEDON_new, 1, 2), ".SOL")
-    ) %>%
+    ) |>
     dplyr::ungroup()
   
   # --- Format output ---
@@ -362,9 +362,9 @@ resolve_dssat_codes <- function(dataset) {
 .resolve_dssat_wth_codes <- function(wth_data) {
   
   # --- Create standard DSSAT weather station identifiers ---
-  wth_dssat_fmt_nms <- wth_data %>%
-    dplyr::mutate(INSI = if ("INSI" %in% names(.)) INSI else "NA") %>%
-    dplyr::group_by(INSI, YEAR) %>%
+  wth_dssat_fmt_nms <- wth_data |>
+    dplyr::mutate(INSI = if ("INSI" %in% names(wth_data)) INSI else "NA") |>
+    dplyr::group_by(INSI, YEAR) |>
     dplyr::mutate(
       INSI_new = if (!is_valid_dssat_id(dplyr::first(INSI), "weather_station", "dssat")) {
         # Generate one new ID per group and apply it to all rows in that group
@@ -378,13 +378,13 @@ resolve_dssat_codes <- function(dataset) {
       } else {
         dplyr::first(INSI)
       }
-    ) %>%
+    ) |>
     dplyr::mutate(
       file_name = paste0(
         # Need another data identifier to do real count!
         INSI_new, YEAR, sprintf("%02d", 1), ".WTH"
       )
-    ) %>%
+    ) |>
     dplyr::ungroup()
   
   # --- Format output ---

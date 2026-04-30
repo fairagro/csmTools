@@ -27,7 +27,6 @@
 #' str(soil_profile)
 #' }
 #'
-#' @importFrom magrittr %>%
 #' @importFrom tidygeocoder reverse_geocode
 #' @importFrom dplyr mutate filter row_number select
 #' @importFrom DSSAT as_DSSAT_tbl read_sol
@@ -76,13 +75,13 @@ get_soil_profile <- function(lon, lat, src = "soil_grids", dir = NULL, output_pa
   # Filter out target profile
   profile <- list()
   for (i in 1:length(sg_cc)){
-    profile[[i]] <- sg_cc[[i]] %>%
+    profile[[i]] <- sg_cc[[i]] |>
       mutate(LAT_diff = LAT - coords[i,]$y,
              LON_diff = LONG - coords[i,]$x,
-             dd = abs(LAT_diff) + abs(LON_diff)) %>%
-      filter(dd == min(dd)) %>%
-      filter(row_number() == 1) %>% # arbitrary filtering for cases when multiple profile match distance
-      select(-LAT_diff, -LON_diff, -dd) %>%
+             dd = abs(LAT_diff) + abs(LON_diff)) |>
+      filter(dd == min(dd)) |>
+      filter(row_number() == 1) |> # arbitrary filtering for cases when multiple profile match distance
+      select(-LAT_diff, -LON_diff, -dd) |>
       as_DSSAT_tbl()
   }
   # If two profiles incidentally matching, takes first

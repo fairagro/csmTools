@@ -51,7 +51,6 @@
 #' )
 #' }
 #'
-#' @importFrom magrittr %>%
 #' @importFrom rlang !! :=
 #' @importFrom dplyr mutate select
 #' @importFrom lubridate ymd_hms
@@ -112,9 +111,9 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
   dataset <- list()
   for (i in seq_along(obs)) {
     if (is.null(obs[[i]]) || nrow(obs[[i]]) == 0) next
-    obs_df <- obs[[i]] %>%
-      mutate(phenomenonTime = ymd_hms(phenomenonTime)) %>%
-      mutate(!!ds_metadata$ObservedProperty.name[i] := as.numeric(result)) %>%
+    obs_df <- obs[[i]] |>
+      mutate(phenomenonTime = ymd_hms(phenomenonTime)) |>
+      mutate(!!ds_metadata$ObservedProperty.name[i] := as.numeric(result)) |>
       select(-result)
     nm <- paste(ds_metadata$Thing.name[i], ds_metadata$Datastream.id[i], sep = "_DS")
     dataset[[nm]] <- list(DATASTREAM = obs_df, METADATA = ds_metadata[i, ])
@@ -154,14 +153,14 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
   httr::stop_for_status(response)
   parsed <- .parse_sta_response(response)
 
-  parsed$value %>%
-    tidyr::unnest(Locations, names_sep = "_") %>%
-    tidyr::unnest_wider(Locations_location, names_sep = "_") %>%
-    tidyr::unnest(Locations_location_coordinates) %>%
+  parsed$value |>
+    tidyr::unnest(Locations, names_sep = "_") |>
+    tidyr::unnest_wider(Locations_location, names_sep = "_") |>
+    tidyr::unnest(Locations_location_coordinates) |>
     dplyr::mutate(
       longitude = purrr::map_dbl(Locations_location_coordinates, ~ .x[1]),
       latitude  = purrr::map_dbl(Locations_location_coordinates, ~ .x[2])
-    ) %>%
+    ) |>
     dplyr::select(-Locations_location_coordinates)
 }
 
@@ -278,7 +277,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
     }
     return(datastreams_in_radius)
   })
-  out <- dplyr::bind_rows(focal_datastreams_list) %>%
+  out <- dplyr::bind_rows(focal_datastreams_list) |>
     dplyr::distinct()
 
   if (nrow(out) == 0) {
@@ -389,10 +388,10 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
     data_clean <- purrr::map(.x, ~ {
       df <- .x$DATASTREAM
       col <- setdiff(names(df), "phenomenonTime")
-      df %>%
-        dplyr::group_by(phenomenonTime) %>%
-        dplyr::summarise(!!col := mean(!!rlang::sym(col), na.rm = TRUE)) %>%
-        dplyr::ungroup() %>%
+      df |>
+        dplyr::group_by(phenomenonTime) |>
+        dplyr::summarise(!!col := mean(!!rlang::sym(col), na.rm = TRUE)) |>
+        dplyr::ungroup() |>
         .nan_to_na(col)
     })
 
@@ -403,10 +402,10 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
       col_names <- purrr::map_chr(data_clean, ~ setdiff(names(.), "phenomenonTime"))
       data_agg <- purrr::map(split(data_clean, col_names), ~ {
         col <- setdiff(names(.x[[1]]), "phenomenonTime")
-        dplyr::bind_rows(.x) %>%
-          dplyr::group_by(phenomenonTime) %>%
-          dplyr::summarise(!!col := agg_func(!!rlang::sym(col), na.rm = TRUE)) %>%
-          dplyr::ungroup() %>%
+        dplyr::bind_rows(.x) |>
+          dplyr::group_by(phenomenonTime) |>
+          dplyr::summarise(!!col := agg_func(!!rlang::sym(col), na.rm = TRUE)) |>
+          dplyr::ungroup() |>
           .nan_to_na(col)
       })
     }

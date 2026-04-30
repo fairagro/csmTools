@@ -71,8 +71,8 @@ collapse_cols <- function(df, cols) {
   
   grp_cols <- setdiff(colnames(df), cols)
   
-  df %>%
-    dplyr::group_by_at(grp_cols) %>%
+  df |>
+    dplyr::group_by_at(grp_cols) |>
     dplyr::summarise(dplyr::across(dplyr::all_of(cols), ~ list(unlist(.x))), .groups = "drop")
 }
 

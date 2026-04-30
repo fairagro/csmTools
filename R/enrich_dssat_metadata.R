@@ -87,35 +87,35 @@ enrich_dssat_metadata <- function(dssat_components) {
 #'
 
 .impute_sol_metadata <- function(sol, exp) {
-  
-  sol %>%
-    dplyr::left_join(exp, by = intersect(names(sol), names(exp))) %>%
+
+  joined <- dplyr::left_join(sol, exp, by = intersect(names(sol), names(exp)))
+  nms <- names(joined)
+
+  joined |>
     dplyr::mutate(
-      INST_NAME = if ("INST_NAME" %in% names(.)) INST_NAME else NA_character_,
-      SOL_INSTITUTION = if ("SOL_INSTITUTION" %in% names(.)) SOL_INSTITUTION else "XX",
-      INSTITUTION = if ("INSTITUTION" %in% names(.)) INSTITUTION else "XX",
+      INST_NAME = if ("INST_NAME" %in% nms) INST_NAME else NA_character_,
+      SOL_INSTITUTION = if ("SOL_INSTITUTION" %in% nms) SOL_INSTITUTION else "XX",
+      INSTITUTION = if ("INSTITUTION" %in% nms) INSTITUTION else "XX",
       INST_NAME = dplyr::coalesce(INST_NAME, INSTITUTION),
-      YEAR_FROM_DATE = if ("DATE" %in% names(.)) {
+      YEAR_FROM_DATE = if ("DATE" %in% nms) {
         suppressWarnings(
-          as.Date(as.character(DATE), format = "%y%j") %>%
-            lubridate::year() %>%
-            as.character()
+          as.character(lubridate::year(as.Date(as.character(DATE), format = "%y%j")))
         )
       } else {
         NA_character_
       },
-      YEAR = if ("YEAR" %in% names(.)) YEAR else NA_character_,
-      EXP_YEAR = if ("YEAR" %in% names(.)) EXP_YEAR else "XXXX",
+      YEAR = if ("YEAR" %in% nms) YEAR else NA_character_,
+      EXP_YEAR = if ("EXP_YEAR" %in% nms) EXP_YEAR else "XXXX",
       YEAR = dplyr::coalesce(YEAR, YEAR_FROM_DATE, EXP_YEAR),
-      LAT = if ("LAT" %in% names(.)) LAT else NA_real_,
-      YCRD = if ("YCRD" %in% names(.)) YCRD else NA_real_,
+      LAT = if ("LAT" %in% nms) LAT else NA_real_,
+      YCRD = if ("YCRD" %in% nms) YCRD else NA_real_,
       LAT = dplyr::coalesce(LAT, YCRD),
-      LONG = if ("LONG" %in% names(.)) LONG else NA_real_,
-      XCRD = if ("XCRD" %in% names(.)) XCRD else NA_real_,
+      LONG = if ("LONG" %in% nms) LONG else NA_real_,
+      XCRD = if ("XCRD" %in% nms) XCRD else NA_real_,
       LONG = dplyr::coalesce(LONG, XCRD),
-      TEXTURE = if ("TEXTURE" %in% names(.)) {
+      TEXTURE = if ("TEXTURE" %in% nms) {
         TEXTURE
-      } else if (all(c("SLCL", "SLSI") %in% names(.)) &&
+      } else if (all(c("SLCL", "SLSI") %in% nms) &&
                  !any(is.null(SLCL), is.null(SLSI)) &&
                  !any(is.na(SLCL), is.na(SLSI)) &&
                  !any(SLCL == -99, SLSI == -99)) {
@@ -127,9 +127,9 @@ enrich_dssat_metadata <- function(dssat_components) {
       } else {
         NA_character_
       }
-    ) %>%
+    ) |>
     dplyr::select(
-      dplyr::all_of(intersect(c("EXP_ID", "PEDON", "INST_NAME", "YEAR", "LAT", "LONG", "TEXTURE"), names(.))),
+      dplyr::all_of(intersect(c("EXP_ID", "PEDON", "INST_NAME", "YEAR", "LAT", "LONG", "TEXTURE"), nms)),
       dplyr::all_of(setdiff(names(sol), c("EXP_ID", "PEDON", "INST_NAME", "YEAR", "LAT", "LONG", "TEXTURE"))),
     )
 }
@@ -161,25 +161,27 @@ enrich_dssat_metadata <- function(dssat_components) {
 #'
 
 .impute_wth_metadata <- function(wth, exp) {
-  
-  wth %>%
-    dplyr::left_join(exp, by = intersect(names(wth), names(exp))) %>%
+
+  joined <- dplyr::left_join(wth, exp, by = intersect(names(wth), names(exp)))
+  nms <- names(joined)
+
+  joined |>
     dplyr::mutate(
-      INSI = if ("INSI" %in% names(.)) INSI else NA_character_,
-      WTH_INSTITUTION = if ("WTH_INSTITUTION" %in% names(.)) WTH_INSTITUTION else "XX",
-      INSTITUTION = if ("INSTITUTION" %in% names(.)) INSTITUTION else "XX",
+      INSI = if ("INSI" %in% nms) INSI else NA_character_,
+      WTH_INSTITUTION = if ("WTH_INSTITUTION" %in% nms) WTH_INSTITUTION else "XX",
+      INSTITUTION = if ("INSTITUTION" %in% nms) INSTITUTION else "XX",
       INSI = dplyr::coalesce(INSI, INSTITUTION),
-      LAT = if ("LAT" %in% names(.)) LAT else NA_real_,
-      YCRD = if ("YCRD" %in% names(.)) YCRD else NA_real_,
+      LAT = if ("LAT" %in% nms) LAT else NA_real_,
+      YCRD = if ("YCRD" %in% nms) YCRD else NA_real_,
       LAT = dplyr::coalesce(LAT, YCRD),
-      LONG = if ("LONG" %in% names(.)) LONG else NA_real_,
-      XCRD = if ("XCRD" %in% names(.)) XCRD else NA_real_,
+      LONG = if ("LONG" %in% nms) LONG else NA_real_,
+      XCRD = if ("XCRD" %in% nms) XCRD else NA_real_,
       LONG = dplyr::coalesce(LONG, XCRD),
-      YEAR = if ("YEAR" %in% names(.)) YEAR else "XXXX",
+      YEAR = if ("YEAR" %in% nms) YEAR else "XXXX",
       YEAR = substr(DATE, 1, 2),
-    ) %>%
+    ) |>
     dplyr::select(
-      dplyr::all_of(intersect(c("EXP_ID", "INSI", "LAT", "LONG", "YEAR"), names(.))),
+      dplyr::all_of(intersect(c("EXP_ID", "INSI", "LAT", "LONG", "YEAR"), nms)),
       dplyr::all_of(setdiff(names(wth), c("EXP_ID", "INSI", "LAT", "LONG", "YEAR"))),
     )
 }
@@ -218,25 +220,27 @@ enrich_dssat_metadata <- function(dssat_components) {
 #'
 
 .format_exp_locations <- function(exp_locations) {
-  
-  exp_locations %>%
+
+  nms <- names(exp_locations)
+
+  exp_locations |>
     dplyr::mutate(
-      INSTITUTION = if ("INSTITUTION" %in% names(.)) INSTITUTION else "XX",
-      FLNAME = if ("FLNAME" %in% names(.)) FLNAME else NA_character_,
+      INSTITUTION = if ("INSTITUTION" %in% nms) INSTITUTION else "XX",
+      FLNAME = if ("FLNAME" %in% nms) FLNAME else NA_character_,
       FLNAME = ifelse(is.na(FLNAME), toupper(ShortLabel), FLNAME),
       # Fill site as address if missing
-      SITE = if ("SITE" %in% names(.)) SITE else NA_character_,
+      SITE = if ("SITE" %in% nms) SITE else NA_character_,
       SITE_addr = tidyr::unite(data.frame(FLNAME, City, Region, CntryName),
-                              "SITE", sep = ", ", na.rm = TRUE)$SITE,
+                               "SITE", sep = ", ", na.rm = TRUE)$SITE,
       SITE = ifelse(is.na(SITE), SITE_addr, SITE),
-      ELEV = if ("ELEV" %in% names(.)) ELEV else NA_real_,
+      ELEV = if ("ELEV" %in% nms) ELEV else NA_real_,
       ELEV = dplyr::coalesce(ELEV, elevation)
-    ) %>%
+    ) |>
     dplyr::mutate(
-      XCRD_tmp = round(XCRD, 2), 
-      YCRD_tmp = round(YCRD, 2), 
+      XCRD_tmp = round(XCRD, 2),
+      YCRD_tmp = round(YCRD, 2),
       ELEV_tmp = round(ELEV, 2)
-    ) %>%
+    ) |>
     tidyr::unite("SITE", SITE, XCRD_tmp, YCRD_tmp, ELEV_tmp, sep = "; ", na.rm = TRUE, remove = TRUE)
 }
 
@@ -270,19 +274,25 @@ enrich_dssat_metadata <- function(dssat_components) {
 #' 
 
 .format_sol_locations <- function(sol_locations) {
-  
-  sol_locations %>%
-    dplyr::group_by(PEDON) %>%
+
+  nms <- names(sol_locations)
+  has_country <- "COUNTRY" %in% nms
+  has_site <- "SITE" %in% nms
+
+  sol_locations |>
+    dplyr::group_by(PEDON) |>
     dplyr::mutate(
-      COUNTRY = if ("COUNTRY" %in% names(.)) COUNTRY else NA_character_,
-      COUNTRY = ifelse("COUNTRY" %in% names(.),
-                       dplyr::coalesce(COUNTRY, CountryCode),
-                       countrycode::countrycode(CountryCode, origin = "iso3c", destination = "iso2c")),
-      SITE = if ("SITE" %in% names(.)) SITE else NA_character_,
-      SITE = ifelse("SITE" %in% names(.),
-                    dplyr::coalesce(SITE, paste(City, Region, sep = ",")),
-                    paste(City, Region, sep = ", ")),
-      ELEV = if ("ELEV" %in% names(.)) ELEV else NA_real_,
+      COUNTRY = if (has_country) COUNTRY else NA_character_,
+      COUNTRY = if (has_country)
+        dplyr::coalesce(COUNTRY, CountryCode)
+      else
+        countrycode::countrycode(CountryCode, origin = "iso3c", destination = "iso2c"),
+      SITE = if (has_site) SITE else NA_character_,
+      SITE = if (has_site)
+        dplyr::coalesce(SITE, paste(City, Region, sep = ","))
+      else
+        paste(City, Region, sep = ", "),
+      ELEV = if ("ELEV" %in% nms) ELEV else NA_real_,
       ELEV = dplyr::coalesce(ELEV, elevation)
     )
 }
@@ -319,17 +329,19 @@ enrich_dssat_metadata <- function(dssat_components) {
 #'
 
 .format_wth_locations <- function(wth_locations) {
-  
-  wth_locations %>%
-    dplyr::group_by(INSI, LAT, LONG) %>%
+
+  nms <- names(wth_locations)
+
+  wth_locations |>
+    dplyr::group_by(INSI, LAT, LONG) |>
     dplyr::mutate(
-      WST_NAME = if ("WST_NAME" %in% names(.)) WST_NAME else NA_character_,
-      WST_NAME = dplyr::coalesce(WST_NAME, 
+      WST_NAME = if ("WST_NAME" %in% nms) WST_NAME else NA_character_,
+      WST_NAME = dplyr::coalesce(WST_NAME,
                                  tidyr::unite(data.frame(ShortLabel, City, Region, CntryName),
                                               "WST_SITE", sep = ", ", na.rm = TRUE)$WST_SITE),
-      ELEV = if ("ELEV" %in% names(.)) ELEV else NA_real_,
+      ELEV = if ("ELEV" %in% nms) ELEV else NA_real_,
       ELEV = dplyr::coalesce(ELEV, elevation),
-      REFHT = if ("REFHT" %in% names(.)) REFHT else NA_real_,
-      WNDHT = if ("WNDHT" %in% names(.)) WNDHT else NA_real_
+      REFHT = if ("REFHT" %in% nms) REFHT else NA_real_,
+      WNDHT = if ("WNDHT" %in% nms) WNDHT else NA_real_
     )
 }

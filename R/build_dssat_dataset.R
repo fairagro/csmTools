@@ -31,7 +31,7 @@
 
 build_dssat_dataset <-  function(dataset) {
   
-  data_fmt <- dataset %>%
+  data_fmt <- dataset |>
     purrr::imap(~{
       switch(
         .y,

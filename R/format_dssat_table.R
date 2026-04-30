@@ -41,10 +41,10 @@ format_dssat_table <- function(df, template) {
   # Populate the template with the input data
   template_cols <- colnames(template)
   extra_cols <- setdiff(colnames(df), template_cols)
-  out <- template %>%
-    dplyr::bind_rows(df) %>%
-    dplyr::select(tidyr::all_of(template_cols), tidyr::all_of(extra_cols)) %>%
-    dplyr::slice(-1) %>%
+  out <- template |>
+    dplyr::bind_rows(df) |>
+    dplyr::select(tidyr::all_of(template_cols), tidyr::all_of(extra_cols)) |>
+    dplyr::slice(-1) |>
     dplyr::arrange(row.names(template))
   
   # Format NULL lists for composite tables (e.g., IRRIGATION)

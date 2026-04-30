@@ -306,14 +306,13 @@ add_management <- function(xtables,
 #' )
 #' }
 #'
-#' @importFrom magrittr %>%
 #' @importFrom dplyr mutate mutate_at vars
 #' @importFrom stringr str_c
 #' @importFrom glue glue_data
-#' 
+#'
 
 write_gluebatch <- function(xfile, trtno, rp, sq, op, co, ...){
-  
+
   # Make batch table
   batch_tbl <- data.frame(FILEX = xfile,
                           TRTNO = trtno,
@@ -322,14 +321,14 @@ write_gluebatch <- function(xfile, trtno, rp, sq, op, co, ...){
                           OP = op,
                           CO = co)
 
-  header <- c('%-92s', rep('%7s',5)) %>%  # fixed columns widths
-    sprintf(c('@FILEX','TRTNO','RP','SQ','OP','CO')) %>%  # column headers
-    str_c(collapse = '') %>%  # collapse into a single column header line
-    c(paste0('$BATCH(CULTIVAR):', crop_code, ingeno, " ", cultivar), "", .)  # add batch file header label
+  header_line <- c('%-92s', rep('%7s', 5)) |>  # fixed columns widths
+    sprintf(c('@FILEX', 'TRTNO', 'RP', 'SQ', 'OP', 'CO')) |>  # column headers
+    str_c(collapse = '')  # collapse into a single column header line
+  header <- c(paste0('$BATCH(CULTIVAR):', crop_code, ingeno, " ", cultivar), "", header_line)  # add batch file header label
   
-  column_output <- batch_tbl %>%
-    mutate(FILEX = sprintf('%-92s', FILEX)) %>%   # expand filex name to full width
-    mutate_at(vars(-FILEX), ~sprintf('%7i', .)) %>%  # write out all other columns
+  column_output <- batch_tbl |>
+    mutate(FILEX = sprintf('%-92s', FILEX)) |>   # expand filex name to full width
+    mutate_at(vars(-FILEX), ~sprintf('%7i', .x)) |>  # write out all other columns
     glue_data('{FILEX}{TRTNO}{RP}{SQ}{OP}{CO}')  # combine columns into character vector
   
   batch_output <- c(header, column_output)  # combine header lines and column data
@@ -460,7 +459,6 @@ check_glue_files <- function(dir_dssat, dir_glue){
 #' )
 #' }
 #' 
-#' @importFrom magrittr %>%
 #' @importFrom dplyr group_by summarise slice_max pull filter
 #' @importFrom tidyr unnest
 #' 
@@ -616,10 +614,10 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
       # Find the highest nitrogen application
       if (!is.null(feTable)){
         
-        feMax <- feTable %>%
-          group_by(.[1]) %>%
-          summarise(FAMN = sum(FAMN)) %>%
-          slice_max(FAMN) %>%
+        feMax <- feTable |>
+          group_by(dplyr::across(1)) |>
+          summarise(FAMN = sum(FAMN)) |>
+          slice_max(FAMN) |>
           pull(1)
       } else {
         feMax = 0
@@ -627,11 +625,11 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
       
       # Find the highest irrigation amount
       if (!is.null(irTable)){
-        irMax <- irTable %>%
-          unnest(cols = c(IDATE, IROP, IRVAL)) %>%
-          group_by(.[1]) %>%
-          summarise(IRVAL = sum(IRVAL)) %>%
-          slice_max(IRVAL) %>%
+        irMax <- irTable |>
+          unnest(cols = c(IDATE, IROP, IRVAL)) |>
+          group_by(dplyr::across(1)) |>
+          summarise(IRVAL = sum(IRVAL)) |>
+          slice_max(IRVAL) |>
           pull(1)
       } else {
         irMax = 0

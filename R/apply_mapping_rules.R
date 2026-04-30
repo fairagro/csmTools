@@ -127,7 +127,7 @@
         }
         
         final_df <- tibble::as_tibble(final_cols_list)
-        final_output_data[[target_section]] <- final_df %>%
+        final_output_data[[target_section]] <- final_df |>
           dplyr::distinct()
       }
     }

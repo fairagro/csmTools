@@ -29,7 +29,7 @@ flag_missing_weather <- function(wdata, coverage = NULL) {
   gs_seq <- data.frame(DATE = seq(coverage[1], coverage[2], by = "day"))
   
   # Merge weather data with full date sequence & ensure correct ordering
-  wdata <- full_join(wdata, gs_seq, by = "DATE") %>% arrange(DATE)
+  wdata <- full_join(wdata, gs_seq, by = "DATE") |> arrange(DATE)
   
   # Identify columns with at least one non-NA value
   vars <- setdiff(colnames(wdata)[colSums(!is.na(wdata)) > 0], "DATE")
@@ -127,7 +127,6 @@ check_weather_coverage <- function(mngt, wth, period = c("growing season", "year
 #' TMP?
 #' 
 #' 
-#' @importFrom magrittr %>%
 #' @importFrom rlang !! :=
 #' @importFrom dplyr select all_of mutate anti_join bind_rows arrange
 #' @importFrom lubridate leap_year
@@ -140,8 +139,8 @@ impute_missing_days <- function(data, variable, method = "loess") {
   }
   
   # Ensure doy is numeric
-  data <- data %>%
-    select(doy, year, month, all_of(variable)) %>%
+  data <- data |>
+    select(doy, year, month, all_of(variable)) |>
     mutate(doy = as.numeric(doy))
   
   # Generate full sequence of days per year
@@ -151,7 +150,7 @@ impute_missing_days <- function(data, variable, method = "loess") {
   }))
   
   # Identify missing days
-  missing_days <- expected_days %>% anti_join(data, by = c("year", "doy"))
+  missing_days <- expected_days |> anti_join(data, by = c("year", "doy"))
   
   if (nrow(missing_days) == 0) {
     return(data)  # No missing days, return original data
@@ -162,15 +161,15 @@ impute_missing_days <- function(data, variable, method = "loess") {
   predicted_values <- predict(loess_model, newdata = missing_days)
   
   # Create interpolated dataset
-  interpolated_data <- missing_days %>%
-    mutate(!!variable := predicted_values) %>%
+  interpolated_data <- missing_days |>
+    mutate(!!variable := predicted_values) |>
     select(doy, year, !!variable)
-  
+
   # Merge interpolated data back into the original dataset
   data_filled <- bind_rows(
-    data %>% select(year, doy, !!variable),
+    data |> select(year, doy, !!variable),
     interpolated_data
-  ) %>%
+  ) |>
     arrange(year, doy)
   
   return(data_filled)

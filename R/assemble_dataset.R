@@ -95,8 +95,8 @@ assemble_dataset <- function(components = list(), keep_all = FALSE, action = "me
   names(flat_dataset) <- sub(".*\\.", "", names(flat_dataset))
   
   # Apply integration action
-  merged_pool <- flat_dataset %>%
-    split(names(.)) %>% 
+  merged_pool <- flat_dataset |>
+    split(names(flat_dataset)) |>
     map(function(sub_list) {
       
       if (action == "merge_properties") {
@@ -249,8 +249,8 @@ assemble_dataset <- function(components = list(), keep_all = FALSE, action = "me
   }
 
   # Perform the aggregation
-  out <- combined_df %>%
-    dplyr::group_by(dplyr::across(dplyr::any_of(groups))) %>%
+  out <- combined_df |>
+    dplyr::group_by(dplyr::across(dplyr::any_of(groups))) |>
     dplyr::summarise(dplyr::across(dplyr::everything(), .aggregate_val), .groups = "drop")
 
   return(out)
