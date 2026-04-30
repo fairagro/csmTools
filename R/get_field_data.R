@@ -78,7 +78,29 @@ get_field_data <- function(path = NULL, raw = FALSE, keep_empty = FALSE) {
 }
 
 
+#' Read a structured Excel template into a named list of data frames
 #'
+#' @param path Path to the `.xlsx` template file.
+#' @param keep_empty Logical; if `FALSE` (default) sheets with no data rows are dropped from the result.
+#'
+#' @return A named list of data frames, one per qualifying sheet, preserving the original sheet names as list names.
+#'
+#' @details
+#' For each qualifying sheet, the following steps are applied:
+#' \enumerate{
+#'   \item The workbook is loaded and sheets with names consisting entirely of  uppercase letters and underscores
+#'     are identified for extraction.
+#'   \item The `Dictionary` sheet is read; variables with `var_order == -99` are dropped as unused.
+#'   \item Each sheet is read starting from row 4, with date detection enabled.
+#'   \item Artefact rows/columns are removed via \code{remove_artefacts()}, followed by helper rows/columns
+#'     via \code{remove_helpers()}.
+#'   \item Column classes are enforced using the `Dictionary` definitions. 
+#'     Supported classes are `"text"`, `"code"`, `"numeric"`, `"integer"`,  and `"date"`.
+#'     Dates are parsed with \code{lubridate::parse_date_time()} to handle multiple input formats.
+#'   \item Coercion and parse warnings are intercepted and re-emitted as informative messages identifying the offending
+#'     sheet and column.
+#'   \item If \code{keep_empty = FALSE}, sheets with no data rows are dropped from the returned list.
+#' }
 #'
 #' @noRd
 #'
@@ -163,7 +185,15 @@ read_template <- function(path, keep_empty = FALSE) {
 }
 
 
+#' Strip display labels from coded columns
 #'
+#' @param df A data frame.
+#'
+#' @return The data frame with coded columns reduced to their numeric identifier (the integer preceding the first `|`).
+#'
+#' @details
+#' Columns whose values match the pattern `"<number>|<label>"` are detected and stripped of their label, retaining only
+#' the leading numeric code. Cells that do not match the pattern are left unchanged before the column is coerced to numeric.
 #'
 #' @noRd
 #'
@@ -188,7 +218,16 @@ remove_helpers <- function(df) {
 }
 
 
+#' Remove artefact rows and columns from a data frame
 #'
+#' @param df A data frame.
+#'
+#' @return The data frame with unnamed columns and fully `NA` rows removed.
+#'
+#' @details
+#' Unnamed columns (those with `NA` column names, renamed to `"unnamed"`) are dropped, and rows where every value
+#' is `NA` are removed. Column names are also deduplicated with \code{make.unique()} to avoid conflicts without
+#' altering special characters present in ICASA variable names.
 #'
 #' @noRd
 #'

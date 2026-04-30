@@ -51,9 +51,6 @@
 #' )
 #' }
 #'
-#' @importFrom tools file_ext
-#' @importFrom yaml read_yaml
-#' @importFrom jsonlite fromJSON
 #' @importFrom magrittr %>%
 #' @importFrom rlang !! :=
 #' @importFrom dplyr mutate select
@@ -63,42 +60,11 @@
 #' 
 
 get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, aggregate = "median", output_path = NULL) {
+   
+  aggregate <- match.arg(aggregate, c("mean", "median", "none"))
   
-  
-  # --- Credential validation ---
-  if(is.null(creds)) {
-    stop("Access denied. Please provide the 'creds' list containing your authentication details.")
-  }
-  if (is.character(creds)) {
-    
-    if (!file.exists(creds)) {
-      stop("Credential file not found at: ", creds)
-    }
-    
-    creds_ext <- tolower(file_ext(creds))
-    if (creds_ext == "yaml" || creds_ext == "yml") {
-      creds <- read_yaml(creds)
-    } else if (creds_ext == "json") {
-      creds <- fromJSON(txt = readLines(creds))
-    } else {
-      stop("Unsupported configuration file format. Use YAML (.yaml/.yml) or JSON (.json)")
-    }
-  }
-  
-  required_keys <- c("url", "client_id", "client_secret", "username", "password")
-  missing_keys <- setdiff(required_keys, names(creds))
-  
-  # Stop if any keys are missing
-  if(length(missing_keys) > 0) {
-    stop(
-      "Invalid 'creds' structure.\n",
-      "The following keys are missing from your credentials list: ", 
-      paste(missing_keys, collapse = ", "), "\n",
-      "Please ensure 'creds' is a list with keys: url, client_id, client_secret, username, password."
-    )
-  }
-  
-  # --- Authentication ---
+  # --- Credential validation and authentication ---
+  creds <- .read_creds(creds)
   token <- tryCatch({
     get_kc_token(
       url = creds$url,
@@ -173,204 +139,6 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
 }
 
 
-#' Obtain an Access Token from a Keycloak Server Using Resource Owner Password Credentials
-#'
-#' Requests an OAuth2 access token from a Keycloak authentication server using the Resource Owner Password Credentials Grant (password grant).
-#'
-#' @param url Character. The token endpoint URL of the Keycloak server (typically ends with \code{/protocol/openid-connect/token}).
-#' @param client_id Character. The client ID registered in Keycloak.
-#' @param client_secret Character. The client secret associated with the client ID.
-#' @param username Character. The username of the Keycloak user.
-#' @param password Character. The password of the Keycloak user.
-#'
-#' @details
-#' This function sends a POST request to the Keycloak token endpoint with the provided credentials and client information, using the OAuth2 Resource Owner Password Credentials Grant. The function expects a successful response to contain an \code{access_token} field.
-#'
-#' The function uses the \strong{httr} package for HTTP requests. The token is extracted from the response and returned as a character string.
-#'
-#' @return A character string containing the access token, or \code{NULL} if the request fails or the token is not found.
-#'
-#' @examples
-#' \dontrun{
-#' token <- get_kc_token(
-#'   url = "https://my-keycloak-server/auth/realms/myrealm/protocol/openid-connect/token",
-#'   client_id = "myclient",
-#'   client_secret = "mysecret",
-#'   username = "myuser",
-#'   password = "mypassword"
-#' )
-#' }
-#'
-#' @importFrom httr POST content add_headers
-#'
-#' @export
-#'
-
-get_kc_token <- function(url, client_id, client_secret, username, password) {
-
-  response <- POST(
-    url = url,
-    body = list(
-      grant_type = "password",
-      client_id = client_id,
-      client_secret = client_secret,
-      username = username,
-      password = password
-    ),
-    encode = "form",
-    add_headers(`Content-Type` = "application/x-www-form-urlencoded")
-  )
-  
-  token <- content(response)$access_token
-  
-  return(token)
-}
-
-
-#' POST Data to an OGC SensorThings API Endpoint
-#'
-#' Sends a POST request to an OGC SensorThings API endpoint to create a new resource (e.g., Thing, Sensor, ObservedProperty, Datastream, or Observation).
-#'
-#' @param object Character. The type of resource to create. Must be one of \code{c("Things", "Sensors", "ObservedProperties", "Datastreams", "Observations")}.
-#' @param body A list representing the JSON body to be sent in the request.
-#' @param url Character. The base URL of the OGC SensorThings API endpoint (should end with a slash).
-#' @param token Character. The Bearer token for authentication.
-#'
-#' @details
-#' This function converts the provided \code{body} to JSON and sends it as a POST request to the specified OGC SensorThings API endpoint, appending the resource type (\code{object}) to the base URL. The request includes the provided Bearer token for authentication.
-#'
-#' The function uses the \strong{httr} package for HTTP requests and the \strong{jsonlite} package for JSON conversion.
-#'
-#' @return The response object from the POST request (an \code{httr::response} object).
-#'
-#' @examples
-#' \dontrun{
-#' post_ogc_iot(
-#'   object = "Things",
-#'   body = list(name = "MyThing", description = "A test thing"),
-#'   url = "https://example.com/SensorThings/v1.0/",
-#'   token = "your_access_token"
-#' )
-#' }
-#'
-#' @importFrom httr POST add_headers
-#' @importFrom jsonlite toJSON
-#'
-#' @export
-
-post_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), body, url, token){
-  
-  body_json <- toJSON(body, auto_unbox = TRUE)
-  
-  url <- paste0(url, object)
-  response <- POST(url, body = body_json, encode = "json",
-                   add_headers(
-                     `Content-Type` = "application/json",
-                     `Authorization` = paste("Bearer", token)
-                   ))
-  return(invisible(response))
-}
-
-
-#' Delete a Resource from an OGC SensorThings API Endpoint
-#'
-#' Sends a DELETE request to an OGC SensorThings API endpoint to remove a specified resource (e.g., Thing, Sensor, ObservedProperty, Datastream, or Observation) by its ID.
-#'
-#' @param object Character. The type of resource to delete. Must be one of \code{c("Things", "Sensors", "ObservedProperties", "Datastreams", "Observations")}.
-#' @param object_id The unique identifier of the resource to delete.
-#' @param url Character. The base URL of the OGC SensorThings API endpoint (should end with a slash).
-#' @param token Character. The Bearer token for authentication.
-#'
-#' @details
-#' This function constructs the full URL for the resource by appending the resource type (\code{object}) and the resource ID (\code{object_id}) in OData format to the base URL. It then sends a DELETE request to this URL, including the provided Bearer token for authentication.
-#'
-#' The function checks that the URL starts with \code{http://} or \code{https://} and stops with an error if not.
-#'
-#' The function uses the \strong{httr} package for HTTP requests.
-#'
-#' @return The response object from the DELETE request (an \code{httr::response} object).
-#'
-#' @examples
-#' \dontrun{
-#' delete_ogc_iot(
-#'   object = "Things",
-#'   object_id = 123,
-#'   url = "https://example.com/SensorThings/v1.0/",
-#'   token = "your_access_token"
-#' )
-#' }
-#'
-#' @importFrom httr DELETE add_headers
-#' 
-#' @export
-
-delete_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), object_id, url, token){
-  
-  if (!grepl("^http[s]?://", url)) {
-    stop("Invalid URL: Must start with http:// or https://")
-  }
-  
-  url <- paste0(url, object, "(", object_id, ")")
-  response <- DELETE(url,
-                     add_headers(
-                       `Content-Type` = "application/json",
-                       `Authorization` = paste("Bearer", token)
-                     ))
-}
-
-
-#' Update a Resource on an OGC SensorThings API Endpoint (PATCH)
-#'
-#' Sends a PATCH request to an OGC SensorThings API endpoint to update a specified resource (e.g., Thing, Sensor, ObservedProperty, Datastream, or Observation) by its ID.
-#'
-#' @param object Character. The type of resource to update. Must be one of \code{c("Things", "Sensors", "ObservedProperties", "Datastreams", "Observations")}.
-#' @param object_id The unique identifier of the resource to update.
-#' @param url Character. The base URL of the OGC SensorThings API endpoint (should end with a slash).
-#' @param token Character. The Bearer token for authentication.
-#' @param body A list representing the JSON body with the fields to update.
-#'
-#' @details
-#' This function constructs the full URL for the resource by appending the resource type (\code{object}) and the resource ID (\code{object_id}) in OData format to the base URL. It converts the \code{body} to JSON and sends a PATCH request to this URL, including the provided Bearer token for authentication.
-#'
-#' The function checks that the URL starts with \code{http://} or \code{https://} and stops with an error if not.
-#'
-#' The function uses the \strong{httr} package for HTTP requests and the \strong{jsonlite} package for JSON conversion.
-#'
-#' @return The response object from the PATCH request (an \code{httr::response} object).
-#'
-#' @examples
-#' \dontrun{
-#' patch_ogc_iot(
-#'   object = "Things",
-#'   object_id = 123,
-#'   url = "https://example.com/SensorThings/v1.0/",
-#'   token = "your_access_token",
-#'   body = list(name = "Updated Thing Name")
-#' )
-#' }
-#'
-#' @importFrom httr PATCH add_headers
-#' @importFrom jsonlite toJSON
-#' 
-#' @export
-#' 
-
-patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), object_id, url, token, body){
-  
-  if (!grepl("^http[s]?://", url)) {
-    stop("Invalid URL: Must start with http:// or https://")
-  }
-  body_json <- toJSON(body, auto_unbox = TRUE)
-  
-  url <- paste0(url, object, "(", object_id, ")")
-  response <- PATCH(url, body = body_json, encode = "json",
-                    add_headers(
-                      `Content-Type` = "application/json",
-                      `Authorization` = paste("Bearer", token)
-                    ))
-}
-
-
 #' Retrieve all devices (Things) with their locations from an STA endpoint
 #'
 #' @param url Character. Base URL of the STA endpoint.
@@ -382,16 +150,11 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
 
 .locate_sta_devices <- function(url, token = NULL) {
   url_locs <- paste0(url, "/Things?$expand=Locations")
-  response <- httr::GET(
-    url_locs,
-    httr::add_headers(`Authorization` = paste("Bearer", token))
-  )
+  response <- httr::GET(url_locs, .sta_auth(token))
+  httr::stop_for_status(response)
+  parsed <- .parse_sta_response(response)
 
-  devices <- jsonlite::fromJSON(
-    httr::content(response, as = "text", encoding = "UTF-8")
-  )
-
-  devices$value %>%
+  parsed$value %>%
     tidyr::unnest(Locations, names_sep = "_") %>%
     tidyr::unnest_wider(Locations_location, names_sep = "_") %>%
     tidyr::unnest(Locations_location_coordinates) %>%
@@ -440,20 +203,16 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
 
 .locate_sta_datastreams <- function(url, token = NULL, device_id = NULL, var, lon, lat, radius = 0, from, to, ...) {
 
-  auth <- httr::add_headers(`Authorization` = paste("Bearer", token))
+  auth <- .sta_auth(token)
 
-  # Single batched request: all Things with Locations + Datastreams + ObservedProperty.
-  # simplifyVector = FALSE gives a predictable nested-list structure regardless of
-  # how many items each Thing has, matching individual Datastream response shape.
+  # --- Identify datastreams per location and observed property ---
+  # Single batched request: all Things with Locations + Datastreams + ObservedProperty
   all_things <- list()
   next_url <- paste0(url, "Things?$expand=Locations,Datastreams($expand=ObservedProperty)")
   while (!is.null(next_url)) {
     response <- httr::GET(next_url, auth)
     httr::stop_for_status(response)
-    parsed <- jsonlite::fromJSON(
-      httr::content(response, as = "text", encoding = "UTF-8"),
-      simplifyVector = FALSE
-    )
+    parsed <- .parse_sta_response(response, simplify = FALSE)
     all_things <- c(all_things, parsed$value)
     next_url <- parsed$`@iot.nextLink`
   }
@@ -463,8 +222,8 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
     return(data.frame())
   }
 
-  # Build a flat dataframe of all datastreams tagged with their parent Thing name.
-  # Date splitting is done inline, replacing the deprecated tidyr::separate() call.
+  # --- Compile metadata ---
+  # Build a flat dataframe of all datastreams tagged with their parent Thing name
   datastreams <- dplyr::bind_rows(purrr::map(all_things, function(thing) {
     ds_list <- thing$Datastreams
     if (length(ds_list) == 0) return(NULL)
@@ -479,20 +238,20 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
       if (length(dates) < 2) return(NULL)
 
       tibble::tibble(
-        Thing.name               = thing$name,
-        Datastream.id            = ds$`@iot.id`,
-        Datastream.link          = ds$`@iot.selfLink`,
-        Datastream.name          = ds$name,
-        Datastream.description   = ds$description,
-        observationType          = ds$observationType,
-        ObservedProperty.id      = ds$ObservedProperty$`@iot.id`,
-        ObservedProperty.name    = ds$ObservedProperty$name,
-        unitOfMeasurement.name   = ds$unitOfMeasurement$name,
+        Thing.name = thing$name,
+        Datastream.id = ds$`@iot.id`,
+        Datastream.link = ds$`@iot.selfLink`,
+        Datastream.name = ds$name,
+        Datastream.description = ds$description,
+        observationType = ds$observationType,
+        ObservedProperty.id = ds$ObservedProperty$`@iot.id`,
+        ObservedProperty.name = ds$ObservedProperty$name,
+        unitOfMeasurement.name = ds$unitOfMeasurement$name,
         unitOfMeasurement.symbol = ds$unitOfMeasurement$symbol,
-        longitude                = coords[1],
-        latitude                 = coords[2],
-        start_date               = as.Date(dates[1]),
-        end_date                 = as.Date(dates[2])
+        longitude = coords[1],
+        latitude = coords[2],
+        start_date = as.Date(dates[1]),
+        end_date = as.Date(dates[2])
       )
     }))
   }))
@@ -502,6 +261,7 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
     return(data.frame())
   }
 
+  # --- Filter based on input arguments ---
   # Find focal datastreams based on coordinate and radius inputs
   focal_datastreams_list <- lapply(seq_along(lon), function(i) {
     current_lon <- lon[i]
@@ -542,6 +302,7 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
   return(out)
 }
 
+
 #' Retrieve All Observations from a SensorThings Datastream
 #'
 #' Fetches all observations from a specified OGC SensorThings API datastream, handling server-side pagination as needed.
@@ -568,21 +329,24 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
 #' 
 
 .get_all_obs <- function(url, token) {
-  auth <- httr::add_headers(`Authorization` = paste("Bearer", token))
+
+  auth <- .sta_auth(token)
   pages <- list()
 
-  # First page: Datastream $expand response — observations live at content$Observations
+  # First page: Datastream $expand response — observations live at parsed$Observations
   response <- httr::GET(url, auth)
-  content <- jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"))
-  pages <- c(pages, list(content$Observations))
-  next_url <- content$`Observations@iot.nextLink`
+  httr::stop_for_status(response)
+  parsed <- .parse_sta_response(response)
+  pages <- c(pages, list(parsed$Observations))
+  next_url <- parsed$`Observations@iot.nextLink`
 
-  # Subsequent pages: following nextLink returns a bare collection — observations at content$value
+  # Subsequent pages: following nextLink returns a bare collection — observations at parsed$value
   while (!is.null(next_url)) {
     response <- httr::GET(next_url, auth)
-    content <- jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"))
-    pages <- c(pages, list(content$value))
-    next_url <- content$`@iot.nextLink`
+    httr::stop_for_status(response)
+    parsed <- .parse_sta_response(response)
+    pages <- c(pages, list(parsed$value))
+    next_url <- parsed$`@iot.nextLink`
   }
 
   dplyr::bind_rows(pages)
