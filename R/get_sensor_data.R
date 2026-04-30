@@ -26,7 +26,9 @@
 #' 
 #' This function orchestrates the retrieval of datastream metadata and observations. It automatically obtains a token using the provided credentials.
 #'
-#' @return A consolidated data frame or output file depending on configuration.
+#' @return A named list with one entry per device, each containing \code{DATASTREAM} (a wide data
+#'   frame of observations) and \code{METADATA} (device metadata). Returns \code{NULL} if no data
+#'   is found. If \code{output_path} is provided the list is also written to a JSON file.
 #'
 #' @examples
 #' \dontrun{
@@ -127,9 +129,7 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
     to = to
   )
   
-  # TODO: fix, returns a message, not a df when no ds is found
-  if(nrow(ds_metadata) == 0) {
-    warning("No datastreams found at the specified location.")
+  if (nrow(ds_metadata) == 0) {
     return(NULL)
   }
   
@@ -144,28 +144,20 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
   
   # Attach device metadata to each datastream
   dataset <- list()
-  for (i in seq_along(obs)){
-    
-    # Skip empty results
-    if(is.null(obs[[i]]) || nrow(obs[[i]]) == 0) next 
-    
+  for (i in seq_along(obs)) {
+    if (is.null(obs[[i]]) || nrow(obs[[i]]) == 0) next
     obs_df <- obs[[i]] %>%
       mutate(phenomenonTime = ymd_hms(phenomenonTime)) %>%
       mutate(!!ds_metadata$ObservedProperty.name[i] := as.numeric(result)) %>%
       select(-result)
-    dataset[[i]] <- list(
-      DATASTREAM = obs_df,
-      METADATA = ds_metadata[i, ]
-    )
+    nm <- paste(ds_metadata$Thing.name[i], ds_metadata$Datastream.id[i], sep = "_DS")
+    dataset[[nm]] <- list(DATASTREAM = obs_df, METADATA = ds_metadata[i, ])
   }
-  
-  # Handle case where observations were found but empty
-  if(length(dataset) == 0) {
+
+  if (length(dataset) == 0) {
     warning("Datastreams found, but no observations retrieved.")
     return(NULL)
   }
-  
-  names(dataset) <- paste(ds_metadata$Thing.name, ds_metadata$Datastream.id, sep = "_DS")
   
   # --- Group by device ---
   device_nms <- sub("_[^_]+$", "", names(dataset))
@@ -209,13 +201,13 @@ get_sensor_data <- function(url, creds = NULL, var, lon, lat, radius, from, to, 
 #' )
 #' }
 #'
-#' @importFrom httr POST content add_headers verbose
-#' 
+#' @importFrom httr POST content add_headers
+#'
 #' @export
-#' 
+#'
 
 get_kc_token <- function(url, client_id, client_secret, username, password) {
-  
+
   response <- POST(
     url = url,
     body = list(
@@ -226,8 +218,7 @@ get_kc_token <- function(url, client_id, client_secret, username, password) {
       password = password
     ),
     encode = "form",
-    add_headers(`Content-Type` = "application/x-www-form-urlencoded"),
-    verbose()
+    add_headers(`Content-Type` = "application/x-www-form-urlencoded")
   )
   
   token <- content(response)$access_token
@@ -262,9 +253,9 @@ get_kc_token <- function(url, client_id, client_secret, username, password) {
 #' )
 #' }
 #'
-#' @importFrom httr POST add_headers verbose
+#' @importFrom httr POST add_headers
 #' @importFrom jsonlite toJSON
-#' 
+#'
 #' @export
 
 post_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Datastreams","Observations"), body, url, token){
@@ -276,8 +267,8 @@ post_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Dat
                    add_headers(
                      `Content-Type` = "application/json",
                      `Authorization` = paste("Bearer", token)
-                   ),
-                   verbose())
+                   ))
+  return(invisible(response))
 }
 
 
@@ -380,6 +371,38 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
 }
 
 
+#' Retrieve all devices (Things) with their locations from an STA endpoint
+#'
+#' @param url Character. Base URL of the STA endpoint.
+#' @param token Character or NULL. Bearer token for authentication.
+#'
+#' @return A data frame of Things with longitude and latitude columns.
+#'
+#' @noRd
+
+.locate_sta_devices <- function(url, token = NULL) {
+  url_locs <- paste0(url, "/Things?$expand=Locations")
+  response <- httr::GET(
+    url_locs,
+    httr::add_headers(`Authorization` = paste("Bearer", token))
+  )
+
+  devices <- jsonlite::fromJSON(
+    httr::content(response, as = "text", encoding = "UTF-8")
+  )
+
+  devices$value %>%
+    tidyr::unnest(Locations, names_sep = "_") %>%
+    tidyr::unnest_wider(Locations_location, names_sep = "_") %>%
+    tidyr::unnest(Locations_location_coordinates) %>%
+    dplyr::mutate(
+      longitude = purrr::map_dbl(Locations_location_coordinates, ~ .x[1]),
+      latitude  = purrr::map_dbl(Locations_location_coordinates, ~ .x[2])
+    ) %>%
+    dplyr::select(-Locations_location_coordinates)
+}
+
+
 #' Locate OGC SensorThings Datastreams by Location, Variable, and Timeframe
 #'
 #' Queries an OGC SensorThings API endpoint to find datastreams at a specified longitude and latitude, for selected observed properties, and within a given time range.
@@ -394,13 +417,11 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
 #' @param ... Additional arguments passed to internal functions.
 #'
 #' @details
-#' The function first identifies all devices (Things) from the SensorThings API, extracting their locations. It then retrieves all datastreams for devices at the specified coordinates, including metadata about observed properties and measurement periods. It filters datastreams to those matching the requested observed properties (\code{var}) and checks if their measurement periods encompass the requested time range (\code{from} to \code{to}).
+#' Issues a single paginated request using \code{$expand} to fetch all Things with their
+#' Locations and Datastreams (including ObservedProperty) in one round-trip, then filters
+#' the flat result by spatial radius, variable name, and time overlap.
 #'
-#' The function returns a data frame of matching datastreams, or a message if no suitable data is found.
-#'
-#' The function uses the \strong{httr}, \strong{jsonlite}, \strong{dplyr}, \strong{tidyr}, and \strong{tibble} packages.
-#'
-#' @return A data frame of matching datastreams, or a character message if no data is found for the specified criteria.
+#' @return A data frame of matching datastreams, or an empty data frame (with a \code{warning}) if no suitable data is found.
 #'
 #' @examples
 #' \dontrun{
@@ -414,159 +435,82 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
 #'   to = "2022-12-31"
 #' )
 #' }
-#' 
+#'
 #' @noRd
-#' 
 
-# TODO: optimize sequence:
-# Right now expanding locations > download all within radius > filter wanter properties
-# Should be: expanding locations and properties > only download target records
-.locate_sta_datastreams <- function(url, token = NULL, device_id = NULL, var, lon, lat,  radius = 0, from, to,...){
-  
-  # --- Identify all devices from the target server ---
-  .locate_sta_devices <- function(...) {
-    
-    url_locs <- paste0(url, "Things?$expand=Locations")
-    response <- httr::GET(
-      url_locs,
-      httr::add_headers(`Authorization` = paste("Bearer", token))
+.locate_sta_datastreams <- function(url, token = NULL, device_id = NULL, var, lon, lat, radius = 0, from, to, ...) {
+
+  auth <- httr::add_headers(`Authorization` = paste("Bearer", token))
+
+  # Single batched request: all Things with Locations + Datastreams + ObservedProperty.
+  # simplifyVector = FALSE gives a predictable nested-list structure regardless of
+  # how many items each Thing has, matching individual Datastream response shape.
+  all_things <- list()
+  next_url <- paste0(url, "Things?$expand=Locations,Datastreams($expand=ObservedProperty)")
+  while (!is.null(next_url)) {
+    response <- httr::GET(next_url, auth)
+    httr::stop_for_status(response)
+    parsed <- jsonlite::fromJSON(
+      httr::content(response, as = "text", encoding = "UTF-8"),
+      simplifyVector = FALSE
     )
-    
-    devices <- jsonlite::fromJSON(
-      httr::content(response, as = "text", encoding = "UTF-8")
-    )
-    
-    devices <- devices$value %>%
-      # Unnest the 'Locations' list-column.
-      tidyr::unnest(Locations, names_sep = "_") %>%
-      # Unnest 'Locations_location' data frame column; creates new columns for 'type' and 'coordinates'.
-      tidyr::unnest_wider(Locations_location, names_sep = "_") %>%
-      tidyr::unnest(Locations_location_coordinates) %>%  # simplify
-      # Split coordinates into separate vectors
-      dplyr::mutate(
-        longitude = purrr::map_dbl(Locations_location_coordinates, ~ .x[1]),
-        latitude  = purrr::map_dbl(Locations_location_coordinates, ~ .x[2])
-      ) %>%
-      dplyr::select(-Locations_location_coordinates)
-    
-    return(devices)
+    all_things <- c(all_things, parsed$value)
+    next_url <- parsed$`@iot.nextLink`
   }
-  
-  # --- Data retrieval ---
-  devices <- .locate_sta_devices(url, token)
-  device_nms <- devices$name
-  
-  # Retrieve all datastreams for the selected devices
-  # CHECK: here could add logic to retrieve sensor type info and structure data model
-  url_dev_ds <- paste0(devices$`@iot.selfLink`, "?$expand=Datastreams")
-  response <- lapply(url_dev_ds, function(url) {
-    httr::GET(
-      url,
-      httr::add_headers(`Authorization` = paste("Bearer", token))
-    )
-  })
-  
-  url_ds_with_nulls <- lapply(response, function(x) {
-    tryCatch({
-      jsonlite::fromJSON(
-        httr::content(x, as = "text", encoding = "UTF-8")
-      )$Datastreams %>%
-        dplyr::pull(`@iot.selfLink`)
-    }, error = function(e) {
-      iot_id <- gsub(".*Things\\((\\d+)\\).*", "\\1", x$url)
-      warning(paste("Could not retrieve datastreams for Thing with @iot.id:", iot_id), 
-              call. = FALSE)
-      return(NULL)
-    })
-  })
-  
-  # Create a logical index of which devices were successful
-  is_valid <- !sapply(url_ds_with_nulls, is.null)
-  device_nms <- device_nms[is_valid]
-  url_ds <- url_ds_with_nulls[is_valid]
-  
-  # Get datastreams metadata incl. observed properties and device identification
-  url_ds_prop <- lapply(url_ds, function(url) paste0(url, "?$expand=ObservedProperty"))
-  response <- lapply(url_ds_prop, function(urls) {
-    lapply(urls, function(url) {
-      httr::GET(
-        url,
-        httr::add_headers(`Authorization` = paste("Bearer", token))
-      )
-    })
-  })
-  
-  ds_ls <- lapply(response, function(dev) {
-    lapply(dev, function(x) {
-      tryCatch({
-        jsonlite::fromJSON(
-          httr::content(x, as = "text", encoding = "UTF-8")
-          )
-      }, error = function(e) {
-        datastream_id <- gsub(".*Datastreams\\((\\d+)\\).*", "\\1", x$url)  # TODO: fix regex
-        warning(
-          paste("Could not parse content for Datastream with @iot.id:", datastream_id),
-          call. = FALSE
-        )
-        return(NULL)
-      })
-    })
-  })
-  names(ds_ls) <- device_nms
-  
-  # Compile output [FIXED NESTED DEVICES [multiple sensors per device]]
-  ds_out <- list()
-  for (i in seq_along(ds_ls)) {
-    
-    ds_out[[i]] <- 
-      dplyr::bind_rows(
-        lapply(ds_ls[[i]], function(ds) {
-          
-          coords <- na.omit(as.numeric(ds$observedArea$coordinates))
-          if (length(coords) < 2) return(NULL)  # Skip if coordinates are invalid
-          
-          tibble::tibble(
-            Datastream.id = ds$`@iot.id`,
-            Datastream.link = ds$`@iot.selfLink`,
-            Datastream.name = ds$name,
-            Datastream.description = ds$description,
-            observationType = ds$observationType,
-            ObservedProperty.id = ds$ObservedProperty$`@iot.id`,
-            ObservedProperty.name = ds$ObservedProperty$name,
-            unitOfMeasurement.name = ds$unitOfMeasurement$name,
-            unitOfMeasurement.symbol = ds$unitOfMeasurement$symbol,
-            longitude = coords[1],
-            latitude = coords[2],
-            phenomenonTime = ds$phenomenonTime
-          ) %>%
-            tidyr::separate(phenomenonTime, into = c("start_date","end_date"), sep = "/") %>%
-            dplyr::mutate(dplyr::across(start_date:end_date, ~ as.Date(.x)))
-        })
-      )
+
+  if (length(all_things) == 0) {
+    warning("No Things found on the server.")
+    return(data.frame())
   }
-  
-  # Re-assign names  
-  is_valid <- !sapply(ds_out, is.null)  # not null (has 2 geocoordinates)
-  ds_out_filtered <- ds_out[is_valid]
-  ds_names <- names(ds_ls)[is_valid]
-  names(ds_out_filtered) <- ds_names
-  ds_out_filtered <- ds_out_filtered[sapply(ds_out_filtered, function(df) length(df) > 0)]
-  
-  # Combine datastreams in one dataframe
-  datastreams <- dplyr::bind_rows(ds_out_filtered, .id = "Thing.name")
+
+  # Build a flat dataframe of all datastreams tagged with their parent Thing name.
+  # Date splitting is done inline, replacing the deprecated tidyr::separate() call.
+  datastreams <- dplyr::bind_rows(purrr::map(all_things, function(thing) {
+    ds_list <- thing$Datastreams
+    if (length(ds_list) == 0) return(NULL)
+
+    dplyr::bind_rows(purrr::map(ds_list, function(ds) {
+      coords <- na.omit(as.numeric(ds$observedArea$coordinates))
+      if (length(coords) < 2) return(NULL)
+
+      phtime <- ds$phenomenonTime
+      if (is.null(phtime) || is.na(phtime)) return(NULL)
+      dates <- strsplit(phtime, "/")[[1]]
+      if (length(dates) < 2) return(NULL)
+
+      tibble::tibble(
+        Thing.name               = thing$name,
+        Datastream.id            = ds$`@iot.id`,
+        Datastream.link          = ds$`@iot.selfLink`,
+        Datastream.name          = ds$name,
+        Datastream.description   = ds$description,
+        observationType          = ds$observationType,
+        ObservedProperty.id      = ds$ObservedProperty$`@iot.id`,
+        ObservedProperty.name    = ds$ObservedProperty$name,
+        unitOfMeasurement.name   = ds$unitOfMeasurement$name,
+        unitOfMeasurement.symbol = ds$unitOfMeasurement$symbol,
+        longitude                = coords[1],
+        latitude                 = coords[2],
+        start_date               = as.Date(dates[1]),
+        end_date                 = as.Date(dates[2])
+      )
+    }))
+  }))
+
   if (is.null(datastreams) || nrow(datastreams) == 0) {
-    return("No valid datastreams could be retrieved from the server.")
+    warning("No valid datastreams could be retrieved from the server.")
+    return(data.frame())
   }
-  
+
   # Find focal datastreams based on coordinate and radius inputs
   focal_datastreams_list <- lapply(seq_along(lon), function(i) {
     current_lon <- lon[i]
     current_lat <- lat[i]
-    
+
     distances <- haversine_dist(current_lat, current_lon, datastreams$latitude, datastreams$longitude)
     in_radius_idx <- which(distances <= radius)
     datastreams_in_radius <- datastreams[in_radius_idx, ]
-    
+
     if (nrow(datastreams_in_radius) > 0) {
       datastreams_in_radius$input_lon <- current_lon
       datastreams_in_radius$input_lat <- current_lat
@@ -576,25 +520,26 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
   })
   out <- dplyr::bind_rows(focal_datastreams_list) %>%
     dplyr::distinct()
-  
+
   if (nrow(out) == 0) {
-    return("No data was measured within the specified radius of the given location(s).")
+    warning("No data was measured within the specified radius of the given location(s).")
+    return(data.frame())
   }
-  
-  out <- out %>% filter(ObservedProperty.name %in% var)
+
+  out <- dplyr::filter(out, ObservedProperty.name %in% var)
   if (nrow(out) == 0) {
-    return("No data for the focal property could be retrieved at the specified location(s).")
+    warning("No data for the focal variable could be retrieved at the specified location(s).")
+    return(data.frame())
   }
-  
-  out <- out %>%
-    mutate(is_contained = start_date >= as.Date(from) & end_date <= as.Date(to)) %>%
-    filter(is_contained)
-  
+
+  # Overlap check: keep datastreams whose measurement period overlaps the requested range
+  out <- dplyr::filter(out, start_date <= as.Date(to) & end_date >= as.Date(from))
   if (nrow(out) == 0) {
-    return("Measured data does not encompass the requested timeframe.")
-  } else {
-    return(out %>% select(-is_contained)) # Remove the temporary column
+    warning("No datastream covers the requested timeframe.")
+    return(data.frame())
   }
+
+  return(out)
 }
 
 #' Retrieve All Observations from a SensorThings Datastream
@@ -623,25 +568,24 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
 #' 
 
 .get_all_obs <- function(url, token) {
-  
-  url_ds <- sub("\\?.*", "", url)  # datastream url
-  
-  all_obs <- data.frame(phenomenonTime = character(0), result = numeric(0))
-  i = 0
-  repeat {
-    response <- httr::GET(
-      url,
-      httr::add_headers(`Authorization` = paste("Bearer", token))
-    )
-    content <- jsonlite::fromJSON(
-      httr::content(response, as = "text", encoding = "UTF-8")
-    )
-    all_obs <- rbind(all_obs, content$Observations)
-    if (is.null(content$`Observations@iot.nextLink`)) break
-    i <- i+100
-    url <- paste0(url_ds, "?$expand=Observations($select=phenomenonTime,result;$skip=",i,"),ObservedProperty($select=name)")
+  auth <- httr::add_headers(`Authorization` = paste("Bearer", token))
+  pages <- list()
+
+  # First page: Datastream $expand response — observations live at content$Observations
+  response <- httr::GET(url, auth)
+  content <- jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"))
+  pages <- c(pages, list(content$Observations))
+  next_url <- content$`Observations@iot.nextLink`
+
+  # Subsequent pages: following nextLink returns a bare collection — observations at content$value
+  while (!is.null(next_url)) {
+    response <- httr::GET(next_url, auth)
+    content <- jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"))
+    pages <- c(pages, list(content$value))
+    next_url <- content$`@iot.nextLink`
   }
-  return(all_obs)
+
+  dplyr::bind_rows(pages)
 }
 
 
@@ -656,91 +600,58 @@ patch_ogc_iot <- function(object = c("Things","Sensors","ObservedProperties","Da
 #'   - "median": Take the median of the values.
 #'   - "none": Keep all variables, appending .x, .y suffixes.
 #'
-#' @return A processed list with the same top-level names, but each element
-#'   contains only two items: `DATASTREAM` (a single, wide data frame) and
-#'   `METADATA` (a single, combined tibble).
-#'   
+#' @return A named list with one entry per device, each containing `DATASTREAM`
+#'   (a single wide data frame) and `METADATA` (a combined tibble).
+#'
 #' @noRd
-#'   
 
 .consolidate_datastreams <- function(device_list, aggregation = "mean") {
-  
+
   aggregation <- match.arg(aggregation, c("mean", "median", "none"))
-  
-  # Map aggregation functions
+
   agg_func <- switch(aggregation,
-                     "mean" = mean,
+                     "mean"   = mean,
                      "median" = median)
-  
-  # Iterate over each device
+
+  .nan_to_na <- function(df, col) {
+    dplyr::mutate(df, !!col := dplyr::if_else(
+      is.nan(!!rlang::sym(col)), NA_real_, !!rlang::sym(col)
+    ))
+  }
+
   data_processed <- purrr::map(device_list, ~ {
-    
-    # --- Data cleaning ---
-    # Remove artefacts (duplicate time stamps)
+
+    # Remove duplicate timestamps within each datastream
     data_clean <- purrr::map(.x, ~ {
       df <- .x$DATASTREAM
-      value_col_name <- setdiff(names(df), "phenomenonTime")
-      
+      col <- setdiff(names(df), "phenomenonTime")
       df %>%
         dplyr::group_by(phenomenonTime) %>%
-        dplyr::summarise(
-          !!value_col_name := mean(!!sym(value_col_name), na.rm = TRUE)
-        ) %>%
+        dplyr::summarise(!!col := mean(!!rlang::sym(col), na.rm = TRUE)) %>%
         dplyr::ungroup() %>%
-        dplyr::mutate(
-          !!value_col_name := dplyr::if_else(
-            is.nan(!!rlang::sym(value_col_name)), NA_real_, !!rlang::sym(value_col_name)
-          )
-        )
+        .nan_to_na(col)
     })
-    
-    data_agg <- NULL
-    
-    # --- Aggregate same-named attributes ---
+
+    # Aggregate same-named variables across streams
     if (aggregation == "none") {
       data_agg <- data_clean
     } else {
-      
-      # Group dataframes by variable names
-      val_col_names <- purrr::map_chr(data_clean, ~ setdiff(names(.), "phenomenonTime"))
-      data_clean_grp <- split(data_clean, val_col_names)
-      
-      # Apply the selected aggregation function
-      data_agg <- purrr::map(data_clean_grp, ~ {
-        value_col_name <- setdiff(names(.x[[1]]), "phenomenonTime")
-        # Bind all dfs in the group, then group by time, and aggregate
+      col_names <- purrr::map_chr(data_clean, ~ setdiff(names(.), "phenomenonTime"))
+      data_agg <- purrr::map(split(data_clean, col_names), ~ {
+        col <- setdiff(names(.x[[1]]), "phenomenonTime")
         dplyr::bind_rows(.x) %>%
           dplyr::group_by(phenomenonTime) %>%
-          dplyr::summarise(
-            !!value_col_name := agg_func(!!rlang::sym(value_col_name), na.rm = TRUE)
-          ) %>%
+          dplyr::summarise(!!col := agg_func(!!rlang::sym(col), na.rm = TRUE)) %>%
           dplyr::ungroup() %>%
-          dplyr::mutate(
-            # Convert NaNs to NAs
-            !!value_col_name := dplyr::if_else(
-              is.nan(!!rlang::sym(value_col_name)), NA_real_, !!rlang::sym(value_col_name)
-            )
-          )
+          .nan_to_na(col)
       })
     }
-    
-    # --- Join datastreams by device ---
-    joined_data <- if (length(data_agg) > 0) {
-      purrr::reduce(data_agg, dplyr::full_join, by = "phenomenonTime")
-    } else {
-      NULL
-    }
-    
-    # --- Combine datastream metadata by device ---
-    metadata_clean <- purrr::map(.x, "METADATA")
-    combined_metadata <- dplyr::bind_rows(metadata_clean)
-    
-    # --- Output
+
     list(
-      DATASTREAM = joined_data,
-      METADATA = combined_metadata
+      DATASTREAM = if (length(data_agg) > 0) purrr::reduce(data_agg, dplyr::full_join, by = "phenomenonTime") else NULL,
+      METADATA   = dplyr::bind_rows(purrr::map(.x, "METADATA"))
     )
   })
-  
-  return(data_processed[[1]])
+
+  return(data_processed)
 }
