@@ -164,7 +164,7 @@ get_field_data0 <- function(path = NULL, exp_id = NULL, headers = c("short", "lo
   dict <- wb_to_df(wb, sheet = "Dictionary", startRow = 1) |>
     # Change provenance section to experiment (now that provenance info has been incorporated to SOIL and WEATHER metadata)
     #mutate(Sheet = ifelse(Sheet %in% c("PERSONS","INSTITUTIONS","DOCUMENTS"), "EXP_METADATA", Sheet)) |>
-    filter(!var_order == "-99" | is.na(var_order))  # tmp: preserve NAs until measured data all sorted in template
+    filter(!var_order_custom == "-99" | is.na(var_order_custom))  # tmp: preserve NAs until measured data all sorted in template
   if(headers == "short") {
     dfs <- mapply(FUN = icasa_long_to_short,
                   df = dfs,
@@ -208,14 +208,14 @@ get_field_data0 <- function(path = NULL, exp_id = NULL, headers = c("short", "lo
   # HACK tmp: rename resource_ID to
   merged_sec <- apply_recursive(merged_sec, function(df) {
     if ("resource_ID" %in% names(df)) {
-      names(df)[names(df) == "resource_ID"] <- "experiment_id"
+      names(df)[names(df) == "resource_ID"] <- "experiment_ID"
     }
     return(df)
   })
   merged_sec[["GENERAL"]] <- merged_sec[["EXP_METADATA"]]
   merged_sec[["EXP_METADATA"]] <- NULL
   
-  # Split experiments
+  # Split experiments ##FIX
   dfs_split <- split_experiments(merged_sec, keep_empty = keep_empty, keep_na_cols = TRUE)
   if(!is.null(exp_id)){
     dfs_split <- dfs_split[[exp_id]]
@@ -495,8 +495,8 @@ format_treatment_str <- function(ls){
   df <- df %>%
     mutate(across(where(is.character), ~ sub("\\|.*", "", .)),
            across(everything(), ~ trimws(., which = "left")),
-           across(cultivar_level:mulch_level, ~ifelse(is.na(.x), 0, .x)),
-           across(c(treatment_number, cultivar_level:mulch_level), ~as.numeric(.))) %>%
+           across(genotype_level_number:mulch_level, ~ifelse(is.na(.x), 0, .x)),
+           across(c(treatment_number, genotype_level_number:mulch_level), ~as.numeric(.))) %>%
     mutate(simulation_control_level = as.numeric(
       ifelse(is.na(simulation_control_level), 1, simulation_control_level))
     )
@@ -883,7 +883,7 @@ split_experiments <- function(ls, keep_empty = FALSE, keep_na_cols = FALSE) {
   if (all(grepl("^[A-Z_]+$", colnames(ls[[1]])))) {
     fcts <- c(exp = "EID", sol = "SOIL_SUBSET", wth = "WTH_SUBSET")
   } else {
-    fcts <- c(exp = "experiment_id", sol = "soil_identifier", wth = "weather_sta_identifier")
+    fcts <- c(exp = "experiment_ID", sol = "soil_identifier", wth = "weather_sta_identifier")
   }
   
   # Split into experiment-related and environment-related dataframes
