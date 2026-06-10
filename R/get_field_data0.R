@@ -290,7 +290,7 @@ drop_artefacts <- function(df) {
 #'
 #' @examples
 #' \dontrun{
-#' wb <- openxlsx::loadWorkbook(\"template.xlsx\")
+#' wb <- openxlsx::loadWorkbook("template.xlsx")
 #' codes_ls <- get_template_codes(wb)
 #' names(codes_ls)
 #' # [1] \"crop\" \"soil\" \"site\" ...
@@ -404,14 +404,14 @@ icasa_long_to_short <- function(df, section, dict, keep_unmapped = TRUE){
 #'
 #' @examples
 #' df <- data.frame(
-#'   crop = c(\"Maize\", \"Wheat\", \"Rice\"),
+#'   crop = crop = c("Maize", "Wheat", "Rice"),,
 #'   stringsAsFactors = FALSE
 #' )
 #' codes <- list(
-#'   crop = data.frame(desc = c(\"Maize\", \"Wheat\", \"Rice\"), code = c(\"MZ\", \"WH\", \"RC\"))
+#'   crop = data.frame(desc = crop = c("Maize", "Wheat", "Rice"),, code = c("MZ", "WH", "RC"))
 #' )
 #' desc_to_codes(df, codes)
-#' # Returns a data frame with crop codes: \"MZ\", \"WH\", \"RC\"
+#' # Returns a data frame with crop codes: "MZ", "WH", "RC"
 #'
 #' @noRd
 #' 
@@ -460,7 +460,7 @@ desc_to_codes <- function(df, codes) {
 #' \itemize{
 #'   \item Removing any content after a pipe (\code{|}) in character columns.
 #'   \item Trimming leading whitespace from all columns.
-#'   \item Replacing \code{NA} values in level columns (\code{genotype_level} to \code{mulch_level}) with 0.
+#'   \item Replacing \code{NA} values in level columns (\code{cultivar_level} to \code{mulch_level}) with 0.
 #'   \item Converting relevant columns to numeric type.
 #'   \item Ensuring \code{simulation_control_level} is numeric and defaults to 1 if missing.
 #' }
@@ -495,8 +495,8 @@ format_treatment_str <- function(ls){
   df <- df %>%
     mutate(across(where(is.character), ~ sub("\\|.*", "", .)),
            across(everything(), ~ trimws(., which = "left")),
-           across(genotype_level:mulch_level, ~ifelse(is.na(.x), 0, .x)),
-           across(c(treatment_number, genotype_level:mulch_level), ~as.numeric(.))) %>%
+           across(cultivar_level:mulch_level, ~ifelse(is.na(.x), 0, .x)),
+           across(c(treatment_number, cultivar_level:mulch_level), ~as.numeric(.))) %>%
     mutate(simulation_control_level = as.numeric(
       ifelse(is.na(simulation_control_level), 1, simulation_control_level))
     )
@@ -756,8 +756,8 @@ reshape_to_model_dssat <- function(vector, map_path, input_model = "icasa", outp
 #' @return A named list of merged data frames, one for each unique name in the input list.
 #'
 #' @examples
-#' df1 <- data.frame(a = 1:2, b = c(\"x\", \"y\"))
-#' df2 <- data.frame(a = 3:4, b = c(\"z\", \"w\"))
+#' df1 <- data.frame(a = 1:2, b = c("x", "y"))
+#' df2 <- data.frame(a = 3:4, b = c("z", "w"))
 #' ls <- list(SECTION = df1, SECTION = df2)
 #' combine_dual_tier(ls)
 #' # Returns a list with one element \"SECTION\", containing the merged data frame
