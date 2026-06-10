@@ -4,7 +4,18 @@
 \alias{write_gluebatch}
 \title{Write a DSSAT Batch File for cultivar parameter calibration}
 \usage{
-write_gluebatch(xfile, trtno, rp, sq, op, co, ...)
+write_gluebatch(
+  xfile,
+  trtno,
+  rp,
+  sq,
+  op,
+  co,
+  cultivar,
+  crop_code,
+  ingeno,
+  dir_out
+)
 }
 \arguments{
 \item{xfile}{Character vector. The X-file names (one per treatment).}
@@ -19,7 +30,13 @@ write_gluebatch(xfile, trtno, rp, sq, op, co, ...)
 
 \item{co}{Integer vector. Code numbers.}
 
-\item{...}{Additional arguments (not used directly).}
+\item{cultivar}{Character. The cultivar name, used to construct the batch file name and header.}
+
+\item{crop_code}{Character. The two-letter DSSAT crop code, used in the batch file name and header.}
+
+\item{ingeno}{Character. The cultivar identifier (INGENO), written to the batch file header.}
+
+\item{dir_out}{Character. Path to the directory where the batch file will be written.}
 }
 \value{
 The name of the batch file written.
@@ -27,11 +44,6 @@ The name of the batch file written.
 \description{
 Generates and writes a DSSAT batch file for model calibration,
 formatting the batch table and header according to DSSAT conventions.
-}
-\details{
-The function constructs a batch table with the specified columns, formats the header and data lines according to DSSAT batch file requirements, and writes the result to a file. The batch file name and path are constructed using the \code{cultivar} and \code{crop_code} variables (which must be defined in the environment), and the output directory \code{dir_out}.
-
-The function uses the \strong{glue}, \strong{dplyr}, and \strong{stringr} packages for string formatting and data manipulation.
 }
 \examples{
 \dontrun{
@@ -41,7 +53,11 @@ write_gluebatch(
   rp = c(1, 1),
   sq = c(1, 2),
   op = c(1, 1),
-  co = c(1, 1)
+  co = c(1, 1),
+  cultivar = "Pioneer123",
+  crop_code = "WH",
+  ingeno = "IB0001",
+  dir_out = "C:/DSSAT48/GLWork"
 )
 }
 

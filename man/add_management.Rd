@@ -32,7 +32,7 @@ If a column specified in \code{args} does not exist in the section table, a warn
 }
 \examples{
 \dontrun{
-xtables <- add_management(xtables, section = "fertilizer", args = list(amount = 50, date = "2022-03-01"))
+xtables <- add_management(xtables, section = "fertilizer", args = list(FAMN = 50, FDATE = "2022-03-01"))
 }
 
 }

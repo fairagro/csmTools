@@ -4,33 +4,60 @@
 \alias{write_gluectrl}
 \title{Write a GLUE Simulation Control File for DSSAT calibration Batch Runs}
 \usage{
-write_gluectrl(cfilename, batchname, ...)
+write_gluectrl(
+  cfilename,
+  batchname,
+  ecocal,
+  dir_glue,
+  dir_out,
+  dir_dssat,
+  flag,
+  reps,
+  cores,
+  dir_genotype
+)
 }
 \arguments{
 \item{cfilename}{Character. The model ID or control file name.}
 
 \item{batchname}{Character. The name of the cultivar batch file.}
 
-\item{...}{Additional arguments (not used directly, but required variables must be present in the environment: \code{ecocal}, \code{dir_glue}, \code{dir_out}, \code{dir_dssat}, \code{flag}, \code{reps}, \code{cores}, \code{dir_genotype}).}
+\item{ecocal}{Character. Whether to calibrate ecotype parameters ("Y" or "N").}
+
+\item{dir_glue}{Character. Path to the GLUE working directory.}
+
+\item{dir_out}{Character. Path to the GLUE output directory.}
+
+\item{dir_dssat}{Character. Path to the DSSAT installation directory.}
+
+\item{flag}{Integer. GLUE calibration flag (1 = phenology+growth, 2 = phenology, 3 = growth).}
+
+\item{reps}{Integer. Number of GLUE replicates.}
+
+\item{cores}{Integer. Number of CPU cores to use.}
+
+\item{dir_genotype}{Character. Path to the DSSAT Genotype directory.}
 }
 \value{
-The data frame of simulation control variables and values (invisibly).
+The data frame of simulation control variables and values.
 }
 \description{
 Generates and writes a simulation control CSV file for GLUE-based DSSAT calibration batch runs,
 specifying file paths, flags, and run parameters.
 }
-\details{
-The function creates a data frame of simulation control variables and their values, then writes it to \code{SimulationControl.csv} in the GLUE directory. The required variables (e.g., \code{ecocal}, \code{dir_glue}, etc.) must be defined in the environment.
-
-This file is used to control GLUE-based DSSAT batch simulations.
-}
 \examples{
 \dontrun{
 write_gluectrl(
-  cfilename = "CERES",
-  batchname = "BATCH.WHC"
-  # plus required variables in the environment
+  cfilename  = "CERES048",
+  batchname  = "Pioneer123.WHC",
+  ecocal     = "N",
+  dir_glue   = "C:/DSSAT48/Tools/GLUE",
+  dir_out    = "C:/DSSAT48/GLWork",
+  dir_dssat  = "C:/DSSAT48",
+  flag       = 1,
+  reps       = 100,
+  cores      = 4,
+  dir_genotype = "C:/DSSAT48/Genotype"
 )
 }
 

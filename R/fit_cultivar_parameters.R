@@ -18,12 +18,9 @@
 #' # Returns the SUMMARY data frame
 #'
 
-get_xfile_sec <- function(xtables, sec_name){
-  
-  index <- which(grepl(sec_name, names(xtables)))
-  tbl <- if(length(index) > 0) xtables[[index]] else NULL
-  
-  return(tbl)
+get_xfile_sec <- function(xtables, sec_name) {
+  idx <- grep(sec_name, names(xtables))[1]
+  if (!is.na(idx)) xtables[[idx]] else NULL
 }
 
 
@@ -47,30 +44,20 @@ get_xfile_sec <- function(xtables, sec_name){
 #' }
 #'
 #' @export
+#' 
 
 get_cdata <- function(crop, model = c("APS","CER","GRO","ARO","CRP","IXM")) {
-  
-  # DSSAT path and version
-  dssat_csm <- gsub("\\", "/", getOption("DSSAT.CSM"), fixed = TRUE)
-  dssat_path <- sub('DSCSM.*', "", dssat_csm)
-  dssat_vers <- sub(".*DSCSM", "", sub("\\..*", "", dssat_csm))
-  
-  #
+  model <- match.arg(model)
+
+  dssat_csm  <- gsub("\\", "/", getOption("DSSAT.CSM"), fixed = TRUE)
+  dssat_path <- sub("DSCSM.*", "", dssat_csm)
+  dssat_vers <- sub(".*DSCSM([^.]+).*", "\\1", dssat_csm)
+
   crop_code <- paste0(substr(toupper(crop), 1, 2), model, dssat_vers)
-  
-  # Open genotype files
-  ctable <- read_cul(file_name = paste0(dssat_path, "Genotype\\", crop_code, ".CUL"))
-  #filee <- read_eco(file_name = paste0(dssat_path, "Genotype\\", crop_code, ".ECO"))
-  
-  # Output
-  out <- ctable
-  #out <- list()
-  #out$CUL <- ctable
-  #out$ECO <- filee
-  attr(out, "crop") <- crop
-  #attr(out, "model") <- model
-  return(out)
-  
+  ctable <- read_cul2(file_name = file.path(dssat_path, "Genotype", paste0(crop_code, ".CUL")))
+
+  attr(ctable, "crop") <- crop
+  ctable
 }
 
 
@@ -96,10 +83,10 @@ get_cdata <- function(crop, model = c("APS","CER","GRO","ARO","CRP","IXM")) {
 #'
 
 set_class <- function(df, classes) {
-  df <- df[names(df) %in% names(classes)]
-  correct_class <- sapply(names(df), function(x) class(x)[1])
-  df <- mapply(function(value, correct_class) {
-    switch(correct_class,
+  
+  cols <- intersect(names(df), names(classes))
+  df[cols] <- mapply(function(value, cls) {
+    switch(cls,
            Date = as.Date(value),
            POSIXct = as.POSIXct(value),
            POSIXt = as.POSIXct(value),
@@ -108,10 +95,24 @@ set_class <- function(df, classes) {
            character = as.character(value),
            factor = as.factor(value),
            value)
-  }, df, classes, SIMPLIFY = FALSE)
-  
+  }, df[cols], classes[cols], SIMPLIFY = FALSE)
+
   return(as.data.frame(df))
 }
+
+
+# Static lookup: short section keys → canonical DSSAT section header names.
+
+.xfile_sections <- data.frame(
+  sec  = c("general","treatments","cultivars","fields","soil_analysis","initial_conditions",
+           "planting","irrigation","fertilizer","organic_amendment","tillage","chemicals",
+           "environment_modifications","harvest","simulation_controls"),
+  name = c("GENERAL","TREATMENTS                        -------------FACTOR LEVELS------------",
+           "CULTIVARS","FIELDS","SOIL ANALYSIS","INITIAL CONDITIONS","PLANTING DETAILS",
+           "IRRIGATION AND WATER MANAGEMENT","FERTILIZERS (INORGANIC)","RESIDUES AND ORGANIC FERTILIZER",
+           "TILLAGE AND ROTATIONS","CHEMICALS","ENVIRONMENT MODIFICATIONS","HARVEST DETAILS","SIMULATION CONTROLS"),
+  stringsAsFactors = FALSE
+)
 
 
 #' Add a New Treatment Row to the treatment matrix of a DSSAT managemeent table list
@@ -138,26 +139,23 @@ set_class <- function(df, classes) {
 #' @export
 
 add_treatment <- function(xtables, args = list()) {
-  
-  trt <- xtables[[which(startsWith(names(xtables), "TREATMENT"))]]
-  
-  # Keep the last row as default
-  new_row <- trt[nrow(trt),]
-  # Set new row primary key
-  new_row[[1]] <- max(trt[1]) + 1
-  
+
+  idx <- which(startsWith(names(xtables), "TREATMENT"))
+  trt <- xtables[[idx]]
+
+  new_row      <- trt[nrow(trt), ]
+  new_row[[1]] <- max(trt[[1]]) + 1
+
   for (col in names(args)) {
     if (col %in% colnames(trt)) {
       new_row[[col]] <- args[[col]]
     } else {
-      warning(paste("Column", arg, "not found in the dataframe"))
+      warning(paste("Column", col, "not found in the dataframe"))
     }
   }
-  
-  out <- bind_rows(trt, new_row)
-  xtables[[2]] <- as_DSSAT_tbl(out)
-  
-  return(xtables)
+
+  xtables[[idx]] <- as_DSSAT_tbl(bind_rows(trt, new_row))
+  xtables
 }
 
 
@@ -179,7 +177,7 @@ add_treatment <- function(xtables, args = list()) {
 #'
 #' @examples
 #' \dontrun{
-#' xtables <- add_management(xtables, section = "fertilizer", args = list(amount = 50, date = "2022-03-01"))
+#' xtables <- add_management(xtables, section = "fertilizer", args = list(FAMN = 50, FDATE = "2022-03-01"))
 #' }
 #'
 #' @importFrom dplyr bind_rows
@@ -192,6 +190,7 @@ add_treatment <- function(xtables, args = list()) {
 #section <- "irrigation"
 #args <- list(EFIR = 1, IDATE = c("1981-05-26","1981-06-24"), IRVAL = c(50,50))
 #args <- list(FEDATE = c("1981-05-26","1981-06-24"), FMCD = "FE041", FACD = "AP001", FAMN = 120, FAMP = 0, FAMK = 0, FAMC = 0, FDEP = 1)
+# TODO: control variable classes/formats?
 
 add_management <- function(xtables,
                            section = c("initial_conditions","planting","tillage","irrigation",
@@ -199,30 +198,16 @@ add_management <- function(xtables,
                                        "simulation_controls"),
                            args = list()) {
   
-  # add to data?
-  xsections <- data.frame(
-    sec = c("general","treatments","cultivars","fields","soil_analysis","initial_conditions",
-            "planting","irrigation","fertilizer","organic_amendment","tillage","chemicals",
-            "environment_modifications","harvest","simulation_controls"),
-    name = c("GENERAL","TREATMENTS                        -------------FACTOR LEVELS------------",
-             "CULTIVARS","FIELDS","SOIL ANALYSIS","INITIAL CONDITIONS","PLANTING DETAILS",
-             "IRRIGATION AND WATER MANAGEMENT","FERTILIZERS (INORGANIC)","RESIDUES AND ORGANIC FERTILIZER",
-             "TILLAGE AND ROTATIONS","CHEMICALS","ENVIRONMENT MODIFICATIONS","HARVEST DETAILS","SIMULATION CONTROLS")
-  )
-
-  # Extract management type prefix
+  # Check section input syntax
+  section <- match.arg(section, .xfile_sections$sec)
+  
   input_nm <- toupper(substr(section, 1, 5))
   sections_pref <- substr(names(xtables), 1, 5)
-  
-  # Check if section exists
+
   if (!(input_nm %in% sections_pref)) {
-    
-    # Retrieve section name
-    nm <- xsections$name[grepl(input_nm, xsections$sec, ignore.case = TRUE)]
-    # Add missing section based on DSSAT templates
-    xtables[[nm]] <- tibble(FERTILIZERS_template[0,])
-    # Set default order
-    xtables <- xtables[match(xsections$name[xsections$name %in% names(xtables)], names(xtables))]
+    nm <- .xfile_sections$name[grepl(input_nm, .xfile_sections$sec, ignore.case = TRUE)]
+    xtables[[nm]] <- tibble(FILEX_template[[nm]][0,])
+    xtables <- xtables[match(.xfile_sections$name[.xfile_sections$name %in% names(xtables)], names(xtables))]
     sections_pref <- substr(names(xtables), 1, 5)
   }
   
@@ -250,11 +235,11 @@ add_management <- function(xtables,
   # If collapsible section:
   nested_cols <- names(classes[classes %in% "list"])
   
-  if (length(nested_cols > 0)){
+  if (length(nested_cols) > 0){
     classes_nested <- sapply(sec[nested_cols], function(x) sapply(x, function(x) class(x)[1]))
     new_row_lss <- set_class(df = new_row, classes = classes_nested)
     new_row <- cbind(
-      new_row[, !(names(new_row) %in% intersect(names(new_row), nested_cols))],
+      new_row[, !names(new_row) %in% nested_cols],
       new_row_lss
     )
   }
@@ -262,8 +247,8 @@ add_management <- function(xtables,
   # Bind new row to section data
   if (section %in% c("initial_conditions","irrigation","soil_analysis")){  # nested sections
     sec <- unnest(sec, cols = all_of(nested_cols))
-    out <- bind_rows(sec, new_row) 
-    out <- collapse_cols(new_row, names(new_row_lss))
+    out <- bind_rows(sec, new_row)
+    out <- collapse_cols(out, names(new_row_lss))
   } else {
     out <- bind_rows(sec, new_row) 
   }
@@ -285,12 +270,10 @@ add_management <- function(xtables,
 #' @param sq Integer vector. Sequence numbers.
 #' @param op Integer vector. Operation numbers.
 #' @param co Integer vector. Code numbers.
-#' @param ... Additional arguments (not used directly).
-#'
-#' @details
-#' The function constructs a batch table with the specified columns, formats the header and data lines according to DSSAT batch file requirements, and writes the result to a file. The batch file name and path are constructed using the \code{cultivar} and \code{crop_code} variables (which must be defined in the environment), and the output directory \code{dir_out}.
-#'
-#' The function uses the \strong{glue}, \strong{dplyr}, and \strong{stringr} packages for string formatting and data manipulation.
+#' @param cultivar Character. The cultivar name, used to construct the batch file name and header.
+#' @param crop_code Character. The two-letter DSSAT crop code, used in the batch file name and header.
+#' @param ingeno Character. The cultivar identifier (INGENO), written to the batch file header.
+#' @param dir_out Character. Path to the directory where the batch file will be written.
 #'
 #' @return The name of the batch file written.
 #'
@@ -302,16 +285,19 @@ add_management <- function(xtables,
 #'   rp = c(1, 1),
 #'   sq = c(1, 2),
 #'   op = c(1, 1),
-#'   co = c(1, 1)
+#'   co = c(1, 1),
+#'   cultivar = "Pioneer123",
+#'   crop_code = "WH",
+#'   ingeno = "IB0001",
+#'   dir_out = "C:/DSSAT48/GLWork"
 #' )
 #' }
 #'
-#' @importFrom dplyr mutate mutate_at vars
-#' @importFrom stringr str_c
+#' @importFrom dplyr mutate across
 #' @importFrom glue glue_data
 #'
 
-write_gluebatch <- function(xfile, trtno, rp, sq, op, co, ...){
+write_gluebatch <- function(xfile, trtno, rp, sq, op, co, cultivar, crop_code, ingeno, dir_out){
 
   # Make batch table
   batch_tbl <- data.frame(FILEX = xfile,
@@ -321,19 +307,19 @@ write_gluebatch <- function(xfile, trtno, rp, sq, op, co, ...){
                           OP = op,
                           CO = co)
 
-  header_line <- c('%-92s', rep('%7s', 5)) |>  # fixed columns widths
-    sprintf(c('@FILEX', 'TRTNO', 'RP', 'SQ', 'OP', 'CO')) |>  # column headers
-    str_c(collapse = '')  # collapse into a single column header line
-  header <- c(paste0('$BATCH(CULTIVAR):', crop_code, ingeno, " ", cultivar), "", header_line)  # add batch file header label
-  
+  header_line <- c('%-92s', rep('%7s', 5)) |>
+    sprintf(c('@FILEX', 'TRTNO', 'RP', 'SQ', 'OP', 'CO')) |>
+    paste0(collapse = '')
+  header <- c(paste0('$BATCH(CULTIVAR):', crop_code, ingeno, " ", cultivar), "", header_line)
+
   column_output <- batch_tbl |>
-    mutate(FILEX = sprintf('%-92s', FILEX)) |>   # expand filex name to full width
-    mutate_at(vars(-FILEX), ~sprintf('%7i', .x)) |>  # write out all other columns
-    glue_data('{FILEX}{TRTNO}{RP}{SQ}{OP}{CO}')  # combine columns into character vector
-  
-  batch_output <- c(header, column_output)  # combine header lines and column data
-  batch_name <- paste0(cultivar, ".", sprintf("%2s", crop_code), "C")  # set cultivar batch file name
-  batch_path <- paste0(dir_out, "/", batch_name)
+    mutate(FILEX = sprintf('%-92s', FILEX),
+           across(-FILEX, ~sprintf('%7i', .x))) |>
+    glue_data('{FILEX}{TRTNO}{RP}{SQ}{OP}{CO}')
+
+  batch_output <- c(header, column_output)
+  batch_name <- paste0(cultivar, ".", sprintf("%2s", crop_code), "C")
+  batch_path <- file.path(dir_out, batch_name)
 
   write(batch_output, file = batch_path)  # write batch_output to file
   
@@ -348,27 +334,38 @@ write_gluebatch <- function(xfile, trtno, rp, sq, op, co, ...){
 #'
 #' @param cfilename Character. The model ID or control file name.
 #' @param batchname Character. The name of the cultivar batch file.
-#' @param ... Additional arguments (not used directly, but required variables must be present in the environment: \code{ecocal}, \code{dir_glue}, \code{dir_out}, \code{dir_dssat}, \code{flag}, \code{reps}, \code{cores}, \code{dir_genotype}).
+#' @param ecocal Character. Whether to calibrate ecotype parameters ("Y" or "N").
+#' @param dir_glue Character. Path to the GLUE working directory.
+#' @param dir_out Character. Path to the GLUE output directory.
+#' @param dir_dssat Character. Path to the DSSAT installation directory.
+#' @param flag Integer. GLUE calibration flag (1 = phenology+growth, 2 = phenology, 3 = growth).
+#' @param reps Integer. Number of GLUE replicates.
+#' @param cores Integer. Number of CPU cores to use.
+#' @param dir_genotype Character. Path to the DSSAT Genotype directory.
 #'
-#' @details
-#' The function creates a data frame of simulation control variables and their values, then writes it to \code{SimulationControl.csv} in the GLUE directory. The required variables (e.g., \code{ecocal}, \code{dir_glue}, etc.) must be defined in the environment.
-#'
-#' This file is used to control GLUE-based DSSAT batch simulations.
-#'
-#' @return The data frame of simulation control variables and values (invisibly).
+#' @return The data frame of simulation control variables and values.
 #'
 #' @examples
 #' \dontrun{
 #' write_gluectrl(
-#'   cfilename = "CERES",
-#'   batchname = "BATCH.WHC"
-#'   # plus required variables in the environment
+#'   cfilename  = "CERES048",
+#'   batchname  = "Pioneer123.WHC",
+#'   ecocal     = "N",
+#'   dir_glue   = "C:/DSSAT48/Tools/GLUE",
+#'   dir_out    = "C:/DSSAT48/GLWork",
+#'   dir_dssat  = "C:/DSSAT48",
+#'   flag       = 1,
+#'   reps       = 100,
+#'   cores      = 4,
+#'   dir_genotype = "C:/DSSAT48/Genotype"
 #' )
 #' }
 #'
 #' @export
+#' 
 
-write_gluectrl <- function(cfilename, batchname, ...){
+write_gluectrl <- function(cfilename, batchname, ecocal, dir_glue, dir_out, dir_dssat,
+                           flag, reps, cores, dir_genotype){
 
   controls <- data.frame(
     Variable =
@@ -377,9 +374,9 @@ write_gluectrl <- function(cfilename, batchname, ...){
       c(batchname, cfilename, ecocal, dir_glue, dir_out, dir_dssat, flag, reps, cores, dir_genotype)
   )
 
-  filepath <- paste0(dir_glue, "/SimulationControl.csv")
+  filepath <- file.path(dir_glue, "SimulationControl.csv")
   write.csv(controls, filepath, row.names = FALSE)
-  
+
   return(controls)
 }
 
@@ -402,26 +399,103 @@ write_gluectrl <- function(cfilename, batchname, ...){
 #' }
 #'
 #' @export
+#' 
 
 check_glue_files <- function(dir_dssat, dir_glue){
-  
-  sys <- Sys.info()
-  os <- sys[["sysname"]]
-  
+
   reqs <- switch(
-    os,
+    Sys.info()[["sysname"]],
     "Windows" = c("MODEL.ERR","SIMULATION.CDE","DSSATPRO.v48","DETAIL.CDE"),
     "Linux"   = c("MODEL.ERR","SIMULATION.CDE","DSSATPRO.v48","DSSATPRO.L48","DETAIL.CDE"),
     "Darwin"  = c("MODEL.ERR","SIMULATION.CDE","DSSATPRO.v48","DETAIL.CDE")  # not tested
   )
 
-  dssat_paths <- sapply(reqs, function(x) file.path(dir_dssat, x))
-  glue_paths <- sapply(reqs, function(x) file.path(dir_glue, x))
-  
-  for (i in seq_along(glue_paths)){
-    if(!file.exists(glue_paths[i])){
-      file.copy(dssat_paths[i], glue_paths[i])
+  dssat_paths <- file.path(dir_dssat, reqs)
+  glue_paths  <- file.path(dir_glue,  reqs)
+
+  missing <- !file.exists(glue_paths)
+  file.copy(dssat_paths[missing], glue_paths[missing])
+  invisible(NULL)
+}
+
+
+#' Resolve the DSSAT model code and versioned filename stem
+#'
+#' Uses \code{model} when valid; otherwise falls back to \code{SMODEL} in the
+#' X-file's simulation controls section.
+#'
+#' @param xtables Named list of DSSAT management tables (from \code{read_filex}).
+#' @param model Character or \code{NULL}. DSSAT model code (e.g. \code{"CER"}).
+#'   \code{NULL} or an unrecognised value triggers inference from \code{xtables}.
+#' @return Length-2 character vector: \code{c(model_code, versioned_filename_stem)}.
+#' 
+#' @noRd
+#' 
+
+identify_model <- function(xtables, model) {
+
+  dict <- fetch_dictionary("dssat")
+  models <- dict$SIMULATION$`Simulation/Crop Models`
+  models_short <- unique(models[[1]])
+
+  if (is.null(model) || !(model %in% models_short)) {
+    smodel <- xtables$`SIMULATION CONTROLS`$SMODEL
+    if (!is.na(smodel) && smodel != -99) {
+      model <- smodel
+    } else {
+      stop("Error: invalid model. Please specify a model currently implemented in DSSAT: ",
+           paste(models_short, collapse = ", "))
     }
+  }
+
+  version  <- DSSAT:::get_dssat_version()  #TODO: workflow with DSSAT.CSM not set in options
+  cfilename <- paste0(model, sprintf("%03d", as.numeric(version)))
+
+  c(model, cfilename)
+}
+
+
+#' Update a MINIMA or MAXIMA boundary row in a CUL table
+#'
+#' Overwrites the columns supplied in \code{values}; absent columns retain their
+#' existing values. Unrecognised column names in \code{values} trigger a warning.
+#'
+#' @param ctable Data frame. Cultivar parameter table as read by \code{read_cul}.
+#' @param bound Character. Row to update: \code{"MINIMA"} or \code{"MAXIMA"}.
+#' @param values Named list. Column-value pairs to write into the boundary row.
+#' 
+#' @return Updated \code{ctable}.
+#' 
+#' @noRd
+#' 
+
+set_bounds <- function(ctable, bound, values = list()) {
+
+  unknown <- setdiff(names(values), names(ctable))
+  if (length(unknown)) warning("Columns not found in CUL table: ", paste(unknown, collapse = ", "))
+
+  idx   <- which(ctable$VRNAME == bound)
+  known <- intersect(names(values), names(ctable))
+  ctable[idx, known] <- values[known]
+  ctable
+}
+
+
+# Validates/defaults a single directory path.
+# If `provided` is NULL, returns `default` (stopping if it doesn't exist).
+# If `provided` is given, stops if it doesn't exist unless `create = TRUE`.
+#' @noRd
+#' 
+
+resolve_dir <- function(provided, default, label, create = FALSE) {
+  if (is.null(provided)) {
+    if (!dir.exists(default)) stop("Error: ", label, " directory not found.")
+    default
+  } else if (!dir.exists(provided)) {
+    if (create) { dir.create(provided, recursive = TRUE); provided }
+    else stop("Error: The specified ", label, " directory does not exist: ", provided)
+  } else {
+    provided
   }
 }
 
@@ -461,6 +535,7 @@ check_glue_files <- function(dir_dssat, dir_glue){
 #' 
 #' @importFrom dplyr group_by summarise slice_max pull filter
 #' @importFrom tidyr unnest
+#' @importFrom DSSAT write_filex
 #' 
 #' @export
 #' 
@@ -475,61 +550,25 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
   setup_calibration <- function(...){
     
     ###------------ Default directories -------------------------------------
-    
-    # Set DSSAT directory
-    if(is.null(dir_dssat)){
+
+    if (is.null(dir_dssat)) {
       dir_dssat <- tryCatch(
         dirname(getOption("DSSAT.CSM")),
-        error = function(e) {
-          stop("Error: DSSAT-CSM exectuable not found.\n
-                  Set the location and file name of the DSSATCSM.EXE using:n\
-                  options(DSSAT.CSM = 'C:\ \ path\ to\ executable')")
-        }
+        error = function(e) stop(
+          "DSSAT-CSM executable not found. ",
+          "Set its path with options(DSSAT.CSM = 'C:/path/to/DSCSM048.EXE')"
+        )
       )
     } else {
-      # Ensure DSSAT.CSM option is set
-      if (!dir.exists(dir_dssat)) {
-        stop("Error: The specified DSSAT directory does not exist.
-             Please provide a valid directory path.")
-      }
-      # Check if the directory exists
-      if(is.null(getOption("DSSAT.CSM"))){
+      if (!dir.exists(dir_dssat))
+        stop("The specified DSSAT directory does not exist: ", dir_dssat)
+      if (is.null(getOption("DSSAT.CSM")))
         options(DSSAT.CSM = dir_dssat)
-      }
     }
-    
-    # Set GLUE settings and output subdirectories
-    if(is.null(dir_genotype)){
-      dir_genotype <- if(dir.exists(paste0(dir_dssat, "/Genotype"))){
-        paste0(dir_dssat, "/Genotype")
-      } else {
-        stop("Error: Genotype directory not found.")
-      }
-    } else if (!dir.exists(dir_genotype)) {
-      stop("Error: The specified Genotype directory does not exist.
-           Please provide a valid directory path.")
-    }
-    
-    if(is.null(dir_glue)){
-      dir_glue <- if(dir.exists(paste0(dir_dssat, "/Tools/GLUE"))){
-        paste0(dir_dssat, "/Tools/GLUE")
-      } else {
-        stop("Error: GLUE directory not found.")
-      }
-    } else if (!dir.exists(dir_glue)) {
-      stop("Error: The specified GLUE directory does not exist.
-           Please provide a valid directory path.")
-    }
-    
-    if(is.null(dir_out)){
-      dir_out <- if(dir.exists(paste0(dir_dssat, "/GLWork"))){
-        paste0(dir_dssat, "/GLWork")
-      } else {
-        stop("Error: Output directory not found.")
-      }
-    } else if (!dir.exists(dir_out)) {
-      dir.create(dir_out)
-    }##
+
+    dir_genotype <- resolve_dir(dir_genotype, file.path(dir_dssat, "Genotype"),   "Genotype")
+    dir_glue     <- resolve_dir(dir_glue,     file.path(dir_dssat, "Tools/GLUE"), "GLUE")
+    dir_out      <- resolve_dir(dir_out,      file.path(dir_dssat, "GLWork"),     "Output", create = TRUE)
     
     
     ###------------ Retrieve, load, and backup input files ------------------
@@ -539,35 +578,11 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     xfilename <- basename(xfile)
     
     # Retrieve focal cultivar file based on model input (retrieve from file X if NULL)
-    identify_model <- function(xtables, model){
-      
-      # Import DSSAT dict to control input data annotation
-      # models <- get_dssat_terms("models")
-      dict <- fetch_dictionary("dssat")
-      models <- dict$SIMULATION$`Simulation/Crop Models`
-      
-      # Validate model input annotation
-      models_short <- unique(models[[1]])
-      if (is.null(model) || !(model %in% models_short)) {
-        
-        if (!is.na(xtables$`SIMULATION CONTROLS`$SMODEL) || xtables$`SIMULATION CONTROLS`$SMODEL != -99) {
-          model <- xtables$`SIMULATION CONTROLS`$SMODEL
-        } else {
-          stop("Error: invalid model. Please specify a model currently implemented in DSSAT: ", paste(models_short, collapse = ", "))
-        }
-      }
-      
-      version <- DSSAT:::get_dssat_version()  #TODO: workflow with DSSAT.CSM not set in options
-      cfilename <- paste0(model, sprintf("%03d", as.numeric(version)))
-      
-      out <- c(model, cfilename)
-      
-      return(out)
-    }
-    model <- identify_model(xtables, model)[1]
-    
+    model_info <- identify_model(xtables, model)
+    model     <- model_info[1]
+
     # Load file CUL
-    modelvers <- identify_model(xtables, model)[2]
+    modelvers <- model_info[2]
     cfilename <- paste0(modelvers, ".CUL")  # Append extension
     cfile <- file.path(dir_genotype, cfilename)
     ctable <- read_cul(cfile)
@@ -589,18 +604,10 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     
     
     ###------------ Retrieve crop code and cultivar identifier --------------
-    
-    cuTable <- xtables$CULTIVARS  # Cultivar table
-    
-    ingeno <- cuTable[cuTable$CNAME == cultivar]$INGENO  # Cultivar Identifier
-    crop_code <- cuTable[cuTable$CNAME == cultivar]$CR  # Crop code
-    
-    # Retrieve crop full name
-    # crop_nms <- suppressWarnings(get_dssat_terms("crops"))
-    dict <- fetch_dictionary("dssat")
-    crop_nms <- tmp$DETAIL$`Crop and Weed Species`
-    
-    crop <- crop_nms[crop_nms$`@CDE` == crop_code,]$DESCRIPTION  # Crop name
+
+    cuTable   <- xtables$CULTIVARS
+    ingeno    <- cuTable[cuTable$CNAME == cultivar, "INGENO"]
+    crop_code <- cuTable[cuTable$CNAME == cultivar, "CR"]
     
     
     ###------------ Set treatment level for calibration ---------------------
@@ -609,98 +616,53 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
       
       feTable <- get_xfile_sec(xtables, "FERTILIZER")  # TODO: include OM table too + NITRO/WATER TO Y
       irTable <- get_xfile_sec(xtables, "IRRIGATION")
-      haTable <- get_xfile_sec(xtables, "HARVEST")  # TODO: add to disable_stress new method
-      
+
       # Find the highest nitrogen application
-      if (!is.null(feTable)){
-        
-        feMax <- feTable |>
+      feMax <- if (!is.null(feTable)) {
+        feTable |>
           group_by(dplyr::across(1)) |>
           summarise(FAMN = sum(FAMN)) |>
           slice_max(FAMN) |>
           pull(1)
-      } else {
-        feMax = 0
-      }
-      
+      } else 0
+
       # Find the highest irrigation amount
-      if (!is.null(irTable)){
-        irMax <- irTable |>
+      irMax <- if (!is.null(irTable)) {
+        irTable |>
           unnest(cols = c(IDATE, IROP, IRVAL)) |>
           group_by(dplyr::across(1)) |>
           summarise(IRVAL = sum(IRVAL)) |>
           slice_max(IRVAL) |>
           pull(1)
-      } else {
-        irMax = 0
-      }
-      
-      # Define stress types based on the presence/absence of nitrogen and water management
-      stress_types <- c()
-      
+      } else 0
+
+      # Disable stresses absent from the experiment so calibration runs at potential
+      stress_types <- character(0)
       if (is.null(feTable)) stress_types <- c(stress_types, "nitrogen")
       if (is.null(irTable)) stress_types <- c(stress_types, "water")
-      
-      # 1- Drop stress in new treatment if irrigation or fertilization were applied
-      if (length(stress_types) > 0) {
+      if (length(stress_types) > 0)
         xtables <- disable_stress(xtables, stress = stress_types)
-      }
-      
+
       trtMat <- get_xfile_sec(xtables, "TREATMENT")
-      trtno <- max(trtMat[1])
-      
-      # Set treatment number to the highest fertilization level if fertilization was applied
-      if (!is.null(feTable)) trtMat[trtno,]$MF <- feMax
-      # Set treatment number to the highest irrigation level if irrigation was applied
-      if (!is.null(irTable)) trtMat[trtno,]$MI <- irMax
-      
-      # 2- Both fertilization and irrigation applied: find treatment number with both max values
-      if (!is.null(feTable) & !is.null(irTable)) {
-        trtno <- trtMat[[which(trtMat$MF == feMax & trtMat$MI == irMax), 1]]
+      trtno  <- max(trtMat[[1]])
+
+      if (!is.null(feTable)) trtMat[trtMat[[1]] == trtno, "MF"] <- feMax
+      if (!is.null(irTable)) trtMat[trtMat[[1]] == trtno, "MI"] <- irMax
+
+      # When both are present, use the treatment with the highest combined inputs
+      if (!is.null(feTable) && !is.null(irTable)) {
+        trtno <- trtMat[trtMat$MF == feMax & trtMat$MI == irMax, 1][[1]]
         if (length(trtno) > 1) trtno <- max(trtno)
       }
       
       # Update treatment matrix in xtables accordingly
-      xtables[grepl("TREATMENT", names(xtables))][[1]] <- trtMat
+      xtables[[which(grepl("TREATMENT", names(xtables)))]] <- trtMat
     }
     
     ###------------ Set bounds for genetic parameters -----------------------
-    
-    # Function to create and update boundary rows
-    set_bounds <- function(ctable, bound, values = list()) {
-      
-      cols <- names(ctable)  # Column names
-      
-      # Initialize new row
-      new_row <- setNames(as.list(rep(NA, length(cols))), cols)
-      
-      # Assign specified values to the new row
-      for (col in names(values)) {
-        if (col %in% cols) {
-          new_row[[col]] <- values[[col]]
-        } else {
-          warning(paste("Column", col, "not found in the dataframe"))
-        }
-      }
-      
-      new_row <- as_tibble(new_row, check.names = FALSE)
-      
-      # Fill NAs with default row values
-      def_row <- ctable[ctable$VRNAME == bound, ]
-      for (col in names(new_row)) {
-        if (is.na(new_row[[col]]) && col %in% names(def_row)) {
-          new_row[[col]] <- def_row[[col]]
-        }
-      }
-      
-      # Update the dataframe
-      ctable[ctable$VRNAME == bound, ] <- new_row
-      
-      return(ctable)
-    }
-    
-    ctable <- set_bounds(ctable, bound = "MINIMA", values = min)
-    ctable <- set_bounds(ctable, bound = "MAXIMA", values = max)
+
+    ctable <- set_bounds(ctable, bound = "MINIMA", values = minbound)
+    ctable <- set_bounds(ctable, bound = "MAXIMA", values = maxbound)
     
     
     ###------------ Overwrite X and C files with set parameters -------------
@@ -714,26 +676,30 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     ###------------ Write batch files for calibration -----------------------
     
     # Write GLUE batch file
-    batchname <- write_gluebatch(xfile, trtno, rp = 1, sq = 0, op = 0, co = 0) #TODO: figure out what these do...
-    
+    batchname <- write_gluebatch(xfile, trtno, rp = 1, sq = 0, op = 0, co = 0,  #TODO: figure out what these do...
+                                 cultivar = cultivar, crop_code = crop_code,
+                                 ingeno = ingeno, dir_out = dir_out)
+
     # Set GLUE flag
-    flag <- switch( 
+    flag <- switch(
       toString(pars),
       "phenology, growth" = 1,
-      "phenology" = 2,
-      "phenology" = 3,
+      "phenology"         = 2,
+      "growth"            = 3,
       stop("Invalid parameter type")
     )
-    
+
     # Set input: calibrate ecotype
     ecocal <- if (calibrate_ecotype) "Y" else "N"
-    
+
     # Set input: number of cores
     cores <- if (is.null(cores)) round(detectCores()/2, 0) else cores
-    
+
     # Write GLUE control files
-    controls <- write_gluectrl(modelvers, batchname, ecocal,
-                               dir_glue, dir_out, dir_dssat, flag, reps, cores, dir_genotype)
+    controls <- write_gluectrl(modelvers, batchname,
+                               ecocal = ecocal, dir_glue = dir_glue, dir_out = dir_out,
+                               dir_dssat = dir_dssat, flag = flag, reps = reps,
+                               cores = cores, dir_genotype = dir_genotype)
     
     return(controls)
   } 
@@ -777,7 +743,7 @@ calibrate <- function(xfile, cultivar, model = NULL, trtno = NULL,
     return(out)
   }
   
-  glue_out <- run_calibration(controls, method = "glue")
+  glue_out <- run_calibration(controls, method = method)
   
   return(glue_out)
 }
