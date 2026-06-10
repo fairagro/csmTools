@@ -164,7 +164,7 @@ get_field_data0 <- function(path = NULL, exp_id = NULL, headers = c("short", "lo
   dict <- wb_to_df(wb, sheet = "Dictionary", startRow = 1) |>
     # Change provenance section to experiment (now that provenance info has been incorporated to SOIL and WEATHER metadata)
     #mutate(Sheet = ifelse(Sheet %in% c("PERSONS","INSTITUTIONS","DOCUMENTS"), "EXP_METADATA", Sheet)) |>
-    filter(!var_order == "-99" | is.na(var_order))  # tmp: preserve NAs until measured data all sorted in template
+    filter(!var_order_custom == "-99" | is.na(var_order_custom))  # tmp: preserve NAs until measured data all sorted in template
   if(headers == "short") {
     dfs <- mapply(FUN = icasa_long_to_short,
                   df = dfs,
@@ -495,8 +495,8 @@ format_treatment_str <- function(ls){
   df <- df %>%
     mutate(across(where(is.character), ~ sub("\\|.*", "", .)),
            across(everything(), ~ trimws(., which = "left")),
-           across(cultivar_level:mulch_level, ~ifelse(is.na(.x), 0, .x)),
-           across(c(treatment_number, cultivar_level:mulch_level), ~as.numeric(.))) %>%
+           across(genotype_level_number:mulch_level, ~ifelse(is.na(.x), 0, .x)),
+           across(c(treatment_number, genotype_level_number:mulch_level), ~as.numeric(.))) %>%
     mutate(simulation_control_level = as.numeric(
       ifelse(is.na(simulation_control_level), 1, simulation_control_level))
     )
