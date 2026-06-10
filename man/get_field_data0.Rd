@@ -10,6 +10,7 @@ get_field_data0(
   headers = c("short", "long"),
   keep_null_events = TRUE,
   keep_empty = TRUE,
+  keep_na_cols = TRUE,
   output_path = NULL
 )
 }
