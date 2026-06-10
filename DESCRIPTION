@@ -1,6 +1,6 @@
 Package: csmTools
 Title: Data Integration Utilities for Crop Modelers
-Version: 0.2.0
+Version: 0.2.1
 Author: Benjamin Leroy
 Maintainer: Benjamin Leroy <benjamin.leroy@inrae.fr>
 Authors@R: 
