@@ -39,7 +39,7 @@
 #' 
 
 get_field_data0 <- function(path = NULL, exp_id = NULL, headers = c("short", "long"),
-                            keep_null_events = TRUE, keep_empty = TRUE,
+                            keep_null_events = TRUE, keep_empty = TRUE, keep_na_cols = TRUE,
                             output_path = NULL){
   
   # Fetch template
@@ -212,18 +212,20 @@ get_field_data0 <- function(path = NULL, exp_id = NULL, headers = c("short", "lo
     }
     return(df)
   })
-  merged_sec[["GENERAL"]] <- merged_sec[["EXP_METADATA"]]
-  merged_sec[["EXP_METADATA"]] <- NULL
+  # merged_sec[["GENERAL"]] <- merged_sec[["EXP_METADATA"]]
+  # merged_sec[["EXP_METADATA"]] <- NULL
   
-  # Split experiments ##FIX
-  dfs_split <- split_experiments(merged_sec, keep_empty = keep_empty, keep_na_cols = TRUE)
+  # Split experiments
+  dfs_split <- split_experiments(merged_sec, keep_empty = keep_empty)
   if(!is.null(exp_id)){
     dfs_split <- dfs_split[[exp_id]]
   }
   
-  # Remove NA cols in all experiments
-  out <- apply_recursive(dfs_split, remove_all_na_cols)
-  out <- export_output(out, output_path = output_path)
+  # Clean and resolve output
+  if (!keep_na_cols) {
+    dfs_split <- apply_recursive(dfs_split, remove_all_na_cols)
+  }
+  out <- export_output(dfs_split, output_path = output_path)
   
   #
   return(out)
