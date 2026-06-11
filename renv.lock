@@ -283,28 +283,6 @@
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "RSPM"
     },
-    "abind": {
-      "Package": "abind",
-      "Version": "1.4-8",
-      "Source": "Repository",
-      "Date": "2024-09-08",
-      "Title": "Combine Multidimensional Arrays",
-      "Authors@R": "c(person(\"Tony\", \"Plate\", email = \"tplate@acm.org\", role = c(\"aut\", \"cre\")), person(\"Richard\", \"Heiberger\", role = c(\"aut\")))",
-      "Maintainer": "Tony Plate <tplate@acm.org>",
-      "Description": "Combine multidimensional arrays into a single array. This is a generalization of 'cbind' and 'rbind'.  Works with vectors, matrices, and higher-dimensional arrays (aka tensors). Also provides functions 'adrop', 'asub', and 'afill' for manipulating, extracting and replacing data in arrays.",
-      "Depends": [
-        "R (>= 1.5.0)"
-      ],
-      "Imports": [
-        "methods",
-        "utils"
-      ],
-      "License": "MIT + file LICENSE",
-      "NeedsCompilation": "no",
-      "Author": "Tony Plate [aut, cre], Richard Heiberger [aut]",
-      "Repository": "RSPM",
-      "Encoding": "UTF-8"
-    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.2.1",
@@ -330,29 +308,6 @@
       "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
       "Repository": "RSPM"
     },
-    "assertthat": {
-      "Package": "assertthat",
-      "Version": "0.2.1",
-      "Source": "Repository",
-      "Title": "Easy Pre and Post Assertions",
-      "Authors@R": "person(\"Hadley\", \"Wickham\", , \"hadley@rstudio.com\", c(\"aut\", \"cre\"))",
-      "Description": "An extension to stopifnot() that makes it easy to declare  the pre and post conditions that you code should satisfy, while also  producing friendly error messages so that your users know what's gone wrong.",
-      "License": "GPL-3",
-      "Imports": [
-        "tools"
-      ],
-      "Suggests": [
-        "testthat",
-        "covr"
-      ],
-      "RoxygenNote": "6.0.1",
-      "Collate": "'assert-that.r' 'on-failure.r' 'assertions-file.r' 'assertions-scalar.R' 'assertions.r' 'base.r' 'base-comparison.r' 'base-is.r' 'base-logical.r' 'base-misc.r' 'utils.r' 'validate-that.R'",
-      "NeedsCompilation": "no",
-      "Author": "Hadley Wickham [aut, cre]",
-      "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
-      "Repository": "RSPM",
-      "Encoding": "UTF-8"
-    },
     "backports": {
       "Package": "backports",
       "Version": "1.5.0",
@@ -374,51 +329,6 @@
       "RoxygenNote": "7.3.1",
       "Author": "Michel Lang [cre, aut] (<https://orcid.org/0000-0001-9754-0393>), Duncan Murdoch [aut], R Core Team [aut]",
       "Repository": "RSPM"
-    },
-    "berryFunctions": {
-      "Package": "berryFunctions",
-      "Version": "1.22.13",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "Function Collection Related to Plotting and Hydrology",
-      "Date": "2025-07-28",
-      "Imports": [
-        "grDevices",
-        "graphics",
-        "stats",
-        "utils",
-        "abind"
-      ],
-      "Suggests": [
-        "RColorBrewer",
-        "pbapply",
-        "knitr",
-        "rmarkdown",
-        "gstat",
-        "RCurl",
-        "colorspace",
-        "vioplot",
-        "spatstat.geom",
-        "ade4",
-        "nortest",
-        "rstudioapi",
-        "leaflet",
-        "leaflet.extras",
-        "zoo",
-        "R.utils"
-      ],
-      "Authors@R": "person(given=\"Berry\", family=\"Boessenkool\", role=c(\"aut\", \"cre\"), email=\"berry-b@gmx.de\")",
-      "Maintainer": "Berry Boessenkool <berry-b@gmx.de>",
-      "Description": "Draw horizontal histograms, color scattered points by 3rd dimension, enhance date- and log-axis plots, zoom in X11 graphics, trace errors and warnings,  use the unit hydrograph in a linear storage cascade, convert lists to data.frames and arrays,  fit multiple functions.",
-      "License": "GPL (>= 2)",
-      "URL": "https://github.com/brry/berryFunctions",
-      "RoxygenNote": "7.3.2",
-      "Encoding": "UTF-8",
-      "VignetteBuilder": "knitr",
-      "BugReports": "https://github.com/brry/berryFunctions/issues",
-      "NeedsCompilation": "no",
-      "Author": "Berry Boessenkool [aut, cre]",
-      "Repository": "CRAN"
     },
     "bit": {
       "Package": "bit",
@@ -1327,39 +1237,6 @@
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "RSPM"
     },
-    "geosphere": {
-      "Package": "geosphere",
-      "Version": "1.6-5",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "Spherical Trigonometry",
-      "Date": "2026-03-01",
-      "LinkingTo": [
-        "Rcpp"
-      ],
-      "Imports": [
-        "Rcpp",
-        "sp"
-      ],
-      "Depends": [
-        "R (>= 3.0.0)"
-      ],
-      "Suggests": [
-        "methods",
-        "terra",
-        "sf"
-      ],
-      "Authors@R": "c( person(\"Robert J.\", \"Hijmans\", role = c(\"cre\", \"aut\"),  email = \"r.hijmans@gmail.com\"), person(\"Charles\", \"Karney\", role = \"ctb\", comment=\"GeographicLib\"),\t person(\"Ed\", \"Williams\", role = \"ctb\"), person(\"Chris\", \"Vennes\", role = \"ctb\"))",
-      "Description": "Spherical trigonometry for geographic applications. That is, compute distances and related measures for angular (longitude/latitude) locations.",
-      "BugReports": "https://github.com/rspatial/geosphere/issues/",
-      "License": "GPL (>= 3)",
-      "LazyLoad": "yes",
-      "NeedsCompilation": "yes",
-      "Author": "Robert J. Hijmans [cre, aut], Charles Karney [ctb] (GeographicLib), Ed Williams [ctb], Chris Vennes [ctb]",
-      "Maintainer": "Robert J. Hijmans <r.hijmans@gmail.com>",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
-    },
     "ggplot2": {
       "Package": "ggplot2",
       "Version": "4.0.2",
@@ -2063,7 +1940,7 @@
     },
     "openxlsx2": {
       "Package": "openxlsx2",
-      "Version": "1.25",
+      "Version": "1.27",
       "Source": "Repository",
       "Type": "Package",
       "Title": "Read, Write and Edit 'xlsx' Files",
@@ -2089,6 +1966,7 @@
       "Suggests": [
         "ggplot2",
         "knitr",
+        "encharter",
         "mschart (>= 0.4)",
         "openssl",
         "rmarkdown",
@@ -2098,7 +1976,7 @@
       ],
       "VignetteBuilder": "knitr",
       "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.3",
+      "Config/roxygen2/version": "8.0.0",
       "Config/testthat/edition": "3",
       "NeedsCompilation": "yes",
       "Author": "Jordan Mark Barbone [aut] (ORCID: <https://orcid.org/0000-0001-9788-3628>), Jan Marvin Garbuszus [aut, cre], Olivier Roy [ctb], openxlsx authors [cph] (openxlsx package), Arseny Kapoulkine [ctb, cph] (Author of included pugixml code)",
@@ -2134,35 +2012,6 @@
       "Author": "Henrik Bengtsson [aut, cre, cph] (ORCID: <https://orcid.org/0000-0002-7579-5165>), Mike Cheng [ctb]",
       "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
       "Repository": "CRAN"
-    },
-    "pbapply": {
-      "Package": "pbapply",
-      "Version": "1.7-4",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "Adding Progress Bar to '*apply' Functions",
-      "Date": "2025-07-19",
-      "Authors@R": "c(person(given = \"Peter\", family = \"Solymos\", comment = c(ORCID = \"0000-0001-7337-1740\"), role = c(\"aut\", \"cre\"), email = \"psolymos@gmail.com\"), person(given = \"Zygmunt\", family = \"Zawadzki\", role = \"aut\", email = \"zygmunt@zstat.pl\"), person(given = \"Henrik\",  family = \"Bengtsson\",  role = \"ctb\", email = \"henrikb@braju.com\"), person(\"R Core Team\", role = c(\"cph\", \"ctb\")))",
-      "Maintainer": "Peter Solymos <psolymos@gmail.com>",
-      "Description": "A lightweight package that adds progress bar to vectorized R functions ('*apply'). The implementation can easily be added to functions where showing the progress is useful (e.g. bootstrap). The type and style of the progress bar (with percentages or remaining time) can be set through options. Supports several parallel processing backends including mirai and future.",
-      "Depends": [
-        "R (>= 3.2.0)"
-      ],
-      "Imports": [
-        "parallel"
-      ],
-      "Suggests": [
-        "shiny",
-        "future",
-        "future.apply"
-      ],
-      "License": "GPL (>= 2)",
-      "URL": "https://github.com/psolymos/pbapply, https://peter.solymos.org/pbapply/",
-      "BugReports": "https://github.com/psolymos/pbapply/issues",
-      "NeedsCompilation": "no",
-      "Author": "Peter Solymos [aut, cre] (ORCID: <https://orcid.org/0000-0001-7337-1740>), Zygmunt Zawadzki [aut], Henrik Bengtsson [ctb], R Core Team [cph, ctb]",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
     },
     "pillar": {
       "Package": "pillar",
@@ -2489,60 +2338,6 @@
       "Maintainer": "Robert J. Hijmans <r.hijmans@gmail.com>",
       "Repository": "CRAN",
       "Encoding": "UTF-8"
-    },
-    "rdwd": {
-      "Package": "rdwd",
-      "Version": "1.9.8",
-      "Source": "GitHub",
-      "Title": "Select and Download Climate Data from 'DWD' (German Weather Service)",
-      "Date": "2025-12-20",
-      "Depends": [
-        "R(>= 2.10)"
-      ],
-      "Imports": [
-        "berryFunctions (>= 1.21.11)",
-        "pbapply"
-      ],
-      "Suggests": [
-        "RCurl",
-        "leaflet",
-        "knitr",
-        "rmarkdown",
-        "testthat",
-        "roxygen2",
-        "devtools",
-        "remotes",
-        "bit64",
-        "data.table",
-        "OSMscale",
-        "R.utils",
-        "ncdf4",
-        "readr",
-        "dwdradar",
-        "XML",
-        "terra (>= 1.8-60)",
-        "stars",
-        "shiny",
-        "gsheet",
-        "rnaturalearth"
-      ],
-      "Authors@R": "person(given = \"Berry\", family = \"Boessenkool\", role = c(\"aut\", \"cre\"), email = \"berry-b@gmx.de\")",
-      "Description": "Handle climate data from the 'DWD' ('Deutscher Wetterdienst', see  <https://www.dwd.de/EN/climate_environment/cdc/cdc_node_en.html> for more information). Choose observational time series from meteorological stations with 'selectDWD()'. Find raster data from radar and interpolation according to <https://brry.github.io/rdwd/raster-data.html>. Download (multiple) data sets with progress bars and no re-downloads through 'dataDWD()'. Read both tabular observational data and binary gridded datasets with 'readDWD()'.",
-      "License": "GPL (>= 2)",
-      "Encoding": "UTF-8",
-      "URL": "https://brry.github.io/rdwd/",
-      "RoxygenNote": "7.3.3",
-      "Roxygen": "list(markdown=TRUE)",
-      "BugReports": "https://github.com/brry/rdwd/issues",
-      "VignetteBuilder": "knitr",
-      "Author": "Berry Boessenkool [aut, cre]",
-      "Maintainer": "Berry Boessenkool <berry-b@gmx.de>",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteUsername": "brry",
-      "RemoteRepo": "rdwd",
-      "RemoteRef": "master",
-      "RemoteSha": "c3bbdaaf5e6b605a3a5a757c8c5eb45b4a30c6ad"
     },
     "readr": {
       "Package": "readr",
@@ -2942,42 +2737,6 @@
       "Maintainer": "Edzer Pebesma <edzer.pebesma@uni-muenster.de>",
       "Repository": "CRAN",
       "Encoding": "UTF-8"
-    },
-    "spsUtil": {
-      "Package": "spsUtil",
-      "Version": "0.2.2.1",
-      "Source": "Repository",
-      "Title": "'systemPipeShiny' Utility Functions",
-      "Date": "2021-10-29",
-      "Authors@R": "c(person(given = \"Le\", family = \"Zhang\", role = c(\"aut\", \"cre\"), email = \"lezhang100@gmail.com\"))",
-      "Description": "The systemPipeShiny (SPS) framework comes with many useful utility functions. However, installing the whole framework is heavy and takes some time. If you like only a few useful utility functions from SPS, install this package is enough.",
-      "Depends": [
-        "R (>= 4.0.0)"
-      ],
-      "Imports": [
-        "httr",
-        "assertthat",
-        "stringr",
-        "glue",
-        "magrittr",
-        "crayon",
-        "utils",
-        "R6",
-        "stats"
-      ],
-      "Suggests": [
-        "testthat"
-      ],
-      "License": "GPL (>= 3)",
-      "Encoding": "UTF-8",
-      "BugReports": "https://github.com/lz100/spsUtil/issues",
-      "URL": "https://github.com/lz100/spsUtil",
-      "RoxygenNote": "7.3.3",
-      "Config/testthat/edition": "3",
-      "NeedsCompilation": "no",
-      "Author": "Le Zhang [aut, cre]",
-      "Maintainer": "Le Zhang <lezhang100@gmail.com>",
-      "Repository": "CRAN"
     },
     "stringi": {
       "Package": "stringi",
@@ -3773,6 +3532,32 @@
       "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
       "Repository": "RSPM"
     },
+    "yaml": {
+      "Package": "yaml",
+      "Version": "2.3.12",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Methods to Convert R Data to YAML and Back",
+      "Authors@R": "c( person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"cre\", comment = c(ORCID = \"0000-0003-4757-117X\")), person(\"Shawn\", \"Garbett\", , \"shawn.garbett@vumc.org\", role = \"ctb\", comment = c(ORCID = \"0000-0003-4079-5621\")), person(\"Jeremy\", \"Stephens\", role = c(\"aut\", \"ctb\")), person(\"Kirill\", \"Simonov\", role = \"aut\"), person(\"Yihui\", \"Xie\", role = \"ctb\", comment = c(ORCID = \"0000-0003-0645-5666\")), person(\"Zhuoer\", \"Dong\", role = \"ctb\"), person(\"Jeffrey\", \"Horner\", role = \"ctb\"), person(\"reikoch\", role = \"ctb\"), person(\"Will\", \"Beasley\", role = \"ctb\", comment = c(ORCID = \"0000-0002-5613-5006\")), person(\"Brendan\", \"O'Connor\", role = \"ctb\"), person(\"Michael\", \"Quinn\", role = \"ctb\"), person(\"Charlie\", \"Gao\", role = \"ctb\"), person(c(\"Gregory\", \"R.\"), \"Warnes\", role = \"ctb\"), person(c(\"Zhian\", \"N.\"), \"Kamvar\", role = \"ctb\") )",
+      "Description": "Implements the 'libyaml' 'YAML' 1.1 parser and emitter (<https://pyyaml.org/wiki/LibYAML>) for R.",
+      "License": "BSD_3_clause + file LICENSE",
+      "URL": "https://yaml.r-lib.org, https://github.com/r-lib/yaml/",
+      "BugReports": "https://github.com/r-lib/yaml/issues",
+      "Suggests": [
+        "knitr",
+        "rmarkdown",
+        "testthat (>= 3.0.0)"
+      ],
+      "Config/testthat/edition": "3",
+      "Config/Needs/website": "tidyverse/tidytemplate",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.3",
+      "VignetteBuilder": "knitr",
+      "NeedsCompilation": "yes",
+      "Author": "Hadley Wickham [cre] (ORCID: <https://orcid.org/0000-0003-4757-117X>), Shawn Garbett [ctb] (ORCID: <https://orcid.org/0000-0003-4079-5621>), Jeremy Stephens [aut, ctb], Kirill Simonov [aut], Yihui Xie [ctb] (ORCID: <https://orcid.org/0000-0003-0645-5666>), Zhuoer Dong [ctb], Jeffrey Horner [ctb], reikoch [ctb], Will Beasley [ctb] (ORCID: <https://orcid.org/0000-0002-5613-5006>), Brendan O'Connor [ctb], Michael Quinn [ctb], Charlie Gao [ctb], Gregory R. Warnes [ctb], Zhian N. Kamvar [ctb]",
+      "Maintainer": "Hadley Wickham <hadley@posit.co>",
+      "Repository": "RSPM"
+    },
     "yyjsonr": {
       "Package": "yyjsonr",
       "Version": "0.1.21",
@@ -3832,48 +3617,6 @@
       "Author": "Gábor Csárdi [aut, cre], Kuba Podgórski [ctb], Rich Geldreich [ctb], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
       "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
       "Repository": "RSPM"
-    },
-    "zoo": {
-      "Package": "zoo",
-      "Version": "1.8-15",
-      "Source": "Repository",
-      "Date": "2025-12-15",
-      "Title": "S3 Infrastructure for Regular and Irregular Time Series (Z's Ordered Observations)",
-      "Authors@R": "c(person(given = \"Achim\", family = \"Zeileis\", role = c(\"aut\", \"cre\"), email = \"Achim.Zeileis@R-project.org\", comment = c(ORCID = \"0000-0003-0918-3766\")), person(given = \"Gabor\", family = \"Grothendieck\", role = \"aut\", email = \"ggrothendieck@gmail.com\"), person(given = c(\"Jeffrey\", \"A.\"), family = \"Ryan\", role = \"aut\", email = \"jeff.a.ryan@gmail.com\"), person(given = c(\"Joshua\", \"M.\"), family = \"Ulrich\", role = \"ctb\", email = \"josh.m.ulrich@gmail.com\"), person(given = \"Felix\", family = \"Andrews\", role = \"ctb\", email = \"felix@nfrac.org\"))",
-      "Description": "An S3 class with methods for totally ordered indexed observations. It is particularly aimed at irregular time series of numeric vectors/matrices and factors. zoo's key design goals are independence of a particular index/date/time class and consistency with ts and base R by providing methods to extend standard generics.",
-      "Depends": [
-        "R (>= 3.1.0)",
-        "stats"
-      ],
-      "Suggests": [
-        "AER",
-        "coda",
-        "chron",
-        "ggplot2 (>= 3.5.0)",
-        "mondate",
-        "scales",
-        "stinepack",
-        "strucchange",
-        "timeDate",
-        "timeSeries",
-        "tinyplot",
-        "tis",
-        "tseries",
-        "xts"
-      ],
-      "Imports": [
-        "utils",
-        "graphics",
-        "grDevices",
-        "lattice (>= 0.20-27)"
-      ],
-      "License": "GPL-2 | GPL-3",
-      "URL": "https://zoo.R-Forge.R-project.org/",
-      "NeedsCompilation": "yes",
-      "Author": "Achim Zeileis [aut, cre] (ORCID: <https://orcid.org/0000-0003-0918-3766>), Gabor Grothendieck [aut], Jeffrey A. Ryan [aut], Joshua M. Ulrich [ctb], Felix Andrews [ctb]",
-      "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
-      "Repository": "RSPM",
-      "Encoding": "UTF-8"
     }
   }
 }
