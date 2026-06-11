@@ -35,8 +35,12 @@ apply_recursive <- function(x, f, ...) {
 #' 
 
 revert_list_str <- function(ls) {
-  x <- lapply(ls, `[`, names(ls[[1]]))
-  apply(do.call(rbind, x), 2, as.list)
+  all_names <- unique(unlist(lapply(ls, names)))
+  result <- lapply(all_names, function(nm) {
+    Filter(Negate(is.null), lapply(ls, function(tbl) tbl[[nm]]))
+  })
+  names(result) <- all_names
+  result
 }
 
 
