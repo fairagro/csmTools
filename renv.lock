@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.5.2",
+    "Version": "4.5.3",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -60,6 +60,51 @@
       "Author": "R Special Interest Group on Databases (R-SIG-DB) [aut], Hadley Wickham [aut], Kirill Müller [aut, cre] (ORCID: <https://orcid.org/0000-0002-1416-3412>), R Consortium [fnd]",
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "RSPM"
+    },
+    "DSSAT": {
+      "Package": "DSSAT",
+      "Version": "0.0.9",
+      "Source": "GitHub",
+      "Type": "Package",
+      "Title": "A Comprehensive R Interface for the DSSAT Cropping Systems Model",
+      "Date": "2024-01-19",
+      "Author": "Phillip D. Alderman [aut, cre]",
+      "Maintainer": "Phillip D. Alderman <phillip.alderman@okstate.edu>",
+      "Description": "The purpose of this package is to provide a comprehensive R interface to the Decision Support System for Agrotechnology Transfer Cropping Systems Model (DSSAT-CSM; see <https://dssat.net> for more information). The package provides cross-platform functions to read and write input files, run DSSAT-CSM, and read output files.",
+      "License": "GPL (>=3)",
+      "Encoding": "UTF-8",
+      "Imports": [
+        "dplyr (>= 1.0.0)",
+        "glue",
+        "lubridate",
+        "magrittr",
+        "methods",
+        "purrr",
+        "readr",
+        "rlang",
+        "stringr",
+        "tibble",
+        "tidyr",
+        "tidyselect",
+        "utils"
+      ],
+      "RoxygenNote": "7.3.2",
+      "Suggests": [
+        "knitr",
+        "rmarkdown"
+      ],
+      "BugReports": "https://github.com/palderman/DSSAT/issues",
+      "Config/testthat/edition": "3",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "DSSAT",
+      "RemoteUsername": "leroy-bml",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "5471d16187d8abfb455bd2ff0df989ba5fc65c50",
+      "NeedsCompilation": "no",
+      "Depends": [
+        "R (>= 4.1.0)"
+      ]
     },
     "KernSmooth": {
       "Package": "KernSmooth",
@@ -804,6 +849,49 @@
       "RemoteRef": "master",
       "RemoteSha": "e82c8e22817efc0985104e4657a0302b699ef053"
     },
+    "crul": {
+      "Package": "crul",
+      "Version": "1.6.0",
+      "Source": "Repository",
+      "Title": "HTTP Client",
+      "Description": "A simple HTTP client, with tools for making HTTP requests, and mocking HTTP requests. The package is built on R6, and takes inspiration from Ruby's 'faraday' gem (<https://rubygems.org/gems/faraday>). The package name is a play on curl, the widely used command line tool for HTTP, and this package is built on top of the R package 'curl', an interface to 'libcurl' (<https://curl.se/libcurl/>).",
+      "License": "MIT + file LICENSE",
+      "Authors@R": "c( person(\"Scott\", \"Chamberlain\", role = c(\"aut\", \"cre\"), email = \"myrmecocystus@gmail.com\", comment = c(ORCID = \"0000-0003-1444-9135\")) )",
+      "URL": "https://docs.ropensci.org/crul/, https://github.com/ropensci/crul, https://books.ropensci.org/http-testing/",
+      "BugReports": "https://github.com/ropensci/crul/issues",
+      "Encoding": "UTF-8",
+      "Language": "en-US",
+      "Imports": [
+        "curl (>= 3.3)",
+        "R6 (>= 2.2.0)",
+        "urltools (>= 1.6.0)",
+        "httpcode (>= 0.2.0)",
+        "jsonlite",
+        "mime",
+        "rlang",
+        "lifecycle"
+      ],
+      "Suggests": [
+        "testthat (>= 3.0.0)",
+        "roxygen2 (>= 7.1.1)",
+        "fauxpas (>= 0.1.0)",
+        "webmockr (>= 2.2.0)",
+        "withr",
+        "knitr",
+        "rmarkdown"
+      ],
+      "VignetteBuilder": "knitr",
+      "RoxygenNote": "7.3.2",
+      "Config/testthat/edition": "3",
+      "Config/testthat/parallel": "true",
+      "X-schema.org-applicationCategory": "Web",
+      "X-schema.org-keywords": "http, https, API, web-services, curl, download, libcurl, async, mocking, caching",
+      "X-schema.org-isPartOf": "https://ropensci.org",
+      "NeedsCompilation": "no",
+      "Author": "Scott Chamberlain [aut, cre] (ORCID: <https://orcid.org/0000-0003-1444-9135>)",
+      "Maintainer": "Scott Chamberlain <myrmecocystus@gmail.com>",
+      "Repository": "CRAN"
+    },
     "curl": {
       "Package": "curl",
       "Version": "7.0.0",
@@ -1486,6 +1574,27 @@
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "RSPM"
     },
+    "httpcode": {
+      "Package": "httpcode",
+      "Version": "0.3.0",
+      "Source": "Repository",
+      "Title": "'HTTP' Status Code Helper",
+      "Description": "Find and explain the meaning of 'HTTP' status codes. Functions included for searching for codes by full or partial number, by message, and get appropriate dog and cat images for many status codes.",
+      "Authors@R": "person(\"Scott\", \"Chamberlain\", role = c(\"aut\",\"cre\"), email = \"myrmecocystus@gmail.com\",  comment = c(ORCID = \"0000-0003-1444-9135\"))",
+      "License": "MIT + file LICENSE",
+      "URL": "https://github.com/sckott/httpcode",
+      "BugReports": "https://github.com/sckott/httpcode/issues",
+      "Encoding": "UTF-8",
+      "Language": "en-US",
+      "Suggests": [
+        "testthat"
+      ],
+      "RoxygenNote": "7.1.0",
+      "NeedsCompilation": "no",
+      "Author": "Scott Chamberlain [aut, cre] (<https://orcid.org/0000-0003-1444-9135>)",
+      "Maintainer": "Scott Chamberlain <myrmecocystus@gmail.com>",
+      "Repository": "CRAN"
+    },
     "httr": {
       "Package": "httr",
       "Version": "1.4.8",
@@ -1655,7 +1764,8 @@
       "NeedsCompilation": "yes",
       "Author": "Deepayan Sarkar [aut, cre] (<https://orcid.org/0000-0003-4107-1553>), Felix Andrews [ctb], Kevin Wright [ctb] (documentation), Neil Klepeis [ctb], Johan Larsson [ctb] (miscellaneous improvements), Zhijian (Jason) Wen [cph] (filled contour code), Paul Murrell [ctb], Stefan Eng [ctb] (violin plot improvements), Achim Zeileis [ctb] (modern colors), Alexandre Courtiol [ctb] (generics for larrows, lpolygon, lrect and lsegments)",
       "Maintainer": "Deepayan Sarkar <deepayan.sarkar@r-project.org>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "lifecycle": {
       "Package": "lifecycle",
@@ -1852,6 +1962,54 @@
       "Author": "Yihui Xie [aut, cre] (<https://orcid.org/0000-0003-0645-5666>, https://yihui.org), Jeffrey Horner [ctb], Beilei Bian [ctb]",
       "Maintainer": "Yihui Xie <xie@yihui.name>",
       "Repository": "RSPM"
+    },
+    "nasapower": {
+      "Package": "nasapower",
+      "Version": "4.2.5",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "NASA POWER API Client",
+      "Authors@R": "c( person(\"Adam H.\", \"Sparks\", , \"adamhsparks@gmail.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-0061-8359\")), person(\"Scott\", \"Chamberlain\", , \"myrmecocystus@gmail.com\", role = \"rev\", comment = c(ORCID = \"0000-0003-1444-9135\", \"Scott Chamberlain reviewed nasapower for rOpenSci, see\\n              <https://github.com/ropensci/software-review/issues/155>.\")), person(\"Hazel\", \"Kavili\", role = \"rev\", comment = \"Hazel Kavili reviewed nasapower for rOpenSci, see\\n            <https://github.com/ropensci/software-review/issues/155>.\"), person(\"Alison\", \"Boyer\", role = \"rev\", comment = \"Alison Boyer reviewed nasapower for rOpenSci, see\\n            <https://github.com/ropensci/software-review/issues/155>.\"), person(\"Fernando\", \"Miguez\", , \"femiguez@iastate.edu\", role = \"ctb\", comment = c(ORCID = \"0000-0002-4627-8329\", \"Fernando Miguez provided assistance in identifying\\n              improper missing value handling in the POWER data, see \\n              <https://github.com/femiguez/apsimx/pull/26>.\")), person(\"Maëlle\", \"Salmon\", role = \"ctb\", comment = c(ORCID = \"0000-0002-2815-0399\", \"Maëlle Salmon contributed a patch to fix issues with using the R\\n              package, 'vcr', for testing the API queries, see\\n                        <https://github.com/ropensci/nasapower/pull/64>.\")), person(\"Phillip D.\", \"Alderman\", , \"phillip.alderman@okstate.edu\", role = \"ctb\", comment = c(ORCID = \"0000-0003-1467-2337\", \"Phillip Alderman contributed a patch to fix an issue with, 'The\\n               `file` argument of `vroom()` must use `I()` for literal data as\\n               of vroom 1.5.0.', see\\n               <https://github.com/ropensci/nasapower/pull/67>.\")), person(\"Aleksandar\", \"Blagotić\", , \"alex@rapporter.net\", role = c(\"ctb\", \"cph\"), comment = \"Author of the CRAN package 'rapportools', from which\\n             the '.is_boolean()' was taken.\"), person(\"Gergely\", \"Daróczi\", , \"daroczig@rapporter.net\", role = c(\"ctb\", \"cph\"), comment = \"Author of the CRAN package 'rapportools', from which\\n             the '.is_boolean()' was taken.\"), person(\"Curtin University\", role = \"cph\", comment = \"Supported the development of 'nasapower' through Adam H.\\n                Sparks' time.\"), person(\"James J.\", \"Balamuta\", role = c(\"ctb\", \"cph\"), comment = \"Author of the GitHub package 'rops', from which the '%notin%' function was taken.\") )",
+      "Description": "An API client for NASA POWER global meteorology, surface solar energy and climatology data API.  POWER (Prediction Of Worldwide Energy Resources) data are freely available for download with varying spatial resolutions dependent on the original data and with several temporal resolutions depending on the POWER parameter and community. This work is funded through the NASA Earth Science Directorate Applied Science Program.  For more on the data themselves, the methodologies used in creating, a web-based data viewer and web access, please see <https://power.larc.nasa.gov/>.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://docs.ropensci.org/nasapower/",
+      "BugReports": "https://github.com/ropensci/nasapower/issues",
+      "Depends": [
+        "R (>= 3.5.0)"
+      ],
+      "Imports": [
+        "cli",
+        "crul",
+        "lubridate",
+        "readr",
+        "rlang",
+        "tibble (>= 3.0.2)",
+        "yyjsonr"
+      ],
+      "Suggests": [
+        "knitr",
+        "purrr",
+        "rmarkdown",
+        "spelling",
+        "testthat (>= 3.0.0)",
+        "vcr (>= 0.6.0)"
+      ],
+      "VignetteBuilder": "knitr",
+      "Config/Needs/build": "moodymudskipper/devtag",
+      "Config/Needs/documentation": "roxylint",
+      "Config/roxylint": "list(linters = roxylint::tidy)",
+      "Config/testthat/edition": "3",
+      "Config/testthat/parallel": "true",
+      "Encoding": "UTF-8",
+      "Language": "en-US",
+      "NeedsCompilation": "no",
+      "Repository": "CRAN",
+      "RoxygenNote": "7.3.2.9000",
+      "X-schema.org-applicationCategory": "Tools",
+      "X-schema.org-isPartOf": "https://ropensci.org",
+      "X-schema.org-keywords": "NASA, meteorological-data, weather, global, weather, weather-data, meteorology, NASA-POWER, agroclimatology, earth-science, data-access, climate-data",
+      "Author": "Adam H. Sparks [aut, cre] (ORCID: <https://orcid.org/0000-0002-0061-8359>), Scott Chamberlain [rev] (ORCID: <https://orcid.org/0000-0003-1444-9135>, Scott Chamberlain reviewed nasapower for rOpenSci, see <https://github.com/ropensci/software-review/issues/155>.), Hazel Kavili [rev] (Hazel Kavili reviewed nasapower for rOpenSci, see <https://github.com/ropensci/software-review/issues/155>.), Alison Boyer [rev] (Alison Boyer reviewed nasapower for rOpenSci, see <https://github.com/ropensci/software-review/issues/155>.), Fernando Miguez [ctb] (ORCID: <https://orcid.org/0000-0002-4627-8329>, Fernando Miguez provided assistance in identifying improper missing value handling in the POWER data, see <https://github.com/femiguez/apsimx/pull/26>.), Maëlle Salmon [ctb] (ORCID: <https://orcid.org/0000-0002-2815-0399>, Maëlle Salmon contributed a patch to fix issues with using the R package, 'vcr', for testing the API queries, see <https://github.com/ropensci/nasapower/pull/64>.), Phillip D. Alderman [ctb] (ORCID: <https://orcid.org/0000-0003-1467-2337>, Phillip Alderman contributed a patch to fix an issue with, 'The `file` argument of `vroom()` must use `I()` for literal data as of vroom 1.5.0.', see <https://github.com/ropensci/nasapower/pull/67>.), Aleksandar Blagotić [ctb, cph] (Author of the CRAN package 'rapportools', from which the '.is_boolean()' was taken.), Gergely Daróczi [ctb, cph] (Author of the CRAN package 'rapportools', from which the '.is_boolean()' was taken.), Curtin University [cph] (Supported the development of 'nasapower' through Adam H.  Sparks' time.), James J. Balamuta [ctb, cph] (Author of the GitHub package 'rops', from which the '%notin%' function was taken.)",
+      "Maintainer": "Adam H. Sparks <adamhsparks@gmail.com>"
     },
     "ncdf4": {
       "Package": "ncdf4",
@@ -3188,6 +3346,36 @@
       "Maintainer": "Vitalie Spinu <spinuvit@gmail.com>",
       "Repository": "RSPM"
     },
+    "triebeard": {
+      "Package": "triebeard",
+      "Version": "0.4.1",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "'Radix' Trees in 'Rcpp'",
+      "Author": "Os Keyes [aut, cre], Drew Schmidt [aut], Yuuki Takano [cph]",
+      "Maintainer": "Os Keyes <ironholds@gmail.com>",
+      "Description": "'Radix trees', or 'tries', are key-value data structures optimised for efficient lookups, similar in purpose to hash tables. 'triebeard' provides an implementation of 'radix trees' for use in R programming and in developing packages with 'Rcpp'.",
+      "License": "MIT + file LICENSE",
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Encoding": "UTF-8",
+      "Imports": [
+        "Rcpp"
+      ],
+      "RoxygenNote": "7.1.2",
+      "Suggests": [
+        "knitr",
+        "rmarkdown",
+        "testthat"
+      ],
+      "VignetteBuilder": "knitr",
+      "URL": "https://github.com/Ironholds/triebeard/",
+      "BugReports": "https://github.com/Ironholds/triebeard/issues",
+      "Date": "2023-03-04",
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN"
+    },
     "tzdb": {
       "Package": "tzdb",
       "Version": "0.5.0",
@@ -3261,6 +3449,42 @@
       "Author": "Edzer Pebesma [aut, cre] (ORCID: <https://orcid.org/0000-0001-8049-7069>), Thomas Mailund [aut], Tomasz Kalinowski [aut], James Hiebert [ctb], Iñaki Ucar [aut] (ORCID: <https://orcid.org/0000-0001-6403-5550>), Thomas Lin Pedersen [ctb]",
       "Maintainer": "Edzer Pebesma <edzer.pebesma@uni-muenster.de>",
       "Repository": "CRAN"
+    },
+    "urltools": {
+      "Package": "urltools",
+      "Version": "1.7.3.1",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Vectorised Tools for URL Handling and Parsing",
+      "Date": "2019-04-14",
+      "Authors@R": "c(person(given = \"Os\", family = \"Keyes\", role = c(\"aut\", \"cre\"), email = \"ironholds@gmail.com\"), person(given = \"Jay\", family = \"Jacobs\", role = \"aut\"), person(given = \"Drew\", family = \"Schmidt\", role = \"aut\"), person(given = \"Mark\", family = \"Greenaway\", role = \"ctb\"), person(given = \"Bob\", family = \"Rudis\", role = \"ctb\"), person(given = \"Alex\", family = \"Pinto\", role = \"ctb\"), person(given = \"Maryam\", family = \"Khezrzadeh\", role = \"ctb\"), person(given = \"Peter\", family = \"Meilstrup\", role = \"ctb\"), person(given = c(\"Adam\", \"M.\"), family = \"Costello\", role = \"cph\"), person(given = \"Jeff\", family = \"Bezanson\", role = \"cph\"), person(given = \"Peter\", family = \"Meilstrup\", role = \"ctb\"), person(given = \"Xueyuan\", family = \"Jiang\", role = \"ctb\"))",
+      "Description": "A toolkit for all URL-handling needs, including encoding and decoding, parsing, parameter extraction and modification. All functions are designed to be both fast and entirely vectorised. It is intended to be useful for people dealing with web-related datasets, such as server-side logs, although may be useful for other situations involving large sets of URLs.",
+      "License": "MIT + file LICENSE",
+      "LazyData": "TRUE",
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Imports": [
+        "Rcpp",
+        "methods",
+        "triebeard"
+      ],
+      "Suggests": [
+        "testthat",
+        "knitr"
+      ],
+      "URL": "https://github.com/Ironholds/urltools/",
+      "BugReports": "https://github.com/Ironholds/urltools/issues",
+      "VignetteBuilder": "knitr",
+      "RoxygenNote": "6.1.1",
+      "Encoding": "UTF-8",
+      "Depends": [
+        "R (>= 2.10)"
+      ],
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN",
+      "Author": "Os Keyes [aut, cre], Jay Jacobs [aut], Drew Schmidt [aut], Mark Greenaway [ctb], Bob Rudis [ctb], Alex Pinto [ctb], Maryam Khezrzadeh [ctb], Peter Meilstrup [ctb], Adam M. Costello [cph], Jeff Bezanson [cph], Peter Meilstrup [ctb], Xueyuan Jiang [ctb]",
+      "Maintainer": "Os Keyes <ironholds@gmail.com>"
     },
     "utf8": {
       "Package": "utf8",
@@ -3548,6 +3772,38 @@
       "Author": "Hadley Wickham [aut], Jim Hester [aut], Jeroen Ooms [aut, cre], Posit Software, PBC [cph, fnd], R Foundation [ctb] (Copy of R-project homepage cached as example)",
       "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
       "Repository": "RSPM"
+    },
+    "yyjsonr": {
+      "Package": "yyjsonr",
+      "Version": "0.1.21",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Fast 'JSON', 'NDJSON' and 'GeoJSON' Parser and Generator",
+      "Authors@R": "c( person(\"Mike\", \"Cheng\", role = c(\"aut\", \"cre\", 'cph'),  email = \"mikefc@coolbutuseless.com\"), person(\"Yao\", \"Yuan\", role = c(\"aut\", \"cph\"), email = \"ibireme@gmail.com\",  comment=\"Author of bundled yyjson\"), person(\"Murat\", \"Tasan\", role = c(\"ctb\"),  comment=\"'json_verbatim' handling\") )",
+      "Maintainer": "Mike Cheng <mikefc@coolbutuseless.com>",
+      "Description": "A fast 'JSON' parser, generator and validator which converts 'JSON',  'NDJSON' (Newline Delimited 'JSON') and 'GeoJSON' (Geographic 'JSON') data  to/from R objects.  The standard R data types are  supported (e.g. logical, numeric, integer) with configurable handling of NULL  and NA values. Data frames, atomic vectors and lists are all supported as data  containers translated to/from 'JSON'.  'GeoJSON' data is read in as 'simple features' objects. This implementation wraps the 'yyjson' 'C' library which  is available from <https://github.com/ibireme/yyjson>.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://github.com/coolbutuseless/yyjsonr, https://coolbutuseless.github.io/package/yyjsonr/",
+      "BugReports": "https://github.com/coolbutuseless/yyjsonr/issues",
+      "Encoding": "UTF-8",
+      "Language": "en-AU",
+      "RoxygenNote": "7.3.2",
+      "Suggests": [
+        "bit64",
+        "knitr",
+        "rmarkdown",
+        "jsonlite",
+        "testthat (>= 3.0.0)"
+      ],
+      "Config/testthat/edition": "3",
+      "VignetteBuilder": "knitr",
+      "Copyright": "The included 'yyjson' code is Copyright (c) 2020 YaoYuan. See 'COPYRIGHTS' for LICENSE for included code.",
+      "Depends": [
+        "R (>= 4.1.0)"
+      ],
+      "NeedsCompilation": "yes",
+      "Author": "Mike Cheng [aut, cre, cph], Yao Yuan [aut, cph] (Author of bundled yyjson), Murat Tasan [ctb] ('json_verbatim' handling)",
+      "Repository": "CRAN"
     },
     "zip": {
       "Package": "zip",
