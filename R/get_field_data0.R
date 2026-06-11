@@ -292,7 +292,7 @@ drop_artefacts <- function(df) {
 #'
 #' @examples
 #' \dontrun{
-#' wb <- openxlsx::loadWorkbook("template.xlsx")
+#' wb <- openxlsx2::wb_load("template.xlsx")
 #' codes_ls <- get_template_codes(wb)
 #' names(codes_ls)
 #' # [1] \"crop\" \"soil\" \"site\" ...
@@ -406,11 +406,11 @@ icasa_long_to_short <- function(df, section, dict, keep_unmapped = TRUE){
 #'
 #' @examples
 #' df <- data.frame(
-#'   crop = crop = c("Maize", "Wheat", "Rice"),,
+#'   crop = c("Maize", "Wheat", "Rice"),
 #'   stringsAsFactors = FALSE
 #' )
 #' codes <- list(
-#'   crop = data.frame(desc = crop = c("Maize", "Wheat", "Rice"),, code = c("MZ", "WH", "RC"))
+#'   crop = data.frame(crop = c("Maize", "Wheat", "Rice"), code = c("MZ", "WH", "RC"))
 #' )
 #' desc_to_codes(df, codes)
 #' # Returns a data frame with crop codes: "MZ", "WH", "RC"

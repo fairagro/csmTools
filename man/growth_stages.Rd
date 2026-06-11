@@ -5,7 +5,7 @@
 \alias{growth_stages}
 \title{Growth stages reference data}
 \format{
-A data frame with 132 rows and 5 variables:
+A data frame with 5 variables:
 \describe{
 \item{scale}{(character) The growth stage scale (bbch, zadoks)}
 \item{growth_stage}{(character) Harmonized name of growth stage}

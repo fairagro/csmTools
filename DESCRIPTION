@@ -1,21 +1,21 @@
 Package: csmTools
 Title: Data Integration Utilities for Crop Modelers
 Version: 0.2.1
-Author: Benjamin Leroy
-Maintainer: Benjamin Leroy <benjamin.leroy@inrae.fr>
 Authors@R: 
     person("Benjamin", "Leroy", , "benjamin.leroy@inrae.fr", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-6007-7948"))
-Description: The package provide a series of tools to extract, structure and integrate data from various sources (IoT platform, online databases, published datasets...) to compile validation datasets for process-based crop models. The current version is mainly helpful for streamlining data preparation for research applications with the DSSAT modeling framework (https://dssat.net) and uses the ICASA dictionary (https://github.com/DSSAT/ICASA-Dictionary) as its core annotation standards.
+Author: Benjamin Leroy
+Maintainer: Benjamin Leroy <benjamin.leroy@inrae.fr>
+Description: The package provide a series of tools to extract, structure
+    and integrate data from various sources (IoT platform, online
+    databases, published datasets...) to compile validation datasets for
+    process-based crop models. The current version is mainly helpful for
+    streamlining data preparation for research applications with the DSSAT
+    modeling framework (https://dssat.net) and uses the ICASA dictionary
+    (https://github.com/DSSAT/ICASA-Dictionary) as its core annotation
+    standards.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
-Encoding: UTF-8
-LazyData: true
-SystemRequirements:
-    libudunits2-dev
-    default-jdk
-    libproj-dev
-    libgdal-dev
 Depends: 
     R (>= 4.4.3)
 Imports:
@@ -25,7 +25,6 @@ Imports:
     dplyr,
     DSSAT,
     elevatr,
-    geosphere,
     ggplot2,
     glue,
     httr,
@@ -36,25 +35,28 @@ Imports:
     openxlsx2,
     purrr,
     readr,
-    rdwd,
     rlang,
-    spsUtil,
+    stats,
+    stringi,
     stringr,
     tibble,
     tidygeocoder,
     tidyr,
     tidyselect,
-    units,
+    tools,
     utils,
     xml2,
-    zip,
-    zoo
+    yaml,
+    zip
+Suggests: 
+    devtools,
+    testthat (>= 3.0.0)
 Remotes: 
     AgMIP-GGCMI/cropCalendars,
-    brry/rdwd,
     leroy-bml/DSSAT
-Suggests: 
-    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Config/testthat/edition: 3
+SystemRequirements: libudunits2-dev default-jdk libproj-dev libgdal-dev
